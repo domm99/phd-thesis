@@ -10,6 +10,101 @@
 \usepackage{fancyhdr}
 \RequirePackage{my-acronyms}
 \RequirePackage{minitoc}
+\RequirePackage{csquotes}
+\RequirePackage[
+  backend=biber,
+  style=alphabetic,
+  sorting=ydnt
+]{biblatex}
+
+\addbibresource{phd-thesis.bib}
+
+\newtoggle{publicationlist}
+\newcounter{publicationitem}
+\let\standardarticledriver\blx@bbx@article
+\let\standardinproceedingsdriver\blx@bbx@inproceedings
+\DeclareFieldFormat{publicationtitle}{\mkbibquote{#1}}
+\DeclareFieldFormat{publicationvenue}{\mkbibemph{#1}}
+
+\defbibenvironment{publicationlist}
+	{\begingroup\setlength{\parindent}{0pt}\setlength{\parskip}{0.1\baselineskip}}
+	{\endgroup}
+	{}
+
+\newbibmacro*{publicationlist:yearheading}{%
+	\iffieldundef{year}
+		{}
+		{%
+			\edef\publicationlistcurrentyear{\thefield{year}}%
+				\ifdefstrequal{\publicationlistcurrentyear}{\publicationlistlastyear}
+					{}
+					{%
+						\par\addvspace{0.9\baselineskip}%
+						\textbf{\printfield{year}}%
+						\par\nobreak\addvspace{0.25\baselineskip}%
+						\xdef\publicationlistlastyear{\publicationlistcurrentyear}%
+					}%
+			}%
+}
+
+\newbibmacro*{publicationlist:venue}{%
+	\iffieldundef{usera}
+		{%
+			\iffieldundef{journaltitle}
+				{%
+					\iffieldundef{booktitle}
+						{}
+						{\printfield[publicationvenue]{booktitle}\addcomma\space}%
+				}
+				{\printfield[publicationvenue]{journaltitle}\addcomma\space}%
+		}
+		{\printfield[publicationvenue]{usera}\addcomma\space}%
+	\printfield{year}%
+}
+
+\newbibmacro*{publicationlist:item}{%
+	% \usebibmacro{publicationlist:yearheading}%
+	\stepcounter{publicationitem}%
+	\par\noindent\hangindent=2em\hangafter=1%
+	\makebox[2em][r]{\arabic{publicationitem}.\space}%
+	\setcounter{maxnames}{99}%
+	\setcounter{minnames}{99}%
+	\printnames{author}%
+	\adddot\space
+	\printfield[publicationtitle]{title}%
+	\adddot\space
+	\iffieldundef{journaltitle}
+		{\iffieldundef{booktitle}{}{In\addcolon\space}}
+		{}%
+	\usebibmacro{publicationlist:venue}%
+	\addperiod
+	\par
+}
+
+\DeclareBibliographyDriver{article}{%
+	\iftoggle{publicationlist}
+		{\usebibmacro{publicationlist:item}}
+		{\standardarticledriver}%
+}
+
+\DeclareBibliographyDriver{inproceedings}{%
+	\iftoggle{publicationlist}
+		{\usebibmacro{publicationlist:item}}
+		{\standardinproceedingsdriver}%
+}
+
+\newcommand{\printpublicationlist}[1]{%
+	\begingroup
+	\def\publicationlistlastyear{}%
+	\setcounter{publicationitem}{0}%
+	\defcounter{maxnames}{99}%
+	\defcounter{minnames}{99}%
+	\toggletrue{publicationlist}%
+	\begin{refcontext}[sorting=ydnt]
+		\printbibliography[keyword=#1,heading=none,env=publicationlist]%
+	\end{refcontext}
+	\endgroup
+}
 
 \fancypagestyle{plain}{
 	\fancyhf{}
@@ -50,13 +145,6 @@
 \newenvironment{inlinelist}{\begin{enumerate*}[label=\emph{(\roman{*})}]}{\end{enumerate*}}
 
 \newcommand{\chapterWithoutNumber}[1]{\chapter*{#1}\addcontentsline{toc}{chapter}{#1}}
-
-\let\oldbibliography\bibliography
-\renewcommand{\bibliography}[1]{
-	\addcontentsline{toc}{part}{}
-	\addcontentsline{toc}{chapter}{\bibname}
-	\oldbibliography{#1}
-}
 
 \def\themainlinespacing{1}
 \newcommand{\mainlinespacing}[1]{\def\themainlinespacing{#1}}
