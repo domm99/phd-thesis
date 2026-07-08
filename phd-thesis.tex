@@ -17,7 +17,7 @@ Max 2000 characters, strict.
 \end{abstract}
 
 \begin{dedication} % this is optional
-Optional. Max a few lines.
+Dux mea lux.
 \end{dedication}
 
 \begin{acknowledgements} % this is optional
@@ -32,137 +32,24 @@ Optional. Max 1 page.
 
 \mainmatter
 
-%----------------------------------------------------------------------------------------
-\chapter{Introduction}
-\label{chap:introduction}
-%----------------------------------------------------------------------------------------
-
-\section{Context and Motivation}
-
-\section{Research Gap}
-
-\section{Contribution}
-
-\section{Thesis Structure}
-
-\section{List of Pubblications}
-
+\input{chapters/c01_introduction}
 
 \part{Background}
 
-%----------------------------------------------------------------------------------------
-\chapter{Context and Motivation}
-%----------------------------------------------------------------------------------------
-\section{Collective Adaptive Systems}
-\section{Self-* Systems}
-\section{Edge-Cloud Continuum}
-
-
-%----------------------------------------------------------------------------------------
-\chapter{Macroprogramming}
-%----------------------------------------------------------------------------------------
-\section{Conceptual Framework}
-\section{Field Calculus}
-\section{Aggregate Computing}
-
-%----------------------------------------------------------------------------------------
-\chapter{Federated Learning}
-%----------------------------------------------------------------------------------------
-\section{Training Dynamics}
-\section{Decentralized Architectures}
-\section{Data Heterogeneity}
-\section{Clustered Federated Learning}
-
-%----------------------------------------------------------------------------------------
-\chapter{Reinforcement Learning}
-%----------------------------------------------------------------------------------------
-\section{Single Agent}
-\section{Multi Agent}
-\section{Scalability in RL}
-\section{Decentralized RL}
-
-%----------------------------------------------------------------------------------------
-\chapter{Other ML Fancy Stuff}
-%----------------------------------------------------------------------------------------
-\section{Graph Neural Networks}
-\section{Random Network Distillation}
-\section{Sparsification}
-\section{Continual Learning}
-
+\input{chapters/c02_context}
+\input{chapters/c03_macroprogramming}
+\input{chapters/c04_federatedlearning}
+\input{chapters/c05_reinforcementlearning}
+\input{chapters/c06_advancedml}
 
 
 \part{Contribution}
 
-%----------------------------------------------------------------------------------------
-\chapter{Closing the gap between AC and AI}
-%----------------------------------------------------------------------------------------
-\section{Motivation}
-\section{Phyelds}
-\section{Evaluation}
-\section{Related Works}
-
-%----------------------------------------------------------------------------------------
-\chapter{Federated Learning}
-%----------------------------------------------------------------------------------------
-\section{Motivation}
-\section{Field-Based Coordination for FL}
-\subsection{Formalization}
-\subsection{Self-* properties}
-\subsection{Evaluation}
-\section{Sparsification in FL}
-\subsection{Formalization}
-\subsection{Evaluation}
-\section{Clustered Continual Federated Learning under Spatial and Temporal Drift}
-\subsection{Formalization}
-\subsection{Evaluation}
-\section{Related Works}
-
-
-%----------------------------------------------------------------------------------------
-\chapter{Scalable Reinforcement Learning}
-%----------------------------------------------------------------------------------------
-\section{Motivation}
-\section{Neighbor-Based Strategies for Decentralized Reinforcement Learning}
-\section{Scaling Multi-Agent Reinforcement Learning with GNNs}
-\section{Evaluation}
-\section{Related Works}
-
-%----------------------------------------------------------------------------------------
-\chapter{Adptive Task-Placement across the Edge-Cloud Continuum}
-%----------------------------------------------------------------------------------------
-\section{Motivation}
-\section{Proposed method: IDHGQL}
-\section{Evaluation}
-\section{Related Works}
-
-%----------------------------------------------------------------------------------------
-\chapter{Wrap Up}
-%----------------------------------------------------------------------------------------
-\section{Conclusions}
-\section{Future Works}
-
-% \chapter{State of the art}
-
-% I suggest referencing stuff as follows: \cref{fig:random-image} or \Cref{fig:random-image}
-
-% \begin{figure}
-%     \centering
-%     \includegraphics[width=.8\linewidth]{figures/random-image.pdf}
-%     \caption{Some random image}
-%     \label{fig:random-image}
-% \end{figure}
-
-% \section{Some cool topic}
-
-% \part{Second Part}
-
-% \chapter{Contribution}
-
-% You may also put some code snippet (which is NOT float by default), eg: \cref{lst:random-code}.
-
-% \lstinputlisting[float,language=Java,label={lst:random-code}]{listings/HelloWorld.java}
-
-% \section{Fancy formulas here}
+\input{chapters/c07_phyelds}
+\input{chapters/c08_selforgfl}
+\input{chapters/c09_scalablerl}
+\input{chapters/c10_tasksplacement}
+\input{chapters/c11_wrapup}
 
 %----------------------------------------------------------------------------------------
 % BIBLIOGRAPHY
