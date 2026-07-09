@@ -248,3 +248,5 @@ TSWLatexianTemp*
 tmp/
 
 *.mtc
+
+*/.DS_Store
