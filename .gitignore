@@ -249,4 +249,4 @@ tmp/
 
 *.mtc
 
-*/.DS_Store
+**/.DS_Store
