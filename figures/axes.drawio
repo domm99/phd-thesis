@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net">
   <diagram name="Pagina-1" id="Srd3fw86SS4Tkd2hsb6M">
-    <mxGraphModel dx="975" dy="545" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="2241" dy="790" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -9,53 +9,68 @@
             <mxPoint x="580" y="720" as="sourcePoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="KO673h3YVN3rM3taKOEC-21" edge="1" parent="1" source="iQrFCdAENoVzSEqGdB7j-10" style="curved=1;endArrow=classic;html=1;rounded=1;strokeWidth=4;fillColor=#e1d5e7;strokeColor=#9673a6;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="iQrFCdAENoVzSEqGdB7j-5" value="">
-          <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <Array as="points" />
-            <mxPoint x="170" y="280" as="sourcePoint" />
-            <mxPoint x="280" y="270" as="targetPoint" />
-          </mxGeometry>
-        </mxCell>
         <mxCell id="iQrFCdAENoVzSEqGdB7j-1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="580" y="720" as="sourcePoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="iQrFCdAENoVzSEqGdB7j-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Privacy-aware Learning" vertex="1">
-          <mxGeometry height="60" width="145" x="302.5" y="370" as="geometry" />
-        </mxCell>
-        <mxCell id="iQrFCdAENoVzSEqGdB7j-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=2;" value="Adaptation to Spatio-temporal Distribution Shift" vertex="1">
-          <mxGeometry height="60" width="150" x="520" y="505" as="geometry" />
-        </mxCell>
-        <mxCell id="iQrFCdAENoVzSEqGdB7j-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" value="Deployment on Resource-constrained Edge Devices" vertex="1">
-          <mxGeometry height="60" width="150" x="300" y="640" as="geometry" />
-        </mxCell>
-        <mxCell id="iQrFCdAENoVzSEqGdB7j-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;" value="Scalable Decentralized Learning" vertex="1">
-          <mxGeometry height="60" width="150" x="80" y="505" as="geometry" />
-        </mxCell>
-        <mxCell id="iQrFCdAENoVzSEqGdB7j-11" edge="1" parent="1" source="iQrFCdAENoVzSEqGdB7j-10" style="curved=1;endArrow=classic;html=1;rounded=1;strokeWidth=4;fillColor=#d5e8d4;strokeColor=#82b366;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="iQrFCdAENoVzSEqGdB7j-4" value="">
-          <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <Array as="points" />
-            <mxPoint x="460" y="620" as="sourcePoint" />
-            <mxPoint x="390" y="620" as="targetPoint" />
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-1" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="720" as="sourcePoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="iQrFCdAENoVzSEqGdB7j-12" edge="1" parent="1" source="iQrFCdAENoVzSEqGdB7j-10" style="curved=1;endArrow=classic;html=1;rounded=1;strokeWidth=4;fillColor=#ffe6cc;strokeColor=#d79b00;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="iQrFCdAENoVzSEqGdB7j-3" value="">
-          <mxGeometry height="50" relative="1" width="50" as="geometry">
-            <Array as="points" />
-            <mxPoint x="470" y="630" as="sourcePoint" />
-            <mxPoint x="400" y="630" as="targetPoint" />
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-15" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="480" y="780" as="sourcePoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="iQrFCdAENoVzSEqGdB7j-13" edge="1" parent="1" source="iQrFCdAENoVzSEqGdB7j-10" style="curved=1;endArrow=classic;html=1;rounded=1;strokeWidth=4;fillColor=#dae8fc;strokeColor=#6c8ebf;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="iQrFCdAENoVzSEqGdB7j-2" value="">
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-16" edge="1" parent="1" source="UUh4ZkAHbRrqELwZsTZs-25" style="curved=1;endArrow=classic;html=1;rounded=1;strokeWidth=4;fillColor=#e1d5e7;strokeColor=#9673a6;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="UUh4ZkAHbRrqELwZsTZs-21" value="">
           <mxGeometry height="50" relative="1" width="50" as="geometry">
             <Array as="points" />
-            <mxPoint x="650" y="630" as="sourcePoint" />
-            <mxPoint x="580" y="630" as="targetPoint" />
+            <mxPoint x="70" y="340" as="sourcePoint" />
+            <mxPoint x="180" y="330" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="iQrFCdAENoVzSEqGdB7j-10" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeWidth=2;strokeColor=#000000;" value="&lt;b&gt;Engineering Many-Agent Cooperative Learning in &lt;br&gt;Collective Adaptive Systems&lt;/b&gt;" vertex="1">
-          <mxGeometry height="110" width="190" x="280" y="480" as="geometry" />
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-17" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;curved=1;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="480" y="780" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-18" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="Data Privacy Constraints" vertex="1">
+          <mxGeometry height="60" width="145" x="202.5" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-19" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=2;" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Spatio-temporal Distribution Shift&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="150" x="420" y="565" as="geometry" />
+        </mxCell>
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-20" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" value="Resource-constrained Edge Devices" vertex="1">
+          <mxGeometry height="60" width="150" x="200" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-21" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;" value="Scalable Decentralization" vertex="1">
+          <mxGeometry height="60" width="150" x="-20" y="565" as="geometry" />
+        </mxCell>
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-22" edge="1" parent="1" source="UUh4ZkAHbRrqELwZsTZs-25" style="curved=1;endArrow=classic;html=1;rounded=1;strokeWidth=4;fillColor=#d5e8d4;strokeColor=#82b366;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="UUh4ZkAHbRrqELwZsTZs-20" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points" />
+            <mxPoint x="360" y="680" as="sourcePoint" />
+            <mxPoint x="290" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-23" edge="1" parent="1" source="UUh4ZkAHbRrqELwZsTZs-25" style="curved=1;endArrow=classic;html=1;rounded=1;strokeWidth=4;fillColor=#ffe6cc;strokeColor=#d79b00;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="UUh4ZkAHbRrqELwZsTZs-19" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points" />
+            <mxPoint x="370" y="690" as="sourcePoint" />
+            <mxPoint x="300" y="690" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-24" edge="1" parent="1" source="UUh4ZkAHbRrqELwZsTZs-25" style="curved=1;endArrow=classic;html=1;rounded=1;strokeWidth=4;fillColor=#dae8fc;strokeColor=#6c8ebf;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="UUh4ZkAHbRrqELwZsTZs-18" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <Array as="points" />
+            <mxPoint x="550" y="690" as="sourcePoint" />
+            <mxPoint x="480" y="690" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="UUh4ZkAHbRrqELwZsTZs-25" parent="1" style="ellipse;whiteSpace=wrap;html=1;strokeWidth=2;strokeColor=#000000;" value="&lt;b&gt;Engineering Many-Agent Cooperative Learning in &lt;br&gt;Collective Adaptive Systems&lt;/b&gt;" vertex="1">
+          <mxGeometry height="110" width="190" x="180" y="540" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>

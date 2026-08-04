@@ -9,43 +9,283 @@
 
 \section{Context and Motivation}
 
+% Contesto: Collective Adaptive Systems 
+% Negli ultimi anni abbiamo visto un aumento esponenziale di dispositivi connessi a internet, che generano una grande quantità di dati e che sono in grado di prendere decisioni autonome. 
+% I sistemi composti da questi dispositivi hanno caratteristiche che li rendono difficili da ingegnerizzare, e che li rendono interessanti da studiare
+% Queste caratteristiche sono:
+% - Complessità
+% - Sono distribuiti (questo porta anche a raccogliere dati non-iid)
+% - Open: dispositivi che entrano ed escono dalla rete
+% - Località: i dispositivi hanno una visione locale del sistema e non globale, possono parlare solo con alcuni vicini
+% - Scala: spesso abbiamo a che fare con centinaia o migliaia di dispositivi (many agents), mentre multi-agents sono più nell'ordine della decina
+% - Problemi di privacy: essendo distribuiti sul territorio e pervasivi nelle nostre vite spesso collezionano dati sensibili
+% I collective adaptive systems hanno preso piede come paradigma per descrivere questo tipo di sistemi 
+% In questi sistemi il tutto è più della somma delle parti, parte del comportamento emerge dall'interazione tra i dispositivi
+% Si può vedere i moderni sistemi iot/edge-cloud/smart city come esempio di CAS
+% Queste caratteristiche rendono difficile ingegnerizzare un processo di apprendimento in questo contesto, non possiamo prendere algoritmi di AI/ML e applicarli as-is
+The last decade has seen a rapid growth in the number 
+ of networked devices embedded in physical environments. 
+%
+These devices continuously generate data, 
+ communicate with one another, 
+ and increasingly make autonomous decisions. 
+% 
+Rather than operating in isolation, 
+ they form large distributed systems that support applications such as smart cities, 
+ pervasive sensing, robotic swarms, and the edge--cloud continuum.
+
+Engineering these systems is difficult because several properties must be addressed at the same time. 
+%
+First, 
+ their behaviour results from the interaction of many components and is therefore difficult to predict 
+ from the behaviour of an individual component alone. 
+%
+Second, computation, communication, and data are distributed: 
+ each device has access only to its local state and to information received from a limited set of neighbours. 
+%
+Consequently, 
+ data collected across the system often do not follow a common independent and identically distributed (IID) process, 
+ since devices located in different environments observe different phenomena. 
+% 
+Third, 
+ these systems are open and dynamic, as devices may join, leave, fail, or move while the system is running. 
+% 
+Fourth, 
+ they operate at a scale that may involve hundreds or thousands of devices. 
+% 
+This motivates the term \emph{many-agent}, 
+ in contrast to settings involving only a small number of interacting agents. 
+% 
+Finally, 
+ many of these devices are resource-constrained 
+ and collect sensitive data because they are distributed throughout physical environments 
+ and are closely integrated into everyday life.
+
+Collective Adaptive Systems (CASs) provide a suitable model for this class of systems. 
+%
+A CAS consists of multiple autonomous or semi-autonomous entities that interact locally 
+ and adapt their behaviour while pursuing individual or collective objectives. 
+% 
+Its global behaviour is not imposed entirely by a central controller; 
+%
+instead, 
+ it partly emerges from the repeated interactions among its components. 
+% 
+Modern Internet of Things deployments, smart-city infrastructures, robotic collectives, 
+ and edge--cloud systems can all be viewed through this lens.
+
+\section{Research Gap}
+
 \begin{figure}
     \includegraphics[width=0.9\textwidth]{figures/axes.drawio.pdf}
     \label{fig:overview}
     \caption{TBD.}
 \end{figure}
 
+Existing approaches to engineering distributed and adaptive systems make different choices 
+ about how the system and its components are represented.
+% 
+Some adopt the individual device as their main abstraction, 
+ whereas others describe the collective as a whole. 
+% 
+Components may be modelled as passive computational objects or as autonomous agents. 
+%
+Their coordination may be centralized, decentralized, or hybrid,
+ and autonomous behaviour may be expressed through rules, models, policies, or explicit objectives. 
+% 
+These choices determine what information is available to each component, 
+ where decisions are made, and how the resulting global behaviour can be controlled.
+
+Within this broad design space, 
+ machine learning has become an increasingly common mechanism for achieving adaptation. 
+% 
+Yet learning in a CAS introduces requirements that are not adequately captured when 
+ an algorithm is considered independently of the system in which it will operate. 
+% 
+This thesis identifies four engineering dimensions, summarized in Figure~\Cref{fig:overview}.
+
+\emph{Data privacy constraints} concerns how agents can benefit from data distributed across the collective without requiring raw, 
+ potentially sensitive observations to be centralized. 
+% 
+\emph{Spatio-temporal distribution shift} concerns the statistical heterogeneity induced by the environment: 
+ nearby devices may observe similar data, distant devices may observe different distributions, 
+ and mobile devices may encounter a sequence of distributions over time. 
+% 
+\emph{Scalable decentralization} concerns how learning and coordination can rely on local interactions 
+ while remaining effective as the number of agents grows and the communication topology changes. 
+% 
+Finally, 
+ \emph{resource-constrained edge devices} concerns the computational, memory, energy,
+ and communication limitations that restrict both learning and execution at the network edge.
+
+These dimensions are not independent.
+%
+Privacy constraints restrict which information can be exchanged;
+decentralization and locality determine how knowledge propagates;
+distribution shifts require models and collaboration structures to adapt;
+and resource constraints limit the complexity and frequency of these operations.
+%
+Taken together, they expose a fundamental mismatch between the assumptions of conventional machine-learning algorithms
+and the operating conditions of CASs.
+%
+Data and global state may be unavailable at a central location,
+the set of participating agents may change over time,
+and both learning and execution must often take place on resource-constrained devices.
+%
+Consequently, machine-learning algorithms cannot simply be applied as-is.
+
+Existing work often addresses these challenges in isolation
+or introduces solutions tailored to specific applications.
+%
+What remains missing is a systematic approach to engineering cooperative learning around the defining properties of CASs,
+together with reusable abstractions and design strategies that reduce reliance on ad-hoc solutions.
+%
+The learning process must therefore be treated as an integral part of the collective system,
+rather than as an algorithmic component added independently of the system in which it operates.
 
 
 
-
-\clearpage
-
-% Contesto: Collective Adaptive Systems 
-% Hanno preso piede negli ultimi anni e sono un'astrazione per ingegnerizzarei i sistemi moderni che hanno alcune carattaristiche peculiari e in comune:
-% - Complessità
-% - Sono distribuiti (questo porta anche a raccogliere dati non-iid)
-% - Open: dispositivi che entrano ed escono dalla rete
-% - Località: i dispositivi hanno una visione locale del sistema e non globale, possono parlare solo con alcuni vicini
-% - Scala: spesso abbiamo a che fare con centinaia o migliaia di dispositivi (many agents), mentre multi-agents sono più nell'ordine della decina
-% - Problemi di privacy
-% In questi sistemi il tutto è più della somma delle parti, parte del comportamento emerge dall'interazione tra i dispositivi
-% Si può vedere i moderni sistemi iot/edge-cloud/smart city come esempio di CAS
-% Queste caratteristiche rendono difficile ingegnerizzare un processo di apprendimento in questo contesto, non possiamo prendere algoritmi di AI/ML e applicarli as-is
-
-
-
-\section{Research Gap}
+% In letteratura ci sono diversi lavori che provano ad ingegnerizzare i sistemi descritti sopra da vari punti di vista 
+% Questi differiscono nel modo in cui trattano i dispositivi, ad esempio:
+% - se usano come astrazione il singolo dispositivo o il collettivo
+% - l'autonomia che ogni dispositivo ha (agenti o "semplici" oggetti)
+% - come vengono coordinati i dispositivi (centralizzato o decentralizzato o ibrido)
+% - come viene espressa l'autonomia (ad esempio con regole, con modelli, con policy, con obiettivi) 
+% in generale ultimamente ha preso piede l'idea di applicare algoritmi di AI/ML a questi sistemi, per permettere loro di adattarsi in maniera autonoma a contesti dinamici e incerti
+% Tuttavia, le caratteristiche dei CAS rendono difficile applicare algoritmi di AI/ML in maniera diretta, e richiedono un ingegnerizzazione ad-hoc per il contesto
+% i vari punti a cui prestare attenzione sono riassunti in fig 1 (descrivili)
+% questo lascia spazio per lavori che provino a sistematizzare l'ingegnerizzazione di algoritmi di AI/ML in contesti CAS, e a fornire linee guida per ingegnerizzare questi sistemi in maniera più sistematica e meno ad-hoc
+% partendo da questo gap abbiamo sviluppato le seguenti research questions che verranno affrontate nel corso della tesi:
+% >> formula 4 research questions a partire dai paper
 
 \section{Contribution}
 
+
 \begin{figure}
     \includegraphics[width=0.9\textwidth]{figures/mapping.drawio.pdf}
-    \label{fig:overview}
+    \label{fig:mapping}
     \caption{TBD.}
 \end{figure}
 
+Starting from the research gap outlined above,
+ this thesis investigates how cooperative learning can be engineered as an integral part of a CAS.
+%
+The objective is not to define a single learning algorithm applicable to every collective system,
+ but to identify coordination mechanisms, learning architectures,
+ and deployment strategies that address the main challenges arising from distribution,
+ locality, scale, openness, and resource constraints.
+
+The investigation is guided by the following research questions:
+
+\begin{questions}
+\item
+How can privacy-aware cooperative learning be organized among many distributed agents
+without centralizing raw data or relying on a fixed central coordinator?\label{itm:rq1}
+
+\item
+How can cooperative learning account for spatially heterogeneous data
+and adapt to temporal distribution shifts caused by mobility and changing environments?\label{itm:rq2}
+
+\item
+How can decentralized learning remain effective and scalable
+when agents have access only to local observations,
+communicate with a limited neighbourhood,
+and operate in collectives whose size may change?\label{itm:rq3}
+
+\item
+How can learning-based decisions be deployed across heterogeneous and resource-constrained
+edge--cloud infrastructures while accounting for both individual device constraints
+and collective system-level phenomena?\label{itm:rq4}
+```
+
+\end{questions}
+
+These questions are addressed through three complementary lines of research,
+ whose relationship with the engineering dimensions identified in the previous section
+ is summarized in \Cref{fig:mapping}.
+
+The first line concerns \emph{self-organizing federated learning}
+ and addresses~\ref{itm:rq1} and \ref{itm:rq2}.
+%
+We developed decentralized approaches in which devices autonomously form learning federations
+ according to their spatial proximity and the similarity of their data distributions.
+%
+This enables the training of models specialized for different regions
+ without centralizing raw data or relying on a fixed server.
+%
+We also introduced a benchmark for evaluating learning under spatially structured data heterogeneity
+ and extended the proposed approaches to reduce their resource requirements
+ and adapt to mobility-induced distribution shifts while retaining previously acquired knowledge.
+
+The second line concerns \emph{scalable decentralized reinforcement learning}
+ and addresses \ref{itm:rq3}.
+%
+We investigated training strategies based on local interactions among neighbouring agents
+ and learning architectures designed to operate with variable-sized collectives.
+%
+These studies evaluate the trade-offs between centralized and fully independent learning
+ and assess whether policies trained with a given number of agents
+ can remain effective when deployed in larger collectives.
+
+The third line concerns \emph{adaptive deployment across the edge--cloud continuum}
+ and addresses \ref{itm:rq4}.
+%
+We developed a learning-based approach that allows devices
+ to make decentralized decisions about where application components should be executed.
+%
+These decisions account for both local constraints,
+ such as energy consumption and computational capacity,
+ and collective conditions,
+ such as network congestion, latency, and infrastructure load.
+
+Together, these contributions provide methods and design principles
+ for integrating learning and collective coordination
+ in many-agent systems characterized by distributed data,
+ local interactions, dynamic populations, and limited resources.
+
+
 \section{Thesis Structure}
+The remainder of this thesis is organized into two main parts.
+
+\emph{Part~I---Background} introduces the concepts required to frame the contributions.
+%
+\Cref{chap:context} presents Collective Adaptive Systems,
+ self-adaptive systems,
+ and the edge--cloud continuum,
+ describing the computational setting considered throughout the thesis.
+%
+\Cref{chap:macroprogramming} introduces macroprogramming
+ and the main abstractions used to express and coordinate collective behaviour.
+%
+\Cref{chap:ml}  provides the machine-learning foundations required by the subsequent chapters.
+%
+\Cref{chap:federated-learning}  focuses on federated learning,
+ with particular attention to decentralized architectures,
+ data heterogeneity,
+ and clustered approaches.
+%
+\Cref{chap:reinforcement-learning} introduces reinforcement learning
+ and discusses its extension to multi-agent settings,
+ including decentralized training and scalability.
+
+\emph{Part~II---Contribution} presents the research developed during this thesis.
+%
+\Cref{chap:selforg-fl}  introduces the proposed approaches to self-organizing federated learning,
+ addressing privacy-aware collaboration
+ and spatially and temporally heterogeneous data.
+%
+\Cref{chap:scalable-rl}  investigates scalable decentralized reinforcement learning,
+ focusing on training through local interactions
+ and on the deployment of learned policies in collectives of different sizes.
+%
+\Cref{chap:tasksplacement} studies adaptive deployment across the edge--cloud continuum,
+ presenting a learning-based approach for decentralized application offloading
+ under device-level and collective resource constraints.
+%
+Finally,
+ \Cref{chap:wrapup} summarizes the main findings,
+ discusses the answers to the research questions,
+ and outlines directions for future work.
 
 
 \section{List of Publications}
