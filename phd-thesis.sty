@@ -19,6 +19,10 @@
 
 \addbibresource{phd-thesis.bib}
 
+\newlist{questions}{enumerate}{2}
+\setlist[questions,1]{label=(RQ\arabic*),ref=RQ\arabic*}
+\setlist[questions,2]{label=(\alph*),ref=\thequestionsi(\alph*)}
+
 \newtoggle{publicationlist}
 \newcounter{publicationitem}
 \let\standardarticledriver\blx@bbx@article
