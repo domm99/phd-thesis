@@ -78,8 +78,8 @@ Modern Internet of Things deployments, smart-city infrastructures, robotic colle
 
 \begin{figure}
     \includegraphics[width=0.9\textwidth]{figures/axes.drawio.pdf}
-    \label{fig:overview}
     \caption{TBD.}
+    \label{fig:overview}
 \end{figure}
 
 Existing approaches to engineering distributed and adaptive systems make different choices 
@@ -102,7 +102,7 @@ Within this broad design space,
 Yet learning in a CAS introduces requirements that are not adequately captured when 
  an algorithm is considered independently of the system in which it will operate. 
 % 
-This thesis identifies four engineering dimensions, summarized in Figure~\Cref{fig:overview}.
+This thesis identifies four engineering dimensions, summarized in~\Cref{fig:overview}.
 
 \emph{Data privacy constraints} concerns how agents can benefit from data distributed across the collective without requiring raw, 
  potentially sensitive observations to be centralized. 
@@ -163,8 +163,8 @@ rather than as an algorithmic component added independently of the system in whi
 
 \begin{figure}
     \includegraphics[width=0.9\textwidth]{figures/mapping.drawio.pdf}
-    \label{fig:mapping}
     \caption{TBD.}
+    \label{fig:mapping}
 \end{figure}
 
 Starting from the research gap outlined above,
@@ -196,7 +196,6 @@ and operate in collectives whose size may change?\label{itm:rq3}
 How can learning-based decisions be deployed across heterogeneous and resource-constrained
 edge--cloud infrastructures while accounting for both individual device constraints
 and collective system-level phenomena?\label{itm:rq4}
-```
 
 \end{questions}
 
@@ -205,38 +204,38 @@ These questions are addressed through three complementary lines of research,
  is summarized in \Cref{fig:mapping}.
 
 The first line concerns \emph{self-organizing federated learning}
- and addresses~\ref{itm:rq1} and \ref{itm:rq2}.
+and addresses~\ref{itm:rq1} and \ref{itm:rq2}.
 %
-We developed decentralized approaches in which devices autonomously form learning federations
- according to their spatial proximity and the similarity of their data distributions.
+Decentralized approaches were developed in which devices autonomously form learning federations
+according to their spatial proximity and the similarity of their data distributions.
 %
 This enables the training of models specialized for different regions
- without centralizing raw data or relying on a fixed server.
+without centralizing raw data or relying on a fixed server.
 %
-We also introduced a benchmark for evaluating learning under spatially structured data heterogeneity
- and extended the proposed approaches to reduce their resource requirements
- and adapt to mobility-induced distribution shifts while retaining previously acquired knowledge.
+A benchmark for evaluating learning under spatially structured data heterogeneity was also introduced.
+Furthermore, the proposed approaches were extended to reduce their resource requirements
+and adapt to mobility-induced distribution shifts while retaining previously acquired knowledge.
 
 The second line concerns \emph{scalable decentralized reinforcement learning}
- and addresses \ref{itm:rq3}.
+and addresses~\ref{itm:rq3}.
 %
-We investigated training strategies based on local interactions among neighbouring agents
- and learning architectures designed to operate with variable-sized collectives.
+Training strategies based on local interactions among neighbouring agents were investigated,
+together with learning architectures designed to operate with variable-sized collectives.
 %
 These studies evaluate the trade-offs between centralized and fully independent learning
- and assess whether policies trained with a given number of agents
- can remain effective when deployed in larger collectives.
+and assess whether policies trained with a given number of agents
+can remain effective when deployed in larger collectives.
 
 The third line concerns \emph{adaptive deployment across the edge--cloud continuum}
- and addresses \ref{itm:rq4}.
+and addresses~\ref{itm:rq4}.
 %
-We developed a learning-based approach that allows devices
- to make decentralized decisions about where application components should be executed.
+A learning-based approach was developed to enable devices
+to make decentralized decisions about where application components should be executed.
 %
 These decisions account for both local constraints,
- such as energy consumption and computational capacity,
- and collective conditions,
- such as network congestion, latency, and infrastructure load.
+such as energy consumption and computational capacity,
+and collective conditions,
+such as network congestion, latency, and infrastructure load.
 
 Together, these contributions provide methods and design principles
  for integrating learning and collective coordination
