@@ -1,13 +1,19 @@
-\RequirePackage{glossaries}
+\RequirePackage[acronym]{glossaries}
 \setkeys{glslink}{hyper=false}
 
 \newcommand{\glsfull}[1]{\glsentrylong{#1} (\glsentryshort{#1})}
 \newcommand{\Glsfull}[1]{\Glsentrylong{#1} (\Glsentryshort{#1})}
 
+
 \makeglossaries
 %\makenoidxglossaries
 
+\newacronym{CAS}{CAS}{Collective Adaptive System}
+\newacronym{CFL}{CFL}{Clustered Federated Learning}
 \newacronym{FL}{FL}{Federated Learning}
-
+\newacronym{MARL}{MARL}{Multi-Agent Reinforcement Learning}
+\newacronym{IID}{IID}{independently and identically distributed}
+\newacronym{RND}{RND}{Random Network Distillation}
+\newacronym{TL}{TL}{Transfer Learning}
 
 \glsaddall
