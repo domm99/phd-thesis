@@ -9,60 +9,91 @@
 
 \section{Context}
 
-The last decade has seen a rapid growth in the number of networked devices
-embedded in physical environments. These devices continuously generate data,
-communicate with one another, and increasingly make autonomous decisions.
-Rather than operating in isolation, they form distributed systems that support
-applications such as smart cities, pervasive sensing, autonomous mobility,
-robotic collectives, and the edge--cloud continuum.
+The last decade has seen a rapid growth in the number 
+ of networked devices embedded in physical environments. 
+% 
+These devices continuously generate data,
+ communicate with one another, and increasingly make autonomous decisions.
+%
+Rather than operating in isolation, 
+ they form distributed systems that support applications such as 
+ smart cities, pervasive sensing, autonomous mobility, robotic collectives, 
+ and the edge--cloud continuum.
 
-The behaviour of these systems cannot be understood solely in terms of their
-individual components. Each device acts on the basis of partial information,
-derived from its local state and from interactions with a limited and possibly
-changing set of neighbours. Nevertheless, these local actions influence one
-another and jointly determine the behaviour observed at the system level. This
-relationship becomes particularly difficult to engineer when the collective
-comprises hundreds or thousands of devices, motivating the term
-\emph{many-agent} for settings whose scale is substantially larger than that
-usually associated with small multi-agent systems. At the same time, the
-collective is rarely static: devices may move, fail, join, or leave during
-operation, causing both the communication topology and the information
-available within the system to evolve.
+The behaviour of these systems cannot be understood solely 
+ in terms of their individual components. 
+% 
+Each device acts on the basis of partial information,
+ derived from its local state and from interactions with 
+ a limited and possibly changing set of neighbors.
+% 
+Nevertheless, 
+ these local actions influence one another and 
+ jointly determine the behaviour observed at the system level. 
+ 
+This relationship becomes particularly difficult to engineer when the collective
+ comprises hundreds or thousands of devices, 
+ motivating the term \emph{many-agent} for settings whose scale is substantially larger than 
+ that usually associated with small multi-agent systems (i.e., two to ten agents). 
+%
+At the same time, 
+ the collective is rarely static: devices may move, fail, join, or leave during operation, 
+ causing both the communication topology and the information available within the system to evolve.
 
-Collective Adaptive Systems (CASs) provide a suitable model for this class of
-systems. A CAS consists of multiple autonomous or semi-autonomous entities that
-interact locally and adapt their behaviour while pursuing individual or
-collective objectives. Its global behaviour is not imposed entirely by a
-central controller; instead, it partly emerges from repeated interactions among
-its components. Modern Internet of Things deployments, smart-city
-infrastructures, robotic collectives, and edge--cloud systems can all be viewed
-through this lens. CASs are also closely related to \emph{self-adaptive systems},
-which monitor their operating conditions and modify their configuration or
-behaviour in response to change. In a collective setting, however, adaptation
-cannot be reduced to the reconfiguration of a single component: it must arise
-from decisions distributed across multiple entities, whose locally reasonable
-actions may interact in ways that produce either desirable or undesirable
-system-level outcomes.
+\glspl{CAS} provide a suitable model for this class of systems. 
+%
+A \gls{CAS} consists of multiple autonomous or semi-autonomous entities that
+ interact locally and adapt their behaviour while pursuing individual or collective objectives. 
+%
+Its global behaviour is not imposed entirely by a central controller; 
+%
+instead, 
+ it partly emerges from repeated interactions among its components. 
+% 
+Modern Internet of Things deployments, smart-city infrastructures, robotic collectives, 
+ and edge--cloud systems can all be viewed through this lens. 
+%
+\glspl{CAS} are also closely related to \emph{self-adaptive systems},
+ which monitor their operating conditions and modify their configuration or
+ behaviour in response to change. 
+% 
+In a collective setting, however, 
+ adaptation cannot be reduced to the reconfiguration of a single component: 
+ it must arise from decisions distributed across multiple entities, 
+ whose locally reasonable actions may interact in ways that produce either desirable 
+ or undesirable system-level outcomes.
 
 Machine learning provides a powerful mechanism for achieving such adaptation
-when the relationship between operating conditions and appropriate behaviour
-cannot be specified completely at design time. In a CAS, however, learning is
-not an isolated computation performed over a centrally available dataset. Data
-are generated at different locations, under different environmental conditions,
-and often remain on the devices that collect them. Consequently, local datasets
-commonly violate the independent and identically distributed (IID)
-assumption---that is, they are non-IID---because agents situated in different
-parts of the environment observe different phenomena, while spatially close
-observations may be statistically correlated. As devices move and conditions
-change, these distributions may also evolve over time. Moreover, the models and
-policies learned by individual agents affect their subsequent actions and,
-through their interaction, may alter both the state of the collective and the
-data it will observe in the future.
+ when the relationship between operating conditions 
+ and appropriate behaviour cannot be specified completely at design time. 
+% 
+In a \gls{CAS}, however, 
+ learning is not an isolated computation performed over a centrally available dataset. 
+% 
+Data are generated at different locations, under different environmental conditions,
+ and often remain on the devices that collect them. 
+% 
+Consequently, 
+ local datasets commonly violate the \gls{IID} assumption--that is, they are non-\gls{IID}--because 
+ agents situated in different parts of the environment observe different phenomena, 
+ while spatially close observations may be statistically correlated. 
+% 
+As devices move and conditions change, 
+ these distributions may also evolve over time. 
+% 
+Moreover, 
+ the models and policies learned by individual agents affect their subsequent actions and,
+ through their interaction, may alter both the state of the collective 
+ and the data it will observe in the future.
 
-Learning in this setting is therefore inherently cooperative. This thesis uses
-\emph{cooperative learning} as an umbrella term for processes in which multiple
-agents improve models or decision policies by exchanging parameters,
-predictions, experience, or other intermediate information. One realization is
+Learning in this setting is therefore inherently cooperative. 
+%
+This thesis uses \emph{cooperative learning} as an umbrella term for processes 
+ in which multiple agents improve models or decision policies by exchanging parameters,
+ predictions, experience, or other intermediate information. 
+
+\sidenote{Da qui in poi non mi piace}
+One realization is
 \emph{federated learning} (FL), in which devices train models from local data
 and exchange model information rather than centralizing raw observations. When
 the collective experiences heterogeneous conditions, however, a single global
