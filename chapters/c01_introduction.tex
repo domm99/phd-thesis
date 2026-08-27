@@ -166,109 +166,129 @@ Learning is not performed by isolated devices within a fixed environment,
 Achieving desirable system-level behaviour consequently requires coordinating 
  how agents learn from one another, how their decisions account for neighbouring agents,
  and how computation is distributed across the available infrastructure.
- 
+
 \section{Research Gap}
 
-Existing approaches to engineering distributed and adaptive systems make
-different choices about how the system and its components are represented. Some
-adopt the individual device as their main abstraction, whereas others describe
-the collective as a whole. Components may be modelled as passive computational
-objects or as autonomous agents. Their coordination may be centralized,
-decentralized, or hybrid, and adaptive behaviour may be expressed through
-rules, optimization objectives, learned models, or decision policies. These
-choices determine what information is available to each component, where
-decisions are made, and how system-level behaviour can be controlled.
+Engineering autonomous behaviour in large distributed collectives requires 
+ choosing the abstraction level at which the system is described.
+%
+Device-centric approaches specify the behaviour of individual agents, 
+ whereas collective-level approaches describe how system-level behaviour 
+ should arise from their interactions.
+%
+This thesis adopts the latter perspective: 
+ the objective is not to engineer each device in isolation, 
+ but to control how the organization and interaction of many devices 
+ produce autonomous collective behaviour.
+%
+Macroprogramming provides a natural foundation for this perspective, 
+ as it allows coordination patterns to be expressed at the level of the collective 
+ and realized through local execution on individual devices.
 
-Macroprogramming and machine learning address complementary parts of this
-design space. Macroprogramming provides abstractions for constructing robust
-collective behaviour from local interactions; machine learning enables models
-and policies to adapt from data or experience. Their integration, however, is
-still fragmented. Distributed learning algorithms are commonly studied under a
-predefined coordination architecture, communication topology, participation
-model, and deployment environment. Conversely, programming abstractions for
-collectives do not by themselves determine how models should be trained, how
-collaborators should be selected, or how learning tasks should be placed on
-heterogeneous resources. Embedding learning in a CAS exposes four coupled
-engineering dimensions, summarized in~\Cref{fig:overview}.
+Machine learning complements this perspective by allowing models and decision policies 
+ to be derived from data and experience rather than specified entirely in advance.
+%
+However, 
+ collective programming and distributed learning remain only partially integrated.
+%
+Learning methods are often studied under predefined assumptions about coordination, 
+ communication topology, participation, and deployment.
+%
+Conversely, 
+ macroprogramming abstractions can organize a collective, 
+ but do not by themselves determine which agents should learn together, 
+ how their knowledge should be combined, or where learning tasks should be executed.
+%
+Engineering cooperative learning at the collective level therefore exposes 
+ four coupled dimensions, summarized in~\Cref{fig:overview}.
 
 \begin{figure}
     \centering
     \includegraphics[width=0.9\textwidth]{figures/axes.drawio.pdf}
-    \caption{Engineering dimensions that arise when cooperative learning is embedded in a Collective Adaptive System.}
+    \caption{
+        Coupled engineering dimensions of cooperative learning in many-agent Collective Adaptive Systems.
+    }
     \label{fig:overview}
 \end{figure}
 
-\emph{Data privacy constraints} concern how agents can benefit from distributed
-observations without requiring raw, potentially sensitive data to be collected
-at a central location. In the mobility scenario, route histories and
-destinations should remain on the vehicles; in disaster response, raw imagery
-may reveal people or private spaces. Retaining data locally motivates FL, but
-data location alone is not a complete privacy design: model updates and derived
-information may also disclose properties of local observations, and the chosen
-aggregation structure determines which participants receive them. The
-engineering problem therefore includes what information is exchanged, within
-which collaboration boundary, and under which coordination and trust model.
+\emph{Data locality and privacy constraints.}
+Observations are generated across distributed devices and may be sensitive 
+ or too expensive to transfer continuously.
+%
+Cooperative learning should therefore extract value from distributed data 
+ without requiring their centralization.
+%
+Retaining raw data locally does not by itself guarantee privacy, 
+ since exchanged models or updates may also reveal information.
+%
+The collective design must consequently determine what information is exchanged, 
+ with whom, and within which collaboration boundaries.
 
-\emph{Spatio-temporal distribution shift} concerns the fact that the data
-observed by agents are structured by both location and time. Traffic samples
-from a highway and a city centre are not interchangeable, while a moving
-vehicle encounters a sequence of local distributions. Likewise, robots deployed
-in different disaster zones experience different sensing conditions, and those
-conditions evolve during the mission. Spatial proximity can be useful evidence
-of statistical similarity, but it is not sufficient on its own. Learning must
-support localized models, revise collaboration boundaries when context changes,
-and retain useful knowledge across transitions. This is a systems concern as
-well as a statistical one, because adapting a model may require adapting the
-topology and membership of the learning process that produces it.
+\emph{Spatio-temporal data heterogeneity.}
+Because observations reflect the physical and operational context in which they are collected, 
+ local datasets are generally non-\gls{IID} and their differences are often spatially structured.
+%
+Devices exposed to related contexts may benefit from learning together, 
+ whereas a single global model may poorly represent distinct regions or conditions.
+%
+Moreover, 
+ mobility and temporal changes alter both local data distributions 
+ and the set of useful collaborators.
+%
+Learning mechanisms must therefore support localized knowledge, 
+ reorganize collaboration as conditions change, 
+ and retain previously acquired information when it remains relevant.
 
-\emph{Scalable decentralization} concerns how learning and coordination can rely
-on local interactions while remaining effective as the collective grows and its
-communication graph changes. A central server coordinating a metropolitan fleet
-would be a communication bottleneck and a single point of failure; after a
-disaster, such a server may not be reachable at all. Yet removing it transfers
-responsibilities such as collaborator discovery, aggregation, role election,
-and recovery to the devices. These mechanisms must work without global
-knowledge and without assuming a fixed number or ordering of agents.
-Macroprogramming is relevant precisely at this boundary: system-level patterns
-such as regions, information gradients, and temporary leaders can be specified
-once and realized through repeated local interactions. The open question is how
-such patterns should be composed with learning algorithms and how learned
-policies themselves can generalize across collective sizes.
+\emph{Scalable decentralization.}
+Coordination mechanisms must remain effective as the number of agents grows 
+ and the communication graph evolves, without relying on a global view 
+ or a permanently available central coordinator.
+%
+Responsibilities such as collaborator discovery, information aggregation, 
+ and role assignment must instead be realized through local interactions.
+%
+Learning architectures must also avoid assumptions about a fixed number 
+ or ordering of agents and support policies that remain effective 
+ across different collective sizes.
 
-\emph{Resource-constrained edge devices} concern the computational, memory,
-energy, and communication limitations that restrict training and inference at
-the network edge. An onboard computer or battery-powered robot may be unable to
-train a dense model frequently or transmit it over a low-bandwidth link. Model
-sparsification, communication-efficient learning, and task offloading can reduce
-these costs, but their effect depends on the collective context. A smaller model
-may change which devices appear statistically similar; offloading may save local
-energy while increasing shared network congestion; and selecting a remote
-resource may violate an application's latency bound. Resource feasibility is
-therefore not only a property of an individual model or device, but also an
-emergent property of concurrent decisions across the system.
+\emph{Resource-constrained deployment.}
+Training and inference compete for limited computation, memory, energy, 
+ and communication resources.
+%
+Although tasks can be distributed across devices, edge nodes, and cloud infrastructure, 
+ their placement cannot be decided independently for each agent.
+%
+Offloading a task may reduce local computation while increasing communication, latency, 
+ or contention on shared resources.
+%
+Deployment decisions must therefore account for both individual device capabilities 
+ and conditions emerging across the collective.
 
-The four dimensions cannot be engineered independently. In the mobility
-scenario, reducing communication may slow the reorganization of learning
-federations; changing federation membership may affect both specialization and
-the exposure of model information; and sending training to an edge server may
-relieve a vehicle while overloading the infrastructure used by its neighbours.
-Similar dependencies arise when failures fragment a disaster-response network.
-An optimization performed within one layer can consequently move cost or risk
-to another layer rather than remove it.
+These dimensions are tightly coupled.
+%
+The choice of collaborators simultaneously affects statistical compatibility, 
+ information exposure, and communication cost; 
+ task placement affects both resource availability and coordination latency; 
+ and changes introduced to improve scalability may alter the information 
+ available to each learning process.
+%
+Optimizing one dimension in isolation may therefore transfer cost or risk 
+ to another part of the system.
 
-The research gap is thus not a lack of individual algorithms for federated
-learning, multi-agent reinforcement learning, self-organization, or offloading.
-It is the lack of a systematic way to engineer them around the defining
-properties of CASs, so that the coordination structure, learning architecture,
-adaptation mechanism, and deployment strategy are designed as parts of the same
-system. Existing work often addresses one dimension in isolation or introduces
-an application-specific solution under fixed assumptions about the others. What
-remains needed are reusable coordination mechanisms, scalable learning
-architectures, and deployment strategies that bridge collective-level intent and
-device-level execution. Accordingly, this thesis treats cooperative learning as
-an integral part of the CAS rather than as an algorithmic component added after
-the surrounding system has been designed.
-
+The research gap addressed by this thesis is thus not the absence of individual 
+ algorithms for federated learning, multi-agent reinforcement learning, 
+ decentralized coordination, or task offloading.
+%
+Rather, 
+ it lies in the limited support for integrating these mechanisms 
+ within a coherent macro-level engineering approach, 
+ in which the coordination structure, learning architecture, 
+ and deployment strategy are designed as parts of the same collective system.
+%
+Accordingly, 
+ this thesis treats cooperative learning as an integral component 
+ of collective behaviour, rather than as an algorithm added after 
+ the surrounding system has already been designed.
 
 \section{Contribution}
 
