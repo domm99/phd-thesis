@@ -6,7 +6,812 @@
 \label{chap:macroprogramming}
 \minitoc
 %----------------------------------------------------------------------------------------
+
+Engineering a collective system by specifying the behavior of each of its
+ components creates a substantial abstraction gap.
+% 
+Application requirements are typically stated at the system level--for example, 
+ cover an area, disseminate an alert, form spatial regions, or aggregate observations--whereas 
+ a conventional distributed implementation must define the state, communication,
+ and control flow of every participating device. 
+% 
+This gap grows with the size, heterogeneity, and dynamism of the collective.
+
+\gls{MP} addresses this problem by making the collective, 
+ rather than the individual component, the primary programming abstraction. 
+%
+This chapter first introduces the conceptual foundations of the paradigm. 
+%
+It then presents \gls{FC}, 
+ a minimal formal language that captures the local interactions required to compute global, 
+ space-time structures. 
+% 
+Finally, 
+ it discusses \gls{AC} as the engineering approach that builds practical languages,
+ resilient coordination operators, and reusable patterns on top of that formal core. 
+% 
+Together, 
+ these layers provide the coordination substrate used throughout this thesis. 
+
 \section{Conceptual Framework}
+\label{sec:macroprogramming-conceptual-framework}
+
+Macroprogramming is the theory and practice of expressing the 
+ macroscopic behavior of a system of computational entities 
+ through a single program~\cite{DBLP:journals/csur/Casadei23}.
+% 
+Here, 
+ \emph{macro} refers to the scale at which the system is described.
+%
+The target is generally a \emph{collective}: 
+ a set of computational entities that can be treated as a unit because they share 
+ an environment, capabilities, goals, or interaction mechanisms. 
+% 
+Its members may be sensors, edge devices, autonomous agents, robots, or virtual services.
+
+The paradigm rests on a distinction between two levels. 
+%
+The \emph{micro level} contains the individual entities, their local state, 
+ and their direct interactions. 
+% 
+The \emph{macro level} contains properties and structures attributed to the system as a whole, 
+ such as a spatial partition, a global estimate, or the coordinated motion of a swarm. 
+% 
+At this level, 
+ two complementary notions are useful. 
+% 
+A \emph{macro-observable} is a system-level view derived from the state and activity of multiple entities. 
+%
+A \emph{macro-abstraction} is a programming construct that describes or manipulates such a view 
+ without explicitly prescribing the behavior of every entity.
+
+A macroprogram therefore has an intended system-level meaning 
+ but must ultimately affect local computation. 
+% 
+This is the \emph{macro-to-micro mapping} problem. 
+%
+Different approaches solve it in different ways: 
+ a compiler may synthesize device-specific programs; 
+ an orchestrator may translate collective operations into commands; 
+ or all devices may execute the same macroprogram using a distributed runtime. 
+% 
+The last strategy is adopted by Aggregate Computing. 
+%
+In each case, 
+ the programming model is responsible for preserving the meaning 
+ of the macroscopic specification while resolving communication, placement,
+ synchronization, and local state management.
+
+\begin{figure}[t]
+  \centering
+  \fbox{%
+    \parbox[c][4.2cm][c]{0.88\linewidth}{\centering
+      \textbf{Image placeholder}\\[0.4em]
+      Macro level: collective goals, abstractions, and observables\\
+      $\Updownarrow$ macro-to-micro mapping $\Updownarrow$\\
+      Micro level: local programs, interactions, and device state}}
+  \caption{Conceptual view of macroprogramming. Macro-abstractions express
+  system-level behavior and are mapped to local computations; the effects of
+  those computations produce macro-observables at the collective level.}
+  \label{fig:macro-micro-mapping}
+\end{figure}
+
+This distinction also clarifies what macroprogramming does \emph{not} imply.
+%
+First, 
+ a global specification need not be executed by a central controller.
+%
+Centralization concerns the runtime architecture, 
+ whereas macroprogramming concerns the perspective offered to the programmer. 
+% 
+A macroprogram may be evaluated through fully decentralized,
+ peer-to-peer interactions. 
+% 
+Second, 
+ the paradigm does not require individual entities to be inaccessible.
+ %
+Strongly macroscopic languages hide them almost entirely,
+ while other languages expose local information when it is relevant. 
+% 
+What matters is that the main abstractions express behavior spanning multiple entities 
+ rather than merely providing a centralized list of micro-level commands.
+
+Macroprogramming is commonly declarative: 
+ the program emphasizes \emph{what} collective behavior is required 
+ and delegates part of \emph{how} it is realized to the language and runtime.
+% 
+This improves portability across deployments whose population, topology, 
+ or communication infrastructure may differ. 
+% 
+It also creates opportunities for system-wide optimization, 
+ because the implementation can select a macro-to-micro mapping that fits the current platform. 
+% 
+These benefits come with a tradeoff: 
+ hiding low-level mechanisms is effective only when the macro-abstractions 
+ capture the regularities of the target domain.
+%
+Consequently, 
+ many macroprogramming languages are domain-specific languages,
+ either external languages with dedicated syntax or internal languages embedded
+ in a general-purpose host language.
+
+Historically, 
+ macroprogramming first gained prominence in Wireless Sensor Networks, 
+ where applications were naturally described in terms of regions,
+ streams, and aggregate queries rather than individual sensor nodes~\cite{mottola2011programming}. 
+% 
+The same perspective later appeared in spatial computing, 
+ where a network is treated as a discrete approximation 
+ of a physical or logical space \cite{beal2012spatialcomputing}. 
+% 
+It subsequently expanded to the Internet of Things, cyber-physical systems, swarm robotics, 
+and Collective Adaptive Systems. 
+%
+Across these domains, 
+ macroprogramming approaches emphasize different abstractions: 
+ control-oriented approaches describe collective actions;
+ data-oriented approaches describe system-wide data flows; 
+ space-time-oriented approaches manipulate distributed spatial structures; 
+ and ensemble-oriented approaches organize components into dynamic groups~\cite{DBLP:journals/csur/Casadei23}.
+
+The space-time-oriented line is especially relevant to this thesis. 
+%
+Many collective behaviors depend on information that is distributed over a network
+ and changes as devices move, join, fail, or sense new conditions. 
+%
+Representing this information as a first-class, 
+ continuously evolving structure allows the programmer to describe coordination 
+ at the scale of the collective while still supporting decentralized execution. 
+% 
+This observation motivates \emph{computational fields} 
+ and their formalization in Field Calculus.
+
 \section{Field Calculus}
+\label{sec:field-calculus}
+
+A computational field is a distributed data structure that associates 
+ the devices of a collective with values. 
+% 
+For a set of devices $D$ and a value domain $V$, 
+ a field at time $t$ can be written as
+\[
+  \Phi_t : D_t \rightarrow V,
+\]
+ where $D_t$ contains the devices participating at that time. 
+% 
+Examples include a Boolean field identifying devices inside a region, 
+ a numeric field representing distance from a source, 
+ and a vector field assigning a desired velocity to each robot. 
+% 
+More generally, 
+ a field evolves over space and time: 
+ each local evaluation performed by a device is a space-time event, 
+ and the program assigns a value to every such event.
+
+\glsentryfull{FC} was introduced as a minimal functional core for specifying 
+ and composing computations over these fields~\cite{viroli2013calculus}. 
+% 
+Its purpose is analogous to that of a small foundational calculus: 
+ it isolates the mechanisms needed for field evolution and interaction without committing 
+ to a particular application language or deployment platform. 
+% 
+The model assumes a dynamic set of devices connected by an application-dependent 
+ neighboring relation. 
+% 
+A neighbor may be defined by physical radio range, 
+ network connectivity, logical affinity, or any other relation supported by the runtime.
+
+Each device repeatedly performs an asynchronous computation round. 
+%
+A round can be summarized in three phases:
+
+\begin{enumerate}
+  \item \emph{context acquisition}: the device reads local sensors, retrieves
+  its previous state, and obtains the most recent messages from its neighbors;
+  \item \emph{computation}: it evaluates the field program against that local
+  context, producing a local result and an export containing the information
+  required by neighboring computations;
+  \item \emph{communication and actuation}: it shares the export with its
+  neighbors and may use the local result to affect the environment.
+\end{enumerate}
+
+Rounds are not globally synchronized. 
+%
+Devices may execute at different rates,
+ and messages represent the latest information available rather than values 
+ from a globally agreed step. 
+% 
+This model captures the operational constraints of many \gls{CAS} while leaving 
+ scheduling, transport, and message retention policies to concrete runtimes.
+
+\begin{figure}[t]
+  \centering
+  \fbox{%
+    \parbox[c][4.6cm][c]{0.88\linewidth}{\centering
+      \textbf{Image placeholder}\\[0.4em]
+      Left: a network of neighboring devices labeled with local values.\\
+      Right: successive asynchronous rounds forming a field over space-time.\\
+      Highlight one device's sense--compute--communicate cycle.}}
+  \caption{Local and aggregate interpretations of a field computation. Each
+  device evaluates the program using local context, while the collection of
+  evaluations defines a computational field over the network and time.}
+  \label{fig:field-local-global-view}
+\end{figure}
+
+The key property of Field Calculus is this dual interpretation. 
+%
+Locally, a program describes the computation performed 
+ by a single device during each round. 
+% 
+Globally, 
+ the same expression denotes a field over the space-time events 
+ of the entire collective. 
+% 
+The operational and denotational views are related by computational adequacy results, 
+ providing a formal bridge between device-level execution 
+ and aggregate meaning~\cite{audrito2019higherorderfields}.
+
+The core calculus combines ordinary functional expressions 
+ with three constructs that capture time, communication, and spatial restriction.
+
+\paragraph{State evolution.}
+The expression \texttt{rep(init)\{(x) => e\}} initializes 
+ local state with \texttt{init}. 
+% 
+In subsequent rounds, 
+ \texttt{x} contains the value produced in the previous round 
+ and \texttt{e} computes the next one. 
+% 
+Although each device maintains its own state, 
+ the collection of local values constitutes a time-evolving field.
+
+\paragraph{Neighbor interaction.}
+The expression \texttt{nbr\{e\}} shares the local value of \texttt{e} 
+ and makes the latest values computed by aligned neighbors available to the current device. 
+% 
+A neighboring field is normally consumed by a built-in reduction such as 
+ minimum, maximum, sum, or logical conjunction. 
+% % 
+% Practical variants such as ScaFi make this reduction explicit 
+%  through an operator such as \texttt{foldhood}.
+
+\paragraph{Domain restriction.}
+The field-based conditional \texttt{if(c)\{e1\}\{e2\}} partitions 
+ the collective into the subdomains in which \texttt{c} is true or false. 
+% 
+Devices in different branches evaluate isolated computations, 
+ so neighbor interaction does not inadvertently cross the boundary. 
+% 
+This makes conditionals a spatial as well as a control-flow construct.
+
+Function definition and functional composition complete the core language.
+%
+Ordinary functions operate pointwise on local values, 
+ while functions that contain field constructs describe reusable collective behavior. 
+% 
+Higher-order variants allow functions themselves to be exchanged and manipulated, 
+ but the same local-to-global interpretation is retained~\cite{audrito2019higherorderfields}.
+
+Correct composition depends on \emph{alignment}. 
+%
+When a device evaluates an instance of \texttt{nbr}, 
+ it must combine its value only with values produced 
+ by neighbors evaluating the corresponding expression in the same logical context.
+%
+Likewise, 
+ each \texttt{rep} instance must recover its own previous state.
+%
+Concrete semantics implement alignment through structured evaluation trees 
+ or equivalent execution paths. 
+% 
+Besides preventing messages or state from being matched to the wrong construct, 
+ alignment ensures that function calls, conditionals, 
+ and dynamically instantiated computations create consistent subdomains.
+
+Listing~\ref{lst:distance-field} illustrates how the constructs cooperate. 
+%
+The program computes a distributed estimate of the minimum path distance 
+ from a source region. 
+% 
+Source devices produce zero. 
+%
+Every other device repeatedly selects the smallest neighbor estimate plus the measured distance
+ to that neighbor. 
+%
+The \texttt{rep} construct stores the estimate between rounds, 
+ while \texttt{nbr} propagates it through local interactions. 
+% 
+The second function uses a field-based conditional to exclude obstacles 
+ from the communication domain.
+
+\begin{lstlisting}[language=Scala,float=t,
+  caption={Illustrative field-calculus program for a self-healing distance field.},
+  label={lst:distance-field}]
+def distanceTo(source) {
+  rep(INFINITY) { distance =>
+    mux(source) {
+      0.0
+    } {
+      minHood(nbr { distance } + nbrRange())
+    }
+  }
+}
+
+def distanceAvoiding(source, obstacle) {
+  if (obstacle) { INFINITY }
+  else          { distanceTo(source) }
+}
+\end{lstlisting}
+
+The resulting field is not computed by flooding a final global map from a central node. 
+%
+Instead,
+ every device computes only its own value from local information. 
+% 
+Repeated interactions propagate the source information 
+ until the network reaches a stable distance estimate. 
+% 
+If a source moves, a link changes, or a device disappears, 
+ the same program updates the affected values without an explicit reconfiguration protocol.
+
+This behavior is captured by \emph{self-stabilization}. 
+%
+Informally, 
+ a field program is self-stabilizing when, after the environment and topology stop changing, 
+ its output converges in finite time to a stable field that depends only on the current inputs, 
+ not on transient state or on the sequence of rounds that led there. 
+% 
+Self-stabilization is particularly valuable in open systems, 
+ because it provides recovery from transient failures and changes without
+ requiring the programmer to enumerate them.
+
+Not every valid \GLS{FC} program is self-stabilizing. 
+%
+Formal work has therefore identified disciplined fragments 
+ and state-evolution patterns for which stabilization can be proved \cite{viroli2018resilientcas}.
+%
+These results support compositional reasoning: 
+ reusable functions can be assigned aggregate properties, 
+ and programs built from compatible functions inherit those properties. 
+% 
+\gls{FC} thus provides both an executable account of collective behavior 
+ and a foundation for reasoning about its eventual outcome.
+
 \section{Aggregate Computing}
+\label{sec:aggregate-computing}
+
+\glsentryfull{FC} and \glsentryfull{AC} are closely related 
+ but serve different roles. 
+% 
+\gls{FC} is the minimal formal programming model; 
+ \gls{AC} is the broader engineering approach that turns 
+ field-based coordination into practical software \cite{viroli2019distributedcoordination}. 
+% 
+It combines language implementations, runtime support, 
+ resilient coordination operators, reusable libraries, simulation, and deployment tools. 
+% 
+The result is a layered stack in which application developers work with collective concepts
+ while lower layers realize them through local execution.
+
+\begin{figure}[t]
+  \centering
+  \fbox{%
+    \parbox[c][5.3cm][c]{0.78\linewidth}{\centering
+      \textbf{Image placeholder: layered Aggregate Computing stack}\\[0.5em]
+      Applications and domain-specific patterns\\
+      $\downarrow$\\
+      Reusable coordination libraries\\
+      $\downarrow$\\
+      Resilient operators ($G$, $C$, $T$, $S$)\\
+      $\downarrow$\\
+      Field Calculus constructs\\
+      $\downarrow$\\
+      Device capabilities, sensors, communication, and runtime}}
+  \caption{Layered organization of Aggregate Computing. Each layer hides part
+  of the distributed coordination machinery while retaining a collective
+  interpretation and a local execution model.}
+  \label{fig:aggregate-computing-stack}
+\end{figure}
+
+At the bottom of the stack, 
+ a runtime implements computation rounds, neighbor discovery, message exchange, 
+ sensing, actuation, and alignment. 
+% 
+Above it, 
+ a concrete language exposes the field constructs. 
+% 
+Protelis~\cite{} 
+ provides an external domain-specific language hosted on the Java Virtual Machine, 
+ whereas ScaFi~\cite{casadei2022scafi} 
+ embeds a field-calculus variant as an internal Scala DSL. 
+%
+In ScaFi, 
+ neighborhood computations are expressed by folding over aligned neighbors, 
+ so fields need not appear explicitly in the host-language type system. 
+% 
+Despite differences in syntax and integration, 
+ these languages share the same aggregate interpretation 
+ and decentralized round-based execution model.
+
+The calculus alone is intentionally general: 
+ it can express useful collective algorithms as well as programs with undesirable dynamics. 
+% 
+Aggregate Computing therefore introduces a layer of reusable coordination operators 
+ whose behavior is better understood. 
+% 
+Four operator families are especially common:
+
+\begin{itemize}
+  \item \textbf{$G$---gradient cast} builds a potential away from one or more
+  sources and propagates information outward along it. Distance estimation,
+  broadcast, and bounded spatial diffusion are instances of this pattern.
+
+  \item \textbf{$C$---converge cast} routes and aggregates values toward minima
+  of a potential. It supports operations such as counting, summation, and
+  distributed collection at elected sinks.
+
+  \item \textbf{$T$---time evolution} manages bounded state changes, including
+  timers, decay, and recent-event tracking.
+
+  \item \textbf{$S$---sparse choice} selects a spatially separated subset of
+  devices. It is commonly used for decentralized leader election and dynamic
+  network partitioning.
+\end{itemize}
+
+These operators are parameterized by application logic. 
+%
+For example, 
+ a gradient may use physical distance, hop count, latency, 
+ or a domain-specific cost as its metric; 
+ a collection may combine values through any suitable associative operation. 
+% 
+Parameterization separates the topology of coordination 
+ from the data being processed and encourages reuse. 
+% 
+Alternative implementations of the same operator may also trade communication cost, 
+ convergence speed, and robustness while preserving the same eventual collective 
+ result~\cite{beal2015buildingblocks,viroli2018resilientcas}.
+
+Operators can in turn be composed into higher-level patterns.
+%
+A representative example is the \emph{\gls{SCR}} pattern~\cite{casadei2019coordinationregions}. 
+%
+It elects multiple leaders, 
+ partitions
+ the network into their regions of influence, 
+ collects local information at each leader, 
+ and disseminates a regional decision back to the members. 
+% 
+The pattern implements a distributed feedback loop without assuming a fixed set of servers.
+%
+Listing~\ref{lst:scr-pattern} shows its structure; 
+ the signatures are illustrative because concrete libraries 
+ provide several variants of each operator.
+
+\begin{lstlisting}[language=Scala,float=t,
+  caption={Composition of aggregate operators into self-organizing coordination regions.},
+  label={lst:scr-pattern}]
+def coordinationRegions[A, B](grain: Double, local: A)
+                             (merge: (A, A) => A,
+                              decide: A => B): Option[B] = {
+  val leader    = S(grain, nbrRange)
+  val potential = distanceTo(leader)
+  val summary   = C(potential, merge, local)
+  val decision  = mux(leader) {
+    Some(decide(summary))
+  } {
+    None
+  }
+  G(leader, decision, identity)
+}
+\end{lstlisting}
+
+This layering changes how distributed applications are engineered. 
+%
+Instead of combining messaging protocols directly, 
+ a developer composes collective functions with explicit system-level meanings.
+% 
+Libraries encapsulate alignment, information propagation, and recovery mechanisms. 
+%
+The same macroprogram is then executed across the participating devices; 
+ their local results collectively realize the specified fields and patterns. 
+% 
+Application code can still access local sensors or invoke local machine-learning functions,
+ but coordination is expressed independently from individual addresses 
+ and a fixed deployment size.
+
+Aggregate programs are typically validated at two complementary levels. 
+%
+Formal analysis establishes properties such as type safety, domain alignment, 
+and self-stabilization for supported fragments and building blocks. 
+%
+Simulation and experimentation assess dynamical properties that are harder to capture 
+ through eventual guarantees alone, including convergence time, communication overhead,
+ behavior under mobility, and sensitivity to execution frequency. 
+% 
+Tools such as Alchemist~\cite{} provide large-scale simulation of devices, environments, 
+ and network dynamics, while language runtimes support deployment of the same program on
+ distributed infrastructures.
+
+The guarantees of \gls{AC} remain conditional on the adopted system model. 
+%
+Neighbor communication must occur often enough relative to environmental change, 
+ relevant inputs must eventually remain stable for stabilization to be observed, 
+ and operators must be composed within the assumptions of their formal fragments. 
+% 
+Highly mobile systems may never reach a static limit, 
+ so their transient behavior must be evaluated explicitly. 
+% 
+Similarly, 
+ logical neighborhoods and runtime placement policies determine communication cost even
+ when they do not change the aggregate semantics. 
+%
+The abstraction removes much accidental complexity, 
+ but it does not remove the need to select an appropriate metric, execution strategy, 
+ and set of building blocks.
+
+For the purposes of this thesis, 
+ the central benefit of \gls{AC} is the separation between \emph{coordination} 
+  and \emph{local computation}. 
+%  
+A field may contain sensor values, roles, model parameters, predictions, or quality measures; 
+ the same operators can organize how those values spread, aggregate, and define regions.
+% 
+Learning procedures can therefore remain local to the devices, 
+ while a macroprogram specifies which devices collaborate 
+ and how information flows through the collective.
+% 
+This makes field-based coordination a natural foundation for decentralized 
+ and self-organizing collective learning.
+
 \section{Phyelds}
+\label{sec:phyelds}
+
+The work presented in this thesis required aggregate programs 
+ to interact directly with machine-learning models, training procedures, 
+ and multi-agent environments. 
+% 
+However, 
+ the principal \gls{AC} implementations target Java, Scala, or C++, 
+ whereas contemporary machine-learning workflows are predominantly developed in Python. 
+% 
+Using these frameworks would therefore require a cross-language layer around 
+ model parameters, tensors, datasets, and simulation environments, 
+ complicating both development and prototyping.
+
+Phyelds was developed to remove this barrier by providing 
+ a native Python implementation of \gls{AC}~\cite{aguzzi2026phyelds}.
+%  
+It is not a new calculus: 
+ it implements the execution model introduced in the previous sections 
+ through an API designed around Python's imperative and object-oriented idioms.
+%
+This choice allows aggregate coordination to be embedded in ordinary Python
+ applications and combined with libraries such as PyTorch and TensorFlow without
+ moving data or control across language boundaries. 
+% 
+The same design also makes the framework suitable for interactive development, education, 
+ and integration with Python-based robotics and multi-agent simulation software.
+
+Phyelds was guided by three design goals. 
+%
+First, 
+ the user-facing API should look and behave like conventional Python rather 
+ than expose a functional syntax borrowed from another language. 
+% 
+Second, 
+ the implementation should remain lightweight and modular, 
+ so that the same core can support notebooks, native simulation, external simulators, 
+ and physical deployments. 
+% 
+Third, 
+ aggregate  values should remain ordinary Python values whenever possible, 
+ allowing coordination functions to manipulate numbers, collections, model parameters,
+ and tensors through their existing interfaces.
+
+\begin{figure}[t]
+  \centering
+  \fbox{%
+    \parbox[c][5.1cm][c]{0.84\linewidth}{\centering
+      \textbf{Image placeholder: Phyelds architecture}\\[0.5em]
+      Simulator $\rightarrow$ Calculus $\rightarrow$ Libraries\\
+      $\hspace{4em}\searrow\quad\downarrow\quad\swarrow$\\
+      Virtual Machine $\leftrightarrow$ Data\\[0.5em]
+      Show the main classes and functions inside each module, following the
+      architecture diagram in the Phyelds paper.}}
+  \caption{Modular architecture of Phyelds. The virtual machine and data
+  modules implement execution and field representation; the calculus exposes
+  Pythonic constructs; libraries provide reusable coordination blocks; and the
+  simulator supplies execution environments and integration points.}
+  \label{fig:phyelds-architecture}
+\end{figure}
+
+\paragraph{Execution architecture.}
+The implementation is organized into five modules, 
+ shown conceptually in~\Cref{fig:phyelds-architecture}. 
+% 
+The \emph{VM} module manages an aggregate round, 
+ including the current device context, incoming neighbor messages, persistent state, 
+ and alignment paths. 
+% 
+Its central class is \texttt{Engine}, 
+ which exposes a three-stage lifecycle. 
+%
+Before a round,
+ \texttt{setup} installs the device identifier, sensor and time information, 
+ messages received from neighbors, and the state produced by the previous round. 
+% 
+The application then invokes the aggregate function as an ordinary Python function. 
+%
+Finally, 
+ \texttt{cooldown} returns the updated state and the messages to transmit, 
+ and resets the engine for the next execution.
+
+This separation keeps the aggregate program independent from the component that schedules it. 
+%
+A native simulator, 
+ an external environment, or a physical device runtime only needs to construct the context, 
+ invoke the program, and deliver its outputs. 
+% 
+The active engine is stored in a Python \texttt{ContextVar}. 
+%
+Different threads, asynchronous tasks, or simulated devices 
+ can therefore use isolated execution contexts while the user-facing API
+ continues to access the current engine implicitly.
+
+\paragraph{Pythonic calculus constructs.}
+The \emph{Calculus} module maps the constructs discussed 
+ in~\Cref{sec:field-calculus} to Python. 
+% 
+Its entry point is the \texttt{@aggregate} decorator, 
+ which marks a function as part of an aggregate program. 
+% 
+The decorator wraps each invocation with calls that enter 
+ and leave a named execution scope. 
+% 
+These scopes extend the current alignment path, 
+ allowing the engine to distinguish state and messages produced 
+ by different functions or different occurrences of the same operator.
+
+State evolution is exposed through \texttt{remember}. 
+%
+Instead of receiving an update function as in a functional \texttt{rep}, 
+ \texttt{remember(initial)} returns the current value together with a setter. 
+% 
+The program can read and update the state imperatively, 
+ following a pattern similar to state management in Python application frameworks.
+% 
+Internally, 
+ the value is represented by a \texttt{State} proxy that records both the stored object 
+ and the alignment path of the corresponding call.
+
+Neighbor interaction is exposed through \texttt{neighbors(value)}. 
+%
+The call shares \texttt{value} and returns a \texttt{NeighborhoodField}, 
+ which internally maps device identifiers to the latest aligned values received from those devices. 
+% 
+The implementation hides this mapping behind a regular Python object. 
+%
+It supports pointwise arithmetic, field combination, 
+ and explicit aggregation through \texttt{foldhood}, 
+ with convenience methods for common operations such as minimum and maximum. 
+% 
+When a \texttt{State} object is passed to \texttt{neighbors}, transmission is lazy:
+ the value is exported only when it has changed, avoiding repeated exchange of unchanged state.
+
+\Cref{lst:phyelds-api} illustrates the resulting style. 
+%
+The program uses a normal Python conditional, 
+ updates persistent state through a setter, 
+ and operates on neighbor values as a Python object. 
+% 
+No explicit engine or message management appears in the application code.
+
+\begin{lstlisting}[language=Python,float=t,
+  caption={Pythonic state, branching, and neighbor interaction in Phyelds.},
+  label={lst:phyelds-api}]
+@aggregate
+def active_counter():
+    set_counter, counter = remember(0)
+
+    if sense("active"):
+        counter += 1
+        set_counter(counter)
+
+    neighbor_counters = neighbors(counter)
+    return neighbor_counters.max()
+\end{lstlisting}
+
+The use of an ordinary \texttt{if} requires special handling. 
+%
+In \gls{FC}, 
+ branching also partitions the alignment domain, 
+ whereas a Python conditional normally affects only local control flow. 
+% 
+Phyelds reconciles the two semantics through source transformation. 
+%
+When an aggregate function is decorated, 
+ its source is parsed into an \gls{AST}. 
+% 
+A node transformer intercepts each \texttt{if} statement 
+ and wraps its two branches in distinct alignment contexts. 
+% 
+Conceptually, 
+ the transformation is the one shown in~\Cref{lst:phyelds-alignment}. 
+% 
+Devices taking different branches then produce different paths 
+ and do not exchange values within those branches; 
+ once the conditional ends, execution returns to the common path 
+ and the devices realign.
+
+\begin{lstlisting}[language=Python,float=t,
+  caption={Conceptual AST transformation used to align Python conditionals.},
+  label={lst:phyelds-alignment}]
+# Code written by the developer
+if condition:
+    left_computation()
+else:
+    right_computation()
+
+# Structure evaluated by the engine
+if condition:
+    with align_left():
+        left_computation()
+else:
+    with align_right():
+        right_computation()
+\end{lstlisting}
+
+This transformation is the central mechanism that permits developers 
+ to use Python's native imperative control flow without manually managing field domains. 
+%
+Together with the paths introduced by decorated function calls,
+ \texttt{remember}, and \texttt{neighbors}, it gives the engine sufficient
+ information to associate each persistent value and incoming message with the
+ correct program point.
+
+\paragraph{Libraries and execution environments.}
+The \emph{Library} module builds reusable coordination functions 
+ on top of the Pythonic calculus. 
+% 
+Its submodules separate device access, time, distance metrics, spreading, 
+collection, gossip, and leader election. 
+%
+For example,
+ \texttt{distance\_to}, \texttt{broadcast}, and \texttt{cast\_from} 
+ implement information spreading; 
+ \texttt{collect\_with}, \texttt{count\_nodes}, and \texttt{sum\_values} 
+ implement aggregation toward a source; and
+ \texttt{elect\_leaders} supports decentralized spatial partitioning. 
+% 
+These functions accept and return Python objects, 
+ so the same coordination paths can carry sensor readings, collections, 
+ or machine-learning model parameters.
+
+The \emph{Simulator} module provides a compact execution environment 
+ without coupling the calculus to a particular deployment. 
+% 
+A \texttt{Node} stores a device identifier, position, and sensor data; 
+ an \texttt{Environment} manages nodes and computes their neighborhoods; 
+ and a discrete-event \texttt{Simulator} schedules aggregate rounds. 
+% 
+Neighborhood policies are pluggable and may describe communication 
+ by radius, nearest neighbors, full connectivity, or a user-defined relation. 
+% 
+Monitors receive execution callbacks for inspection and visualization. 
+%
+External systems can instead provide a runner and an environment adapter; 
+ the VMAS integration follows this pattern, keeping the aggregate program independent 
+ from the underlying multi-agent simulator.
+
+For this thesis, 
+ Phyelds provides the implementation layer connecting field-based coordination 
+ with Python-native learning code.
+% 
+Local training, inference, and policy computation remain ordinary Python operations, 
+ while \texttt{remember}, \texttt{neighbors}, and the coordination library determine
+ how their state and outputs evolve across the collective. 
+% 
+This separation makes it possible to reuse the same coordination abstractions 
+ across different learning settings without embedding the
+ learning algorithm into the distributed runtime.
