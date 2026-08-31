@@ -136,13 +136,13 @@ Consequently,
  in a general-purpose host language.
 
 Historically, 
- macroprogramming first gained prominence in Wireless Sensor Networks, 
+ macroprogramming first gained prominence in \glspl{WSN}, 
  where applications were naturally described in terms of regions,
- streams, and aggregate queries rather than individual sensor nodes~\cite{mottola2011programming}. 
+ streams, and aggregate queries rather than individual sensor nodes~\cite{DBLP:journals/csur/MottolaP11}. 
 % 
 The same perspective later appeared in spatial computing, 
  where a network is treated as a discrete approximation 
- of a physical or logical space \cite{beal2012spatialcomputing}. 
+ of a physical or logical space \cite{DBLP:journals/corr/abs-1202-5509}. 
 % 
 It subsequently expanded to the Internet of Things, cyber-physical systems, swarm robotics, 
 and Collective Adaptive Systems. 
@@ -189,7 +189,7 @@ More generally,
  and the program assigns a value to every such event.
 
 \glsentryfull{FC} was introduced as a minimal functional core for specifying 
- and composing computations over these fields~\cite{viroli2013calculus}. 
+ and composing computations over these fields~\cite{DBLP:conf/esocc/ViroliDB13}. 
 % 
 Its purpose is analogous to that of a small foundational calculus: 
  it isolates the mechanisms needed for field evolution and interaction without committing 
@@ -249,7 +249,7 @@ Globally,
 % 
 The operational and denotational views are related by computational adequacy results, 
  providing a formal bridge between device-level execution 
- and aggregate meaning~\cite{audrito2019higherorderfields}.
+ and aggregate meaning~\cite{DBLP:journals/tocl/AudritoVDPB19}.
 
 The core calculus combines ordinary functional expressions 
  with three constructs that capture time, communication, and spatial restriction.
@@ -290,7 +290,7 @@ Ordinary functions operate pointwise on local values,
  while functions that contain field constructs describe reusable collective behavior. 
 % 
 Higher-order variants allow functions themselves to be exchanged and manipulated, 
- but the same local-to-global interpretation is retained~\cite{audrito2019higherorderfields}.
+ but the same local-to-global interpretation is retained~\cite{DBLP:journals/tocl/AudritoVDPB19}.
 
 Correct composition depends on \emph{alignment}. 
 %
@@ -308,7 +308,7 @@ Besides preventing messages or state from being matched to the wrong construct,
  alignment ensures that function calls, conditionals, 
  and dynamically instantiated computations create consistent subdomains.
 
-Listing~\ref{lst:distance-field} illustrates how the constructs cooperate. 
+\Cref{lst:distance-field} illustrates how the constructs cooperate. 
 %
 The program computes a distributed estimate of the minimum path distance 
  from a source region. 
@@ -368,7 +368,8 @@ Self-stabilization is particularly valuable in open systems,
 Not every valid \GLS{FC} program is self-stabilizing. 
 %
 Formal work has therefore identified disciplined fragments 
- and state-evolution patterns for which stabilization can be proved \cite{viroli2018resilientcas}.
+ and state-evolution patterns for which stabilization can be 
+ proved~\cite{DBLP:journals/tomacs/ViroliABDP18}.
 %
 These results support compositional reasoning: 
  reusable functions can be assigned aggregate properties, 
@@ -385,7 +386,7 @@ These results support compositional reasoning:
 % 
 \gls{FC} is the minimal formal programming model; 
  \gls{AC} is the broader engineering approach that turns 
- field-based coordination into practical software \cite{viroli2019distributedcoordination}. 
+ field-based coordination into practical software~\cite{DBLP:journals/jlap/ViroliBDACP19}. 
 % 
 It combines language implementations, runtime support, 
  resilient coordination operators, reusable libraries, simulation, and deployment tools. 
@@ -420,9 +421,9 @@ At the bottom of the stack,
 Above it, 
  a concrete language exposes the field constructs. 
 % 
-Protelis~\cite{} 
+Protelis~\cite{DBLP:conf/sac/PianiniVB15} 
  provides an external domain-specific language hosted on the Java Virtual Machine, 
- whereas ScaFi~\cite{casadei2022scafi} 
+ whereas ScaFi~\cite{DBLP:journals/softx/CasadeiVAP22} 
  embeds a field-calculus variant as an internal Scala DSL. 
 %
 In ScaFi, 
@@ -470,11 +471,11 @@ Parameterization separates the topology of coordination
 % 
 Alternative implementations of the same operator may also trade communication cost, 
  convergence speed, and robustness while preserving the same eventual collective 
- result~\cite{beal2015buildingblocks,viroli2018resilientcas}.
+ result~\cite{DBLP:conf/saso/BealV14a,DBLP:journals/tomacs/ViroliABDP18}.
 
 Operators can in turn be composed into higher-level patterns.
 %
-A representative example is the \emph{\gls{SCR}} pattern~\cite{casadei2019coordinationregions}. 
+A representative example is the \gls{SCR} pattern~\cite{DBLP:conf/coordination/CasadeiPVN19}. 
 %
 It elects multiple leaders, 
  partitions
@@ -484,7 +485,7 @@ It elects multiple leaders,
 % 
 The pattern implements a distributed feedback loop without assuming a fixed set of servers.
 %
-Listing~\ref{lst:scr-pattern} shows its structure; 
+\Cref{lst:scr-pattern} shows its structure; 
  the signatures are illustrative because concrete libraries 
  provide several variants of each operator.
 
@@ -529,9 +530,9 @@ Simulation and experimentation assess dynamical properties that are harder to ca
  through eventual guarantees alone, including convergence time, communication overhead,
  behavior under mobility, and sensitivity to execution frequency. 
 % 
-Tools such as Alchemist~\cite{} provide large-scale simulation of devices, environments, 
- and network dynamics, while language runtimes support deployment of the same program on
- distributed infrastructures.
+Tools such as Alchemist~\cite{DBLP:journals/jos/PianiniMV13} provide large-scale simulation 
+ of devices, environments, and network dynamics, while language runtimes support deployment 
+ of the same program on distributed infrastructures.
 
 The guarantees of \gls{AC} remain conditional on the adopted system model. 
 %
@@ -580,7 +581,7 @@ Using these frameworks would therefore require a cross-language layer around
  complicating both development and prototyping.
 
 Phyelds was developed to remove this barrier by providing 
- a native Python implementation of \gls{AC}~\cite{aguzzi2026phyelds}.
+ a native Python implementation of \gls{AC}~\cite{DBLP:conf/coordination/AguzziDFV26}.
 %  
 It is not a new calculus: 
  it implements the execution model introduced in the previous sections 
