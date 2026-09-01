@@ -28,6 +28,9 @@
 	frameround=fttt,
 }
 
+
+% ---------- KOTLIN ----------
+
 \lstdefinelanguage{Kotlin}{
 	comment=[l]{//},
 	emph={delegate, filter, first, firstOrNull, forEach, lazy, map, mapNotNull, println, return@},
@@ -37,4 +40,51 @@
 	morestring=[s]{"""*}{*"""},
 	ndkeywords={@Deprecated, @JvmField, @JvmName, @JvmOverloads, @JvmStatic, @JvmSynthetic, Array, Byte, Double, Float, Int, Integer, Iterable, Long, Runnable, Short, String, Unit, it},
 	sensitive=true
+}
+
+
+% ---------- SCALA ----------
+
+\lstdefinelanguage{scala}{
+  keywords={abstract,case,catch,class,def,%
+    do,else,extends,false,final,finally,%
+    for,if,implicit,import,match,mixin,%
+    new,null,object,override,package,%
+    private,protected,requires,return,sealed,%
+    super,this,throw,trait,true,try,lazy,%
+    type,val,var,while,with,yield,forSome},
+  otherkeywords={=>,<-,<\%,<:,>:,\#},
+  sensitive=true,
+  columns=fullflexible,
+  morecomment=[l]{//},
+  morecomment=[n]{/*}{*/},
+  morestring=[b]",
+  stringstyle=\ttfamily\color{red!50!brown},
+  showstringspaces=false,
+  morestring=[b]',
+  morestring=[b]""",
+  basicstyle=\sffamily\lst@ifdisplaystyle\footnotesize\fi\ttfamily,
+  emphstyle=\sffamily\bfseries\ttfamily
+}
+\definecolor{ddarkgreen}{rgb}{0,0.5,0}
+
+
+% ---------- SCAFI ----------
+
+\lstdefinelanguage{scafi}{
+  frame=single,
+  basewidth=0.5em,
+  language={scala},
+  keywordstyle=\color{blue}\textbf,
+  commentstyle=\color{ddarkgreen},
+  keywordstyle=[2]\color{teal}\textbf,
+  keywords=[2]{rep,nbr,foldhood,foldhoodPlus,aggregate,branch,spawn,mux,mid},
+  keywordstyle=[3]\color{gray},
+  keywords=[3]{Me,AroundMe,Everywhere,Forever}, %,@@,@@@
+  keywordstyle=[4]\color{red}\textbf,
+  keywords=[4]{in,out,rd},
+  keywordstyle=[5]\color{violet},
+  keywords=[5]{evolve,when,andNext,workflow,G,C,S,broadcast,gossip},
+  keywordstyle=[6]\color{orange},
+  keywords=[6]{Available,Serving,Done,Waiting,Removing,None,Set}
 }

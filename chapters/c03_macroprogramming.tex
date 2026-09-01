@@ -324,7 +324,7 @@ The \texttt{rep} construct stores the estimate between rounds,
 The second function uses a field-based conditional to exclude obstacles 
  from the communication domain.
 
-\begin{lstlisting}[language=Scala,float=t,
+\begin{lstlisting}[language=scafi,float=t,
   caption={Illustrative field-calculus program for a self-healing distance field.},
   label={lst:distance-field}]
 def distanceTo(source) {
@@ -489,7 +489,7 @@ The pattern implements a distributed feedback loop without assuming a fixed set 
  the signatures are illustrative because concrete libraries 
  provide several variants of each operator.
 
-\begin{lstlisting}[language=Scala,float=t,
+\begin{lstlisting}[language=scafi,float=t,
   caption={Composition of aggregate operators into self-organizing coordination regions.},
   label={lst:scr-pattern}]
 def coordinationRegions[A, B](grain: Double, local: A)
