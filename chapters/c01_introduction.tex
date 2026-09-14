@@ -331,17 +331,12 @@ Accordingly,
     \label{fig:mapping}
 \end{figure}
 
-Starting from the research gap outlined above, this thesis investigates how
-cooperative learning can be engineered as an integral part of a CAS. The
-objective is not to define a single learning algorithm for every collective
-system, but to identify coordination mechanisms, learning architectures, and
-deployment strategies that remain viable under distribution, locality, scale,
-openness, and resource constraints. Particular attention is given to the role of
-macroprogramming in expressing self-organizing structures around a learning
-process, and to architectures that avoid encoding a fixed collective size in the
-learned solution.
+This thesis investigates how cooperative learning can be engineered as an
+integral part of a CAS, with particular attention to the role of macroprogramming
+in expressing self-organizing structures around a learning process and to
+architectures that remain effective across collectives of varying size.
+The investigation is guided by the following research questions.
 
-The investigation is guided by the following research questions:
 
 \begin{questions}
 \item
@@ -374,15 +369,13 @@ in~\Cref{fig:mapping}.
 
 The first line concerns \emph{self-organizing federated learning} and
 addresses~\ref{itm:rq1} and~\ref{itm:rq2}. Field-based coordination mechanisms
-are used to let devices construct and maintain learning federations according to
+are used to let devices construct and maintain adaptive learning groups according to
 spatial proximity and model similarity, without a fixed server or prior
 knowledge of the number of groups. This line introduces localized learning
 methods, evaluates their robustness to changes in topology and participation,
-and provides a benchmark for spatially structured data heterogeneity. 
-\sidenote{forse va tarato l'uso di termini tecnici come federations qui}
-It also
-studies how federations and models can adapt to mobility-induced distribution
-shifts while retaining previously acquired knowledge, and how model
+and provides a benchmark for spatially structured data heterogeneity.
+It also studies how these groups and their models can adapt to mobility-induced
+distribution shifts while retaining previously acquired knowledge, and how model
 sparsification can reduce computation and communication costs without removing
 the spatial structure of collaboration.
 
@@ -402,11 +395,12 @@ computational capacity, with collective conditions such as latency, network
 congestion, and infrastructure load, thereby accounting for the externalities
 created by concurrent device decisions.
 
-Together, these contributions surround learning with explicit coordination and
-deployment mechanisms instead of treating it as an isolated algorithm. They
-provide concrete methods and broader design evidence for
-integrating learning into many-agent systems with distributed data, local
-interactions, dynamic populations, and limited resources.
+Together, these contributions treat cooperative learning not as an isolated
+algorithm but as a component of collective behaviour, surrounded by explicit
+coordination and deployment mechanisms.
+They provide concrete methods and broader design evidence for engineering
+learning into \glspl{CAS} under the conditions that define them:
+distributed data, local interactions, dynamic populations, and constrained resources.
 
 
 \section{Thesis Structure}
