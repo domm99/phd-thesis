@@ -135,7 +135,6 @@ As devices join, leave, or move,
  the set of available participants and their data distributions
  change continuously, which the standard static-aggregation model does not account for.
 
-\noindent
 These limitations are not independent.
 %
 Addressing data heterogeneity through more local updates
@@ -186,6 +185,9 @@ where $d'$ is any sample from the same distribution $P_i$.
 Both conditions capture the same intuition:
  within a region data are \gls{IID},
  while data from different regions are distinguishable by a margin.
+%
+This structure has direct consequences for which collaborations are beneficial
+ and which are harmful.
 
 \begin{figure}[t]
   \centering
@@ -227,7 +229,9 @@ Standard benchmarks distribute labels with Dirichlet splits that treat devices i
  heterogeneously across regions and homogeneously within them,
  supporting multiple skewness strategies (IID, Dirichlet with parameter $\alpha$,
  and hard partitioning) and a configurable number of regions,
- enabling systematic comparison across varying degrees of spatial heterogeneity.
+ enabling systematic comparison across varying degrees of spatial heterogeneity,
+ and providing the evaluation infrastructure used to assess
+ the contributions of this thesis.
 
 \section{Decentralized Federated Learning}
 \label{sec:fl-decentralized}
@@ -247,9 +251,9 @@ Each device communicates directly with its neighbors,
 The global objective is approached through repeated local aggregation steps
  that gradually mix information across the network.
 %
-Convergence depends on the spectral gap of the communication graph:
- better-connected networks mix faster,
- while sparse or partitioned graphs slow convergence~\cite{DBLP:conf/nips/LianZZHZL17}.
+How quickly this mixing proceeds depends on the spectral gap of the communication graph:
+ well-connected networks diffuse information faster,
+ while sparse or partitioned topologies slow convergence considerably~\cite{DBLP:conf/nips/LianZZHZL17}.
 
 Gossip-based protocols are a common implementation strategy.
 %
@@ -260,8 +264,9 @@ At each round, each device exchanges its model
 Repeated gossip rounds propagate information across the network
  without requiring global synchronization or a central coordinator.
 %
-These protocols tolerate node failures and dynamic topologies naturally,
- at the cost of slower convergence compared to server-based aggregation.
+These properties make gossip protocols well-suited to \glspl{CAS},
+ where node failures, intermittent connectivity, and topology changes
+ are the norm rather than the exception.
 
 Hierarchical and semi-decentralized architectures occupy a middle ground.
 %
@@ -276,8 +281,8 @@ The field-based coordination mechanisms introduced in~\Cref{chap:macroprogrammin
  because leader election, information collection, and model broadcasting
  can all be expressed as compositions of gradient-cast and converge-cast operators.
 
-A key consequence of removing the central server
- is that the notion of a single global model becomes ill-defined
+Removing the central server has a deeper conceptual implication:
+ the notion of a single global model becomes ill-defined
  when devices communicate only with their neighbors.
 %
 In a fully decentralized architecture,
@@ -322,6 +327,8 @@ A related approach~\cite{DBLP:journals/tnn/SattlerMS21}
  so hierarchical clustering on the server can recover the group structure
  without requiring clients to evaluate multiple candidate models.
 
+Underlying these approaches is a more general insight.
+%
 Clustered \gls{FL} can be understood as a form of model personalization,
  where the degree of personalization is controlled by cluster granularity.
 %
@@ -330,15 +337,11 @@ A single shared model and fully local training sit at the two extremes;
  sharing model capacity among clients with compatible data
  while maintaining distinct models for incompatible groups.
 %
-A persistent limitation of these approaches is that the number of clusters
- must be supplied as a hyperparameter.
+This picture, however, has a persistent limitation:
+ the number of clusters must be supplied as a hyperparameter.
 %
 In open and dynamic environments, the natural group structure may be unknown a priori,
  variable over time, or spatially organized in ways not visible to a central server.
-%
-Addressing this gap-- discovering and maintaining cluster structure adaptively,
- under spatial heterogeneity and device mobility--
- is the focus of the contributions described in~\Cref{chap:selforg-fl}.
 
 \section{Toward Self-Organizing Federated Learning}
 \label{sec:fl-selforg-preview}
