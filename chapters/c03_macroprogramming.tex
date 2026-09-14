@@ -154,16 +154,20 @@ Across these domains,
  space-time-oriented approaches manipulate distributed spatial structures; 
  and ensemble-oriented approaches organize components into dynamic groups~\cite{DBLP:journals/csur/Casadei23}.
 
-The space-time-oriented line is especially relevant to this thesis. 
+The space-time-oriented line is especially relevant to this thesis.
 %
-Many collective behaviors depend on information that is distributed over a network
- and changes as devices move, join, fail, or sense new conditions. 
+In the \gls{CAS} setting, data distributions vary across the physical space,
+ the set of beneficial collaborators depends on location,
+ and both evolve as devices move or environmental conditions change.
 %
-Representing this information as a first-class, 
- continuously evolving structure allows the programmer to describe coordination 
- at the scale of the collective while still supporting decentralized execution. 
-% 
-This observation motivates \emph{computational fields} 
+Many collective behaviors therefore depend on information that is distributed over a network
+ and changes as devices move, join, fail, or sense new conditions.
+%
+Representing this information as a first-class,
+ continuously evolving structure allows the programmer to describe coordination
+ at the scale of the collective while still supporting decentralized execution.
+%
+This observation motivates \emph{computational fields}
  and their formalization in Field Calculus.
 
 \section{Field Calculus}
@@ -271,9 +275,6 @@ The expression \texttt{nbr\{e\}} shares the local value of \texttt{e}
 % 
 A neighboring field is normally consumed by a built-in reduction such as 
  minimum, maximum, sum, or logical conjunction. 
-% % 
-% Practical variants such as ScaFi make this reduction explicit 
-%  through an operator such as \texttt{foldhood}.
 
 \paragraph{Domain restriction.}
 The field-based conditional \texttt{if(c)\{e1\}\{e2\}} partitions 
@@ -365,7 +366,7 @@ Self-stabilization is particularly valuable in open systems,
  because it provides recovery from transient failures and changes without
  requiring the programmer to enumerate them.
 
-Not every valid \GLS{FC} program is self-stabilizing. 
+Not every valid \gls{FC} program is self-stabilizing. 
 %
 Formal work has therefore identified disciplined fragments 
  and state-evolution patterns for which stabilization can be 
@@ -551,19 +552,25 @@ The abstraction removes much accidental complexity,
  but it does not remove the need to select an appropriate metric, execution strategy, 
  and set of building blocks.
 
-For the purposes of this thesis, 
- the central benefit of \gls{AC} is the separation between \emph{coordination} 
-  and \emph{local computation}. 
-%  
-A field may contain sensor values, roles, model parameters, predictions, or quality measures; 
- the same operators can organize how those values spread, aggregate, and define regions.
-% 
-Learning procedures can therefore remain local to the devices, 
- while a macroprogram specifies which devices collaborate 
- and how information flows through the collective.
-% 
-This makes field-based coordination a natural foundation for decentralized 
- and self-organizing collective learning.
+For the purposes of this thesis,
+ the central benefit of \gls{AC} is the separation between \emph{coordination}
+  and \emph{local computation}.
+%
+A field may contain sensor values, roles, model parameters, predictions, or quality measures;
+ the same operators organize how those values spread, aggregate, and define regions---independently
+ of the learning algorithm that produces or consumes them.
+%
+In the federated learning setting, this separation allows a macroprogram to specify
+ which devices form a learning group and how their model updates are aggregated,
+ without prescribing the local training procedure.
+%
+In the multi-agent reinforcement learning setting, it determines which neighbors
+ a policy can observe and how collective state is summarized,
+ without encoding a fixed collective size in the learned solution.
+%
+This makes field-based coordination a natural substrate for the self-organizing
+ and scalable learning architectures developed in~\Cref{chap:selforg-fl}
+ and~\Cref{chap:scalable-rl}.
 
 \section{Phyelds}
 \label{sec:phyelds}
@@ -654,11 +661,7 @@ A native simulator,
  an external environment, or a physical device runtime only needs to construct the context, 
  invoke the program, and deliver its outputs. 
 % 
-The active engine is stored in a Python \texttt{ContextVar}. 
-%
-Different threads, asynchronous tasks, or simulated devices 
- can therefore use isolated execution contexts while the user-facing API
- continues to access the current engine implicitly.
+
 
 \paragraph{Pythonic calculus constructs.}
 The \emph{Calculus} module maps the constructs discussed 
@@ -723,53 +726,20 @@ def active_counter():
     return neighbor_counters.max()
 \end{lstlisting}
 
-The use of an ordinary \texttt{if} requires special handling. 
+The use of an ordinary \texttt{if} requires special handling.
 %
-In \gls{FC}, 
- branching also partitions the alignment domain, 
- whereas a Python conditional normally affects only local control flow. 
-% 
-Phyelds reconciles the two semantics through source transformation. 
+In \gls{FC},
+ branching also partitions the alignment domain,
+ whereas a Python conditional normally affects only local control flow.
 %
-When an aggregate function is decorated, 
- its source is parsed into an \gls{AST}. 
-% 
-A node transformer intercepts each \texttt{if} statement 
- and wraps its two branches in distinct alignment contexts. 
-% 
-Conceptually, 
- the transformation is the one shown in~\Cref{lst:phyelds-alignment}. 
-% 
-Devices taking different branches then produce different paths 
- and do not exchange values within those branches; 
- once the conditional ends, execution returns to the common path 
- and the devices realign.
-
-\begin{lstlisting}[language=Python,float=t,
-  caption={Conceptual AST transformation used to align Python conditionals.},
-  label={lst:phyelds-alignment}]
-# Code written by the developer
-if condition:
-    left_computation()
-else:
-    right_computation()
-
-# Structure evaluated by the engine
-if condition:
-    with align_left():
-        left_computation()
-else:
-    with align_right():
-        right_computation()
-\end{lstlisting}
-
-This transformation is the central mechanism that permits developers 
- to use Python's native imperative control flow without manually managing field domains. 
+Phyelds reconciles the two semantics transparently: when an aggregate function
+ is decorated, its \texttt{if} statements are wrapped in distinct alignment
+ contexts, so devices taking different branches do not exchange values within
+ those branches.
 %
-Together with the paths introduced by decorated function calls,
- \texttt{remember}, and \texttt{neighbors}, it gives the engine sufficient
- information to associate each persistent value and incoming message with the
- correct program point.
+This transformation is invisible to the developer,
+ who writes plain Python conditionals and relies on the engine
+ to maintain correct alignment across the collective.
 
 \paragraph{Libraries and execution environments.}
 The \emph{Library} module builds reusable coordination functions 
@@ -805,14 +775,18 @@ External systems can instead provide a runner and an environment adapter;
  the VMAS integration follows this pattern, keeping the aggregate program independent 
  from the underlying multi-agent simulator.
 
-For this thesis, 
- Phyelds provides the implementation layer connecting field-based coordination 
+For this thesis,
+ Phyelds provides the implementation layer connecting field-based coordination
  with Python-native learning code.
-% 
-Local training, inference, and policy computation remain ordinary Python operations, 
- while \texttt{remember}, \texttt{neighbors}, and the coordination library determine
- how their state and outputs evolve across the collective. 
-% 
-This separation makes it possible to reuse the same coordination abstractions 
- across different learning settings without embedding the
- learning algorithm into the distributed runtime.
+%
+Local training, model aggregation, inference, and policy computation remain ordinary
+ Python operations, while \texttt{remember}, \texttt{neighbors}, and the coordination
+ library determine how their state and outputs evolve across the collective.
+%
+This separation is used throughout the contribution chapters:
+ in~\Cref{chap:selforg-fl}, field-based operators organize self-adaptive federation
+ structures around local federated learning procedures;
+ in~\Cref{chap:scalable-rl}, coordination determines what each agent observes
+ and how collective state is summarized for decentralized policy learning;
+ and in~\Cref{chap:tasksplacement}, the same abstractions support decentralized
+ application placement decisions across the edge--cloud continuum.
