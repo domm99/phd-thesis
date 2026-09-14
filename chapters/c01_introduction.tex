@@ -43,7 +43,7 @@ This interplay between local autonomy
  adapt during operation, and pursue individual or collective objectives.
 
 Autonomy in these systems can be engineered through several approaches,
- among them explicit programming of individual agent behaviour,
+ among them explicit programming of individual device behaviour,
  macroprogramming abstractions that express collective behaviour from a global perspective,
  and learning-based methods that derive models or decision policies from data and experience.
 %
@@ -56,7 +56,7 @@ Learning-based approaches are particularly suited to \glspl{CAS}
  they allow the system to adapt its behaviour as it interacts with the world.
 %
 Two paradigms are especially relevant here:
- \gls{MARL}, in which agents learn decision policies through interactions
+ \gls{MARL}, in which devices learn decision policies through interactions
  with one another and their shared environment,
  and \gls{FL}, which allows distributed devices to construct shared models
  without centralizing their raw data.
@@ -64,34 +64,34 @@ Two paradigms are especially relevant here:
 Yet learning in isolation is not sufficient.
 %
 Because each device observes only a partial view of the environment,
- no single agent can acquire the breadth of experience
+ no single device can acquire the breadth of experience
  needed to support reliable behaviour across the collective.
 %
-Cooperation among agents is therefore necessary:
+Cooperation among devices is therefore necessary:
  by sharing knowledge, model updates, or learned representations,
  devices can collectively build a richer understanding of the environment
  than any one of them could achieve alone.
 %
 This is the core motivation for \emph{cooperative learning} in \glspl{CAS}:
  not merely distributing computation across devices,
- but organizing how agents learn from one another
+ but organizing how devices learn from one another
  so that the collective as a whole benefits.
 %
 Designing such cooperation, however, is itself a non-trivial engineering problem
  in a setting where there is no fixed central coordinator
- and agents can communicate only with a local neighbourhood.
+ and devices can communicate only with a local neighbourhood.
 
 Engineering these systems is further complicated by both scale and dynamism.
 %
 A collective may comprise hundreds or thousands of devices,
  motivating the term \emph{many-agent} for settings whose scale is substantially larger
- than that usually associated with small multi-agent systems (i.e., two to ten agents).
+ than that usually associated with small multi-agent systems (i.e., two to ten devices).
 %
 At this scale,
  learning mechanisms cannot assume a fixed number of participants
  or rely on stable global aggregation structures:
  coordination, role assignment, and knowledge accumulation
- must instead remain effective as agents join, leave, or change roles.
+ must instead remain effective as devices join, leave, or change roles.
 %
 Moreover,
  the collective is rarely static:
@@ -115,7 +115,7 @@ Furthermore,
  may cause these distributions and their spatial organization to evolve over time.
 %
 As a consequence,
- deciding \emph{which} agents should cooperate,
+ deciding \emph{which} devices should cooperate,
  \emph{how} their knowledge should be combined,
  and \emph{when} collaboration structures should be reorganized
  are not implementation details but core design questions.
@@ -150,7 +150,7 @@ Traffic patterns vary across districts, roads, directions, and times of day,
 % 
 Consequently,
  information obtained in one context may be of limited value in another, 
- and the vehicles from which an agent can benefit may change as it moves through the city. 
+ and the vehicles from which an device can benefit may change as it moves through the city. 
 % 
 Cooperation must therefore adapt to both the spatial distribution 
  of traffic conditions and their evolution over time.
@@ -197,28 +197,21 @@ DEvices embedded in a physical environment must learn from distributed,
 %
 In both cases, cooperative learning is not merely a performance optimization:
  it is the only viable means by which the collective can acquire knowledge
- that no individual agent could obtain alone.
+ that no individual device could obtain alone.
 %
-Engineering such cooperation---deciding which agents should learn together,
+Engineering such cooperation---deciding which devices should learn together,
  how their knowledge should be combined, and when collaboration structures
  should be reorganized---constitutes the central challenge this thesis addresses.
 
 \section{Research Gap}
 
-Engineering autonomous behaviour in large distributed collectives requires 
- choosing the abstraction level at which the system is described.
-%
-Device-centric approaches specify the behaviour of individual agents, 
- whereas collective-level approaches describe how system-level behaviour 
- should arise from their interactions.
-%
-This thesis adopts the latter perspective: 
- the objective is not to engineer each device in isolation, 
- but to control how the organization and interaction of many devices 
+This thesis adopts a collective-level perspective on engineering autonomy:
+ the objective is not to engineer each device in isolation,
+ but to control how the organization and interaction of many devices
  produce autonomous collective behaviour.
 %
-Macroprogramming provides a natural foundation for this perspective, 
- as it allows coordination patterns to be expressed at the level of the collective 
+Macroprogramming provides a natural foundation for this perspective,
+ as it allows coordination patterns to be expressed at the level of the collective
  and realized through local execution on individual devices.
 
 Machine learning complements this perspective by allowing models and decision policies 
@@ -232,11 +225,12 @@ Learning methods are often studied under predefined assumptions about coordinati
 %
 Conversely, 
  macroprogramming abstractions can organize a collective, 
- but do not by themselves determine which agents should learn together, 
+ but do not by themselves determine which devices should learn together, 
  how their knowledge should be combined, or where learning tasks should be executed.
 %
-Engineering cooperative learning at the collective level therefore exposes 
- four coupled dimensions, summarized in~\Cref{fig:overview}.
+Bridging these two perspectives exposes four dimensions along which
+ the assumptions of conventional machine learning are systematically
+ violated by the CAS setting, summarized in~\Cref{fig:overview}.
 
 \begin{figure}
     \centering
@@ -276,7 +270,7 @@ Learning mechanisms must therefore support localized knowledge,
  and retain previously acquired information when it remains relevant.
 
 \emph{Scalable decentralization.}
-Coordination mechanisms must remain effective as the number of agents grows 
+Coordination mechanisms must remain effective as the number of devices grows 
  and the communication graph evolves, without relying on a global view 
  or a permanently available central coordinator.
 %
@@ -284,7 +278,7 @@ Responsibilities such as collaborator discovery, information aggregation,
  and role assignment must instead be realized through local interactions.
 %
 Learning architectures must also avoid assumptions about a fixed number 
- or ordering of agents and support policies that remain effective 
+ or ordering of devices and support policies that remain effective 
  across different collective sizes.
 
 \emph{Resource-constrained deployment.}
@@ -292,7 +286,7 @@ Training and inference compete for limited computation, memory, energy,
  and communication resources.
 %
 Although tasks can be distributed across devices, edge nodes, and cloud infrastructure, 
- their placement cannot be decided independently for each agent.
+ their placement cannot be decided independently for each device.
 %
 Offloading a task may reduce local computation while increasing communication, latency, 
  or contention on shared resources.
@@ -308,8 +302,10 @@ The choice of collaborators simultaneously affects statistical compatibility,
  and changes introduced to improve scalability may alter the information 
  available to each learning process.
 %
-Optimizing one dimension in isolation may therefore transfer cost or risk 
- to another part of the system.
+This coupling is precisely what makes the problem resistant to solutions
+ that address each dimension independently:
+ an integrated engineering approach is required,
+ in which coordination, learning, and deployment are designed together.
 
 The research gap addressed by this thesis is thus not the absence of individual 
  algorithms for federated learning, multi-agent reinforcement learning, 
@@ -350,7 +346,7 @@ The investigation is guided by the following research questions:
 \begin{questions}
 \item
 How can privacy-aware cooperative learning be organized among many distributed
-agents without centralizing raw data or relying on a fixed central coordinator?
+devices without centralizing raw data or relying on a fixed central coordinator?
 \label{itm:rq1}
 
 \item
@@ -359,7 +355,7 @@ to temporal distribution shifts caused by mobility and changing environments?
 \label{itm:rq2}
 
 \item
-How can decentralized learning remain effective and scalable when agents have
+How can decentralized learning remain effective and scalable when devices have
 access only to local observations, communicate with a limited neighbourhood,
 and operate in collectives whose size may change?
 \label{itm:rq3}
@@ -392,11 +388,11 @@ the spatial structure of collaboration.
 
 The second line addresses~\ref{itm:rq3} through \emph{scalable decentralized
 reinforcement learning}. It investigates training strategies based on
-interactions among neighbouring agents and learning architectures that operate
+interactions among neighbouring devices and learning architectures that operate
 on variable-sized neighbourhoods. The resulting analysis characterizes the
 trade-offs between centralized training, independent learning, and local
 cooperation, and examines whether policies trained with a given number of
-agents remain effective when deployed in larger collectives.
+devices remain effective when deployed in larger collectives.
 
 The third line concerns \emph{adaptive deployment across the edge--cloud
 continuum} and addresses~\ref{itm:rq4}. It develops a learning-based approach
