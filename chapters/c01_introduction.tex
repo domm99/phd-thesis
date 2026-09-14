@@ -9,85 +9,121 @@
 
 \section{Context}
 
-\sidenote{non emerge troppo il concetto di cooperative learning qua nell'intro}
-The last decade has seen a rapid growth in the number 
+The last decade has seen a rapid growth in the number
  of networked devices embedded in physical environments,
- bringing the long-standing visions of 
- ubiquitous~\cite{DBLP:journals/sigmobile/Weiser03}, 
- pervasive~\cite{DBLP:journals/computer/SahaM03}, 
+ bringing the long-standing visions of
+ ubiquitous~\cite{DBLP:journals/sigmobile/Weiser03},
+ pervasive~\cite{DBLP:journals/computer/SahaM03},
  everywhere~\cite{DBLP:journals/newriders/adam}
  and collective~\cite{DBLP:journals/computer/Abowd}
- computing increasingly close to reality. 
-% 
+ computing increasingly close to reality.
+%
 These devices continuously generate data,
  communicate with one another, and increasingly make autonomous decisions.
 %
-Rather than operating in isolation, 
- they form distributed systems that support applications such as 
- smart cities, pervasive sensing, autonomous mobility, robotic collectives, 
+Rather than operating in isolation,
+ they form distributed systems that support applications such as
+ smart cities, pervasive sensing, autonomous mobility, robotic collectives,
  and the edge--cloud continuum.
 
-The behaviour of these systems cannot be understood solely 
- in terms of their individual components. 
-% 
-Each device acts on the basis of partial information, 
- derived from its local state and from interactions with a limited 
- and possibly changing set of neighbours. 
+The behaviour of these systems cannot be understood solely
+ in terms of their individual components.
 %
-Nevertheless, 
- these locally situated actions influence one another 
- and jointly give rise to the behaviour observed at the system level. 
-% 
-This interplay between local autonomy 
- and system-level emergence is characteristic of \glspl{CAS}: 
- systems composed of multiple autonomous or semi-autonomous entities that interact locally, 
+Each device acts on the basis of partial information,
+ derived from its local state and from interactions with a limited
+ and possibly changing set of neighbours.
+%
+Nevertheless,
+ these locally situated actions influence one another
+ and jointly give rise to the behaviour observed at the system level.
+%
+This interplay between local autonomy
+ and system-level emergence is characteristic of \glspl{CAS}:
+ systems composed of multiple autonomous or semi-autonomous entities that interact locally,
  adapt during operation, and pursue individual or collective objectives.
 
-\sidenote{specificare che questi sono due dei tanti approcci}
-Autonomy in these systems can be engineered through different, 
- and potentially complementary, approaches.
+Autonomy in these systems can be engineered through several approaches,
+ among them explicit programming of individual agent behaviour,
+ macroprogramming abstractions that express collective behaviour from a global perspective,
+ and learning-based methods that derive models or decision policies from data and experience.
 %
-Explicit programming approaches include agent-level architectures, 
- such as belief--desire--intention models, 
- and macroprogramming abstractions that allow collective behaviour 
- to be specified from a global perspective.
+This thesis focuses on the latter.
 %
-Learning-based approaches instead derive models or decision policies 
- from data and experience.
+Learning-based approaches are particularly suited to \glspl{CAS}
+ because the environment is often too dynamic, large, or uncertain
+ to be fully described or anticipated in advance:
+ rather than requiring a designer to enumerate every operating condition,
+ they allow the system to adapt its behaviour as it interacts with the world.
 %
-For example, 
- \gls{MARL} enables agents 
- to learn through interactions with one another and their environment, 
- while \gls{FL} allows distributed devices to construct shared models 
+Two paradigms are especially relevant here:
+ \gls{MARL}, in which agents learn decision policies through interactions
+ with one another and their shared environment,
+ and \gls{FL}, which allows distributed devices to construct shared models
  without centralizing their raw data.
 
-Regardless of the approach, 
- engineering these systems is complicated by both scale and dynamism.
+Yet learning in isolation is not sufficient.
 %
-A collective may comprise hundreds or thousands of devices, 
- motivating the term \emph{many-agent} for settings whose scale is substantially larger 
+Because each device observes only a partial view of the environment,
+ no single agent can acquire the breadth of experience
+ needed to support reliable behaviour across the collective.
+%
+Cooperation among agents is therefore necessary:
+ by sharing knowledge, model updates, or learned representations,
+ devices can collectively build a richer understanding of the environment
+ than any one of them could achieve alone.
+%
+This is the core motivation for \emph{cooperative learning} in \glspl{CAS}:
+ not merely distributing computation across devices,
+ but organizing how agents learn from one another
+ so that the collective as a whole benefits.
+%
+Designing such cooperation, however, is itself a non-trivial engineering problem
+ in a setting where there is no fixed central coordinator
+ and agents can communicate only with a local neighbourhood.
+
+Engineering these systems is further complicated by both scale and dynamism.
+%
+A collective may comprise hundreds or thousands of devices,
+ motivating the term \emph{many-agent} for settings whose scale is substantially larger
  than that usually associated with small multi-agent systems (i.e., two to ten agents).
 %
-Moreover, 
- the collective is rarely static: 
- devices may move, fail, join, or leave during operation, 
- causing both the communication topology and the information available 
- within the system to evolve.
-
-When autonomy relies on learning, 
- an additional challenge arises from the way data are generated and collected.
+At this scale,
+ learning mechanisms cannot assume a fixed number of participants
+ or rely on stable global aggregation structures:
+ coordination, role assignment, and knowledge accumulation
+ must instead remain effective as agents join, leave, or change roles.
 %
-Because each device observes only a particular portion of the physical environment, 
+Moreover,
+ the collective is rarely static:
+ devices may move, fail, join, or leave during operation,
+ causing both the communication topology and the information available
+ within the system to evolve continuously.
+
+These challenges are compounded by how data are generated and collected
+ in physically situated systems.
+%
+Because each device observes only a particular portion of the environment,
  local datasets rarely satisfy the common \gls{IID} assumption.
 %
-This heterogeneity is often spatially structured: 
- devices exposed to the same local phenomenon may observe related distributions, 
- whereas devices operating in different regions or contexts may collect 
+This heterogeneity is often spatially structured:
+ devices exposed to the same local phenomenon may observe related distributions,
+ whereas devices operating in different regions or contexts may collect
  substantially different data.
 %
-Furthermore, 
- mobility and changes in the underlying phenomena 
- may cause these distributions and their spatial organization to evolve over time. 
+Furthermore,
+ mobility and changes in the underlying phenomena
+ may cause these distributions and their spatial organization to evolve over time.
+%
+As a consequence,
+ deciding \emph{which} agents should cooperate,
+ \emph{how} their knowledge should be combined,
+ and \emph{when} collaboration structures should be reorganized
+ are not implementation details but core design questions.
+%
+Together, these characteristics distinguish learning in \glspl{CAS}
+ from conventional centralized machine-learning pipelines,
+ and motivate the need for cooperative learning mechanisms
+ specifically designed to operate within this setting.
 
 \section{Motivating Scenarios}
 
