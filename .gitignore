@@ -250,3 +250,5 @@ tmp/
 *.mtc
 
 **/.DS_Store
+
+papers-pdf/
