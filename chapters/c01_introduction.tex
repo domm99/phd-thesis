@@ -155,19 +155,13 @@ Consequently,
 Cooperation must therefore adapt to both the spatial distribution 
  of traffic conditions and their evolution over time.
 
-Collecting all observations at a central location would raise 
- privacy, communication, latency, and scalability concerns. 
-% 
-Computation is also distributed: 
- latency-critical operations may run on board, 
- more demanding tasks may be delegated to nearby edge infrastructure,
- and delay-tolerant processing may use cloud resources. 
-% 
-These choices depend on local connectivity, workload, and hardware capabilities, 
- but are also coupled through shared communication and computational resources. 
-% 
-Effective operation therefore requires vehicles to coordinate learning 
- and resource usage without relying on complete global knowledge.
+Centralizing all observations would raise privacy, latency, and scalability concerns,
+ and is in any case at odds with the real-time requirements of individual vehicles.
+%
+Effective cooperation in learning must therefore be organized locally:
+ vehicles share knowledge with nearby peers rather than pooling raw data,
+ and must adapt whom they learn with as their position and the relevant traffic
+ conditions change.
 
 \paragraph{Disaster-response collectives.}
 A complementary scenario arises after a natural disaster, 
@@ -194,16 +188,20 @@ At the same time,
 The collective must thus decide how to distribute sensing, learning, 
  and computation while continuing to operate under changing and incomplete information.
 
-Together, 
- these scenarios illustrate the central engineering challenge addressed in this thesis.
-% 
-Learning is not performed by isolated devices within a fixed environment, 
- but is embedded in a dynamic collective whose members, interactions, knowledge, 
- and resources evolve during operation. 
-% 
-Achieving desirable system-level behaviour consequently requires coordinating 
- how agents learn from one another, how their decisions account for neighbouring agents,
- and how computation is distributed across the available infrastructure.
+\paragraph{Shared challenges.}
+Together, these scenarios share a common structure.
+%
+DEvices embedded in a physical environment must learn from distributed,
+ heterogeneous experience without centralizing raw data,
+ while the population, topology, and distribution of relevant phenomena evolve.
+%
+In both cases, cooperative learning is not merely a performance optimization:
+ it is the only viable means by which the collective can acquire knowledge
+ that no individual agent could obtain alone.
+%
+Engineering such cooperation---deciding which agents should learn together,
+ how their knowledge should be combined, and when collaboration structures
+ should be reorganized---constitutes the central challenge this thesis addresses.
 
 \section{Research Gap}
 
