@@ -7,635 +7,364 @@
 \minitoc
 %----------------------------------------------------------------------------------------
 
-\gls{FL} is a distributed machine-learning paradigm 
- in which multiple clients collaboratively train one or more models 
- while retaining their training data locally. 
-% 
-Rather than collecting observations in a centralized dataset, 
- \gls{FL} moves the learning procedure to the locations where data are generated 
- and exchanges model parameters or updates during 
- training~\cite{mcmahan2017communication,kairouz2021advances}. 
-% 
-This organization is particularly relevant when data are private, 
-costly to transfer, continuously generated at the edge, 
-or distributed across independently managed devices and organizations.
-
-The distribution of the learning process introduces challenges that do not arise,
- or are less prominent, in conventional centralized training. 
-% 
-The system must coordinate multiple local optimization procedures, 
- communicate model updates, handle clients that may participate intermittently, 
- and learn from datasets whose statistical properties can differ substantially. 
-% 
-Moreover, 
- although the original formulation of \gls{FL} assumes a central coordinating server, 
-  the separation between data ownership and model training does not prescribe 
-  a particular communication architecture. 
-%  
-Federated optimization can also be organized through hierarchical,
- peer-to-peer, or fully decentralized interactions.
-
-
-
-\section{Training Dynamics}
-\label{sec:fl-training-dynamics}
-
-\glsentryfull{FL} organizes model training across a set of \(K\) clients,
- each of which retains exclusive access to a local dataset \(\mathcal{D}_k\). 
-% 
-The size of the local dataset and the total number of training samples are respectively defined as
+Training machine learning models on data that is already distributed
+ across many devices presents a fundamental tension.
 %
+Centralizing the data enables standard optimization procedures
+ but sacrifices privacy, incurs high communication cost,
+ and becomes impractical when datasets are large or legally restricted.
+%
+\glsentryfull{FL} resolves this tension by keeping data local:
+ devices share model updates rather than raw samples,
+ and a shared model is built through aggregation rather than
+ through data collection~\cite{DBLP:conf/aistats/McMahanMRHA17}.
+
+This chapter introduces the standard FL paradigm
+ and then examines why its assumptions are systematically violated
+ in the \gls{CAS} setting.
+%
+It covers the problem of spatially structured data heterogeneity,
+ the transition from centralized to decentralized architectures,
+ and the family of clustered FL methods that address statistical
+ incompatibility among participants.
+%
+The chapter closes with a preview of the self-organizing approach
+ developed in~\Cref{chap:selforg-fl}.
+
+\section{Standard Federated Learning}
+\label{sec:fl-standard}
+
+\glsentryfull{FL} was introduced to enable collaborative model training
+ without requiring participants to share their raw data~\cite{DBLP:conf/aistats/McMahanMRHA17}.
+%
+The canonical setting involves a set of \emph{clients}
+ $S = \{s_1, s_2, \ldots, s_n\}$,
+ each holding a local dataset $D_i$,
+ and a central \emph{server} responsible for coordinating training.
+
+The learning objective is to minimize the global empirical risk:
 \begin{equation}
-    n_k = \lvert\mathcal{D}_k\rvert,
-    \qquad
-    n = \sum_{k=1}^{K} n_k.
-    \label{eq:fl-dataset-sizes}
+  \min_{w} \; F(w) = \sum_{i=1}^{n} \frac{|D_i|}{|D|} F_i(w),
 \end{equation}
-%
-Given a model parameterized by \(\boldsymbol{\theta}\) 
- and a sample-wise loss function \(\ell\), 
- client \(k\) defines the local empirical objective
-%
-\begin{equation}
-    F_k(\boldsymbol{\theta})
-    =
-    \frac{1}{n_k}
-    \sum_{(\mathbf{x},y)\in\mathcal{D}_k}
-    \ell(\boldsymbol{\theta};\mathbf{x},y).
-    \label{eq:fl-local-objective}
-\end{equation}
-%
-In the simplest \gls{FL} formulation, 
- all clients collaborate to learn a single global model 
- by minimizing the weighted combination of their local objectives:
-%
-\begin{equation}
-    \boldsymbol{\theta}^{*}
-    =
-    \operatorname*{arg\,min}_{\boldsymbol{\theta}}
-    F(\boldsymbol{\theta}),
-    \qquad
-    F(\boldsymbol{\theta})
-    =
-    \sum_{k=1}^{K}
-    \frac{n_k}{n}
-    F_k(\boldsymbol{\theta}).
-    \label{eq:fl-global-objective}
-\end{equation}
-%
-The weights account for differences in the sizes of the local datasets. 
-%
-The objective in~\Cref{eq:fl-global-objective} corresponds 
- to empirical risk minimization over all available samples,
-  but its optimization is decomposed into computations performed directly by the clients, 
-  without requiring their datasets to be transferred to a common location.
+where $F_i(w) = \frac{1}{|D_i|} \sum_{(x,y) \in D_i} \ell(w; x, y)$
+ is the local loss on client $i$,
+ $\ell$ is the per-sample loss function,
+ and $|D| = \sum_i |D_i|$ is the total number of training samples.
 
-The basic realization of this process adopts a client-server architecture 
- and the \gls{FedAvg} algorithm~\cite{mcmahan2017communication}. 
-% 
-A central server coordinates training and maintains the current global parameters,
- while the clients perform local optimization. 
-% 
-Training proceeds through a sequence of communication rounds.
+The most widely used algorithm for this objective is
+ \glsentryfull{FedAvg}~\cite{DBLP:conf/aistats/McMahanMRHA17}.
 %
-At round \(t\), 
- the server holds the global parameters \(\boldsymbol{\theta}^{t}\) 
- and performs the following operations:
+Each training round proceeds in four steps:
 
 \begin{enumerate}
-    \item \emph{Client selection.}
-    The server selects a subset \(\mathcal{S}_{t}\) of the available clients.
-    Partial participation is common when the client population is large or
-    individual clients are only intermittently available.
-
-    \item \emph{Model distribution.}
-    The server sends \(\boldsymbol{\theta}^{t}\) to every selected client, so
-    that all participants start the round from the same model state.
-
-    \item \emph{Local optimization.}
-    Each selected client independently trains the received model on its local
-    dataset. For example, using mini-batch stochastic gradient descent, client
-    \(k\) repeatedly applies
-    %
+  \item \emph{Broadcast}: the server distributes the current global model
+    $w^t$ to a selected subset of clients $S^t \subseteq S$.
+  \item \emph{Local training}: each selected client $i \in S^t$ initializes
+    its local model from $w^t$ and performs $E$ epochs of stochastic
+    gradient descent on $D_i$, producing an updated local model $w_i^{t+1}$.
+  \item \emph{Upload}: each client sends $w_i^{t+1}$ back to the server.
+  \item \emph{Aggregation}: the server computes the new global model as the
+    weighted average of the received updates:
     \begin{equation}
-        \boldsymbol{\theta}_{k}^{t,e+1}
-        =
-        \boldsymbol{\theta}_{k}^{t,e}
-        -
-        \eta
-        \nabla
-        \ell
-        \left(
-            \boldsymbol{\theta}_{k}^{t,e};
-            \mathcal{B}_{k}^{e}
-        \right),
-        \label{eq:fl-local-update}
-    \end{equation}
-    %
-    where \(e\) identifies a local optimization step, \(\eta\) is the learning
-    rate, and
-    \(\mathcal{B}_{k}^{e}\subseteq\mathcal{D}_{k}\) is a local mini-batch.
-
-    \item \emph{Update collection.}
-    After completing one or more local epochs, each selected client sends the
-    resulting model parameters, or their difference from the received global
-    parameters, back to the server.
-
-    \item \emph{Aggregation.}
-    The server combines the received models to obtain the global parameters for
-    the next round. FedAvg computes a weighted average:
-    %
-    \begin{equation}
-        \boldsymbol{\theta}^{t+1}
-        =
-        \sum_{k\in\mathcal{S}_{t}}
-        \frac{n_k}{
-            \sum_{j\in\mathcal{S}_{t}} n_j
-        }
-        \boldsymbol{\theta}_{k}^{t+1}.
-        \label{eq:fedavg-aggregation}
+      w^{t+1} = \sum_{i \in S^t} \frac{|D_i|}{\sum_{j \in S^t} |D_j|} \; w_i^{t+1}.
     \end{equation}
 \end{enumerate}
 
-\begin{figure}[t]
-    \centering
-    \fbox{
-        \parbox[c][5.2cm][c]{0.9\textwidth}{
-            \centering
-            \textbf{Image placeholder: client--server FL training round}
-            \\[1em]
-            1. The server selects participating clients and distributes the
-            current global model.
-            \\[0.5em]
-            2. Clients independently train the model on their local datasets.
-            \\[0.5em]
-            3. Clients return their locally updated models.
-            \\[0.5em]
-            4. The server aggregates the updates and starts a new round.
-        }
-    }
-    \caption{Training dynamics of client--server Federated Learning. Raw data
-    remain on the clients, while model parameters or updates are exchanged
-    during successive communication rounds.}
-    \label{fig:fl-training-round}
-\end{figure}
-
-The aggregated parameters become the initial model for the following round. 
+\noindent
+The round repeats until convergence or a communication budget is exhausted.
 %
-The process continues until a stopping condition is reached, 
- such as a fixed number of rounds, stabilization of a validation metric, 
- or exhaustion of the available training budget. 
-% 
-Local computation and global communication are therefore interleaved 
- throughout the entire learning process.
-
-The number of local optimization steps controls an important trade-off.
-%
-Performing more local work between two communication rounds reduces 
- the frequency with which models must be exchanged, 
- but allows each local model to move farther from the shared parameters. 
-% 
-This effect is usually limited when clients observe similar data distributions, 
- whereas it can become problematic when their local objectives differ. 
-% 
-The number of participating clients, their dataset sizes, local learning rates, 
- and aggregation weights similarly affect the relationship between 
- the local optimization processes and the global objective.
-
-Federated settings are commonly distinguished according to the scale 
- and availability of their clients. 
-% 
-In \emph{cross-silo} \gls{FL}, 
- the participants are typically a limited number of stable organizations, 
- such as hospitals or companies, with relatively large datasets and reliable infrastructure. 
-% 
-In \emph{cross-device} \gls{FL}, 
- training may involve a much larger population of phones, sensors, vehicles, 
- or edge devices that hold smaller datasets and may be available only intermittently. 
-% 
-The optimization principle remains the same, 
- but client selection, fault tolerance, communication cost, and resource variability
- become substantially more important in the cross-device case~\cite{kairouz2021advances}.
-
-\section{Decentralized Architectures}
-\label{sec:fl-decentralized}
-
-\gls{FL} and centralized coordination are distinct concepts. 
-%
-The term \emph{federated} describes how data ownership and training are organized:
- participants retain their datasets and cooperate 
- by exchanging learning-related information. 
-%
-It does not require a central server. 
-%
-The client-server architecture is widely adopted because it provides 
- a simple way to initialize the model, coordinate rounds, collect updates,
- and construct a consistent global state, but the same learning objective can be realized 
- through different communication topologies.
-
-The central server introduces an explicit coordination point. 
-%
-This simplifies model versioning and aggregation, 
- since every round has a clearly identified initial and final state. 
-% 
-However, 
- it can also become a communication bottleneck when many clients participate, 
- and its unavailability may suspend the entire training process. 
-% 
-Moreover, 
- all clients must be able to communicate with the server even when 
- direct local communication would be less expensive or more readily available.
-
-Decentralized \gls{FL} instead represents the clients 
- and their communication relationships as a graph
-%
-\begin{equation}
-    G = (V,E),
-\end{equation}
-%
-where each vertex \(i\in V\) is a client and an edge \((i,j)\in E\) indicates
-that clients \(i\) and \(j\) can exchange model information. A client typically
-alternates local optimization with a mixing operation over its neighborhood
-\(\mathcal{N}_{i}\). A generic mixing step can be written as
-%
-\begin{equation}
-    \boldsymbol{\theta}_{i}^{t+1}
-    =
-    \sum_{j\in\mathcal{N}_{i}\cup\{i\}}
-    W_{ij}
-    \widehat{\boldsymbol{\theta}}_{j}^{t},
-\end{equation}
-%
-where \(\widehat{\boldsymbol{\theta}}_{j}^{t}\) is the model obtained by client
-\(j\) after local training and \(W_{ij}\) is the weight assigned by \(i\) to
-that model. The matrix \(\mathbf{W}\) encodes the communication topology and
-aggregation policy. Under appropriate connectivity and weighting assumptions,
-repeated local exchanges allow information to propagate through the network and
-can drive the clients toward a consensus model.
+Because raw data never leaves the client,
+ \gls{FL} reduces exposure compared to centralized collection,
+ especially when combined with privacy-enhancing mechanisms
+ such as differential privacy or secure aggregation~\cite{DBLP:journals/ftml/KairouzMABBBBCC21}.
 
 \begin{figure}[t]
-    \centering
-    \fbox{
-        \parbox[c][5.4cm][c]{0.9\textwidth}{
-            \centering
-            \textbf{Image placeholder: federated-learning architectures}
-            \\[1em]
-            Client--server: clients communicate with one global aggregator.
-            \\[0.5em]
-            Hierarchical: clients communicate with intermediate edge aggregators.
-            \\[0.5em]
-            Peer-to-peer: clients exchange models directly over a communication
-            graph.
-            \\[0.5em]
-            Gossip-based: clients repeatedly exchange and mix models with a
-            limited set of neighbors.
-        }
-    }
-    \caption{Representative runtime architectures for Federated Learning. The
-    organization of communication and aggregation can vary without changing the
-    fundamental constraint that training data remain distributed among clients.}
-    \label{fig:fl-architectures}
+  \centering
+  \fbox{%
+    \parbox[c][4.8cm][c]{0.88\linewidth}{\centering
+      \textbf{Image placeholder: centralized FL protocol}\\[0.4em]
+      Server at top; clients at bottom.\\
+      Round steps numbered: broadcast $\rightarrow$ local train $\rightarrow$
+      upload $\rightarrow$ aggregate.}}
+  \caption{One communication round of standard (centralized) \gls{FL}.
+    Each client trains locally and returns only its updated model weights;
+    the server produces the new global model through weighted averaging.}
+  \label{fig:fl-centralized}
 \end{figure}
 
-Several decentralized organizations can be derived from this model. In a fully
-connected peer-to-peer topology, every client can exchange its update with every
-other client and reproduce an aggregation similar to the server-based case.
-Although conceptually simple, all-to-all communication becomes expensive as the
-population grows. Sparse peer-to-peer systems restrict exchanges to logical or
-physical neighbors and propagate information over multiple steps
-\cite{wink2021approach}. Gossip-based approaches further reduce coordination
-requirements by letting clients periodically communicate with one or a few
-peers, possibly without a globally synchronized round structure
-\cite{hegedus2021decentralized}.
+\section{Limitations in the CAS Setting}
+\label{sec:fl-limits}
 
-Hierarchical architectures introduce intermediate aggregators, commonly located
-on edge or regional infrastructure. Clients first send updates to a nearby
-aggregator; intermediate models are subsequently combined at higher levels.
-This organization can reduce long-distance communication and distribute the
-aggregation workload, while still retaining some designated coordination
-entities. Hybrid architectures may combine server-based coordination in stable
-parts of the network with direct exchanges among devices that cannot
-continuously reach the central infrastructure.
+The centralized client-server model of \gls{FL} carries structural assumptions
+ that are often incompatible with the constraints of \glspl{CAS}.
 
-Removing the global server distributes its responsibilities rather than
-eliminating them. Clients must establish which models can be combined, manage
-possibly stale model versions, and determine when sufficient information has
-been received. Convergence then depends not only on the optimization algorithm,
-but also on graph connectivity, communication frequency, message delays, and
-node churn. Failures may have a more localized effect than in the client--server
-case, but temporary partitions can prevent information from spreading between
-different parts of the network.
+\paragraph{Single point of failure.}
+The server aggregates all updates and distributes the global model in every round.
+%
+In a large-scale deployment spanning thousands of devices,
+ the server introduces a communication bottleneck,
+ and its unavailability halts the entire learning process.
+%
+CAS are open systems in which devices may be mobile, intermittently connected,
+ or organized across different administrative domains,
+ making a permanently available central coordinator unrealistic.
 
-The architecture also determines the meaning of a training round. In a
-synchronous peer-to-peer system, all clients may alternate between a common
-local-training phase and a common communication phase. In asynchronous and
-gossip-based systems, each client instead progresses according to its own local
-clock and aggregates models produced at different times. The latter organization
-avoids waiting for the slowest clients but requires mechanisms for handling
-staleness and preventing rapidly communicating clients from having a
-disproportionate influence.
+\paragraph{Sensitivity to non-IID data.}
+\gls{FedAvg} and its variants converge under the assumption
+ that local data distributions are sufficiently similar across clients.
+%
+When distributions diverge substantially---a condition referred to as
+ \emph{non-\gls{IID}}---the weighted average of locally trained models
+ may perform poorly on every individual client,
+ a phenomenon known as \emph{client drift}~\cite{DBLP:conf/icml/KarimireddyKMRS20}.
+%
+Algorithms such as FedProx~\cite{DBLP:conf/mlsys/LiSZSTS20} and
+ Scaffold~\cite{DBLP:conf/icml/KarimireddyKMRS20} mitigate drift
+ by regularizing local updates or correcting gradient variance,
+ but they still produce a single shared model
+ that may represent no client's data distribution well.
 
-Importantly, decentralization alone does not solve statistical heterogeneity.
-A peer-to-peer network can still drive every client toward a single consensus
-model, reproducing the same statistical compromise as centralized aggregation.
-Conversely, multiple specialized models can be maintained by a centralized
-server. Communication architecture determines how coordination is performed;
-the number and specialization of the learned models determine what learning
-objective the coordination realizes.
+\paragraph{Scale and dynamism.}
+A collective may comprise hundreds or thousands of devices
+ whose participation changes dynamically.
+%
+Synchronization between rounds requires waiting for all selected clients,
+ introducing latency that scales with collective size.
+%
+As devices join, leave, or move,
+ the set of available participants and their data distributions
+ change continuously, which the standard static-aggregation model does not account for.
 
+\noindent
+These limitations are not independent.
+%
+Addressing data heterogeneity through more local updates
+ increases client drift and worsens aggregation quality;
+ and decentralizing aggregation to improve resilience
+ requires alternative mechanisms for maintaining model coherence.
+%
+Resolving these tensions jointly, rather than in isolation, is the
+ engineering challenge that motivates the approaches described in the rest of this chapter.
 
-\section{Data Heterogeneity}
+\section{Spatial Data Heterogeneity}
 \label{sec:fl-heterogeneity}
 
-The global objective introduced in
-Section~\ref{sec:fl-training-dynamics} does not require local datasets to have
-the same size, but its simplest behavior is obtained when all observations are
-sampled independently from the same underlying probability distribution. In an
-IID setting,
+A key source of non-\gls{IID} data in \glspl{CAS} is the physical environment.
 %
-\[
-    (\mathbf{x},y)\sim P
-\]
+Devices are embedded in space and observe phenomena that vary across locations:
+ a traffic sensor in a residential district captures different patterns
+ from one on a highway, and a temperature sensor on a rooftop differs
+ from one at street level.
 %
-for every client, so differences between local datasets are mainly due to finite
-sampling. Local gradients then provide noisy but broadly aligned estimates of
-the gradient of the global objective.
+This produces a form of heterogeneity that is not random
+ but \emph{spatially structured}~\cite{DBLP:journals/iot/DominiFAVE26,DBLP:journals/jors/DominiIALV26}.
 
-Real federated datasets rarely satisfy this assumption. Each client \(k\) may
-instead observe a different distribution
+To formalize this structure, consider a spatial area $A = \{a_1, a_2, \ldots, a_k\}$
+ divided into $k$ distinct contiguous regions,
+ each associated with a data distribution $P_j$ over some sample space $\mathcal{X}$.
 %
-\[
-    (\mathbf{x},y)\sim P_k(\mathbf{x},y),
-\]
+A set of devices $S = \{s_1, s_2, \ldots, s_n\}$ ($n \gg k$) is deployed across $A$,
+ with each device $s_i$ residing in some region $a_j$
+ and holding a local dataset $D_i$ drawn from $P_j$.
 %
-with \(P_i\neq P_j\) for at least some pair of clients \(i\) and \(j\). This
-condition is generally referred to as \emph{non-independent and identically
-distributed}, or \emph{non-IID}, data. The term covers several distinct forms of
-heterogeneity \cite{zhu2021federated}:
-
-\begin{itemize}
-    \item \emph{Label-distribution skew} occurs when the frequency of the target
-    classes differs among clients. Some clients may observe only a subset of the
-    possible labels, while others may contain the same labels in different
-    proportions.
-
-    \item \emph{Feature-distribution skew} occurs when clients share the same
-    prediction task but observe different input distributions. Images may, for
-    example, differ in lighting, background, sensor characteristics, or writing
-    style even when their labels are drawn from the same set.
-
-    \item \emph{Concept shift} occurs when the relationship between inputs and
-    targets differs among clients. Formally, conditional distributions such as
-    \(P_k(y\mid\mathbf{x})\) are client-dependent, so the same input may require
-    a different prediction in different contexts.
-
-    \item \emph{Quantity skew} occurs when clients hold substantially different
-    numbers of observations. This condition does not necessarily change the
-    underlying distributions, but it affects aggregation weights, uncertainty,
-    and the influence of individual clients.
-\end{itemize}
-
-Multiple forms can coexist. For example, a client can hold fewer observations,
-cover only a subset of the labels, and acquire its inputs through a sensor whose
-characteristics differ from those of the remaining devices. Non-IID behavior
-should therefore not be treated as a single scalar property of a dataset.
-
-Statistical heterogeneity affects federated optimization because the local
-objectives \(F_k\) no longer have the same minimizers. A client that performs
-several local steps moves its parameters toward a solution that is effective for
-its own distribution, which may differ from the direction preferred by other
-clients. This phenomenon is commonly referred to as \emph{client drift}. When
-the resulting updates are averaged, they may partially cancel one another,
-produce unstable progress, or converge to a compromise that performs unevenly
-across the client population \cite{li2022federated}. Increasing the amount of
-local training can amplify this divergence even though it reduces the number of
-communication rounds.
-
-Non-IID data may be unstructured, with each client receiving an unrelated local
-distribution, but it can also exhibit a regular organization. This is especially
-important in spatially distributed systems. Consider an environment
-\(\mathcal{A}\) partitioned into \(Q\) regions,
+Devices in the same region share a common distribution;
+ devices in different regions do not.
 %
-\[
-    \mathcal{A}
-    =
-    \bigcup_{q=1}^{Q} a_q,
-\]
+The heterogeneity condition is captured by requiring distributions to be
+ $\varepsilon$-separated under some divergence measure $D(\cdot \| \cdot)$:
+\begin{equation}
+  \forall\, i \neq j : \; D(P_i \| P_j) \geq \varepsilon.
+\end{equation}
+An equivalent sample-level characterization~\cite{DBLP:journals/jors/DominiIALV26},
+ using a distance metric $m(\cdot, \cdot)$ and a threshold $\delta > 0$, requires:
+\begin{equation}
+  \forall\, i \neq j,\; \forall\, d \in P_i,\; \forall\, d'' \in P_j :
+  \quad m(d, d') \leq \delta < m(d, d''),
+\end{equation}
+where $d'$ is any sample from the same distribution $P_i$.
 %
-where each region \(a_q\) is associated with a data-generating distribution
-\(P_q\). A client located in \(a_q\) observes data sampled primarily from
-\(P_q\). Clients in the same region therefore tend to have statistically similar
-datasets, whereas clients located in different regions may observe different
-distributions:
-%
-\[
-    P_i \simeq P_j
-    \quad
-    \text{if clients \(i\) and \(j\) are in the same region},
-    \qquad
-    P_i \not\simeq P_j
-    \quad
-    \text{across heterogeneous regions}.
-\]
+Both conditions capture the same intuition:
+ within a region data are \gls{IID},
+ while data from different regions are distinguishable by a margin.
 
 \begin{figure}[t]
-    \centering
-    \fbox{
-        \parbox[c][5.5cm][c]{0.9\textwidth}{
-            \centering
-            \textbf{Image placeholder: spatially structured non-IID data}
-            \\[1em]
-            Represent an environment divided into colored regions, with each
-            color denoting a different data distribution.
-            \\[0.6em]
-            Place multiple devices inside each region to show that nearby
-            devices tend to observe similar distributions, while devices in
-            different regions observe non-IID data.
-        }
-    }
-    \caption{Spatially structured data heterogeneity. Data are comparatively
-    homogeneous within each region but heterogeneous across regions, producing
-    group-level rather than purely client-level non-IID behavior.}
-    \label{fig:spatial-non-iid}
+  \centering
+  \fbox{%
+    \parbox[c][5.0cm][c]{0.88\linewidth}{\centering
+      \textbf{Image placeholder: spatial data distribution}\\[0.4em]
+      A network of devices overlaid on a spatial area partitioned into
+      colored regions. Within each region, devices observe IID samples;
+      across regions, distributions differ.
+      Label ``IID'' inside a region and ``non-IID'' across region boundaries.}}
+  \caption{Spatially structured data heterogeneity in a device network.
+    Devices in the same region share a common data distribution;
+    devices in different regions observe statistically distinct data.}
+  \label{fig:spatial-heterogeneity}
 \end{figure}
 
-This organization can arise whenever observations depend on the surrounding
-environment. Traffic measurements vary between residential areas, city centers,
-and highways; energy consumption depends on building type and local climate;
-air-quality measurements are affected by nearby infrastructure; and images
-collected by mobile devices depend on the locations and conditions in which they
-operate. Spatial proximity is therefore often correlated with statistical
-similarity, although it is not a guarantee of it. Nearby devices may perform
-different tasks or face different orientations and sensing conditions, while
-distant areas may still generate similar data.
+When heterogeneity follows this spatial structure,
+ not all collaboration is equally beneficial.
+%
+Averaging model updates from devices in different regions
+ may pull the global model toward an average of incompatible distributions,
+ producing a solution that fits no region well.
+%
+Conversely, devices in the same region can benefit substantially from pooling their data,
+ since their observations are locally \gls{IID}.
+%
+The central challenge is therefore not whether to collaborate,
+ but \emph{with whom}:
+ the ideal collaboration boundary aligns with the latent spatial partition,
+ which is not directly observable by any participant.
 
-Spatial heterogeneity can also change over time. A mobile client may move
-between regions and progressively replace observations from one distribution
-with observations from another. Even stationary devices may experience temporal
-changes caused by weather, recurring activity patterns, infrastructure changes,
-or other environmental processes. The local distribution is then more accurately
-represented as \(P_k^t\), making heterogeneity both spatial and temporal.
+Evaluating \gls{FL} algorithms under this kind of structure requires benchmarks
+ that model spatial partitions explicitly.
+%
+Standard benchmarks distribute labels with Dirichlet splits that treat devices independently,
+ which conflates the effect of label imbalance with genuine spatial heterogeneity.
+%
+\textsc{ProFed}~\cite{DBLP:journals/jors/DominiIALV26} addresses this by distributing data
+ heterogeneously across regions and homogeneously within them,
+ supporting multiple skewness strategies (IID, Dirichlet with parameter $\alpha$,
+ and hard partitioning) and a configurable number of regions,
+ enabling systematic comparison across varying degrees of spatial heterogeneity.
 
-Several families of FL algorithms attempt to mitigate these effects. Optimization
-methods can constrain local updates or correct the disagreement between local
-and global directions, as done respectively by FedProx and SCAFFOLD
-\cite{li2020federated,karimireddy2020scaffold}. Other approaches personalize a
-shared model for each client, learn common representations with local output
-components, or allow different groups of clients to train different models.
-Clustered Federated Learning follows the last strategy and exploits structure in
-the client population rather than forcing every distribution into a single global
-objective.
+\section{Decentralized Federated Learning}
+\label{sec:fl-decentralized}
 
+The limitations of a fixed central server have motivated
+ a family of \emph{decentralized} or \emph{peer-to-peer} \gls{FL} architectures
+ in which aggregation is distributed across the network
+\sidenote{double check better this ref}
+ rather than concentrated at a single node~\cite{DBLP:conf/nips/LianZZHZL17}.
+
+In the fully decentralized setting (\Cref{fig:fl-centralized}),
+ there is no dedicated server.
+%
+Each device communicates directly with its neighbors,
+ exchanges model updates, and performs aggregation locally.
+%
+The global objective is approached through repeated local aggregation steps
+ that gradually mix information across the network.
+%
+Convergence depends on the spectral gap of the communication graph:
+ better-connected networks mix faster,
+ while sparse or partitioned graphs slow convergence~\cite{DBLP:conf/nips/LianZZHZL17}.
+
+Gossip-based protocols are a common implementation strategy.
+%
+At each round, each device exchanges its model
+ with a randomly or deterministically selected neighbor
+ and updates its local model through pairwise averaging.
+%
+Repeated gossip rounds propagate information across the network
+ without requiring global synchronization or a central coordinator.
+%
+These protocols tolerate node failures and dynamic topologies naturally,
+ at the cost of slower convergence compared to server-based aggregation.
+
+Hierarchical and semi-decentralized architectures occupy a middle ground.
+%
+A subset of nodes acts as local aggregators for their neighborhood,
+ while remaining aggregators may or may not communicate with one another.
+%
+This approach can reduce communication overhead by exploiting locality
+ while retaining some of the convergence benefits of hierarchical aggregation.
+%
+The field-based coordination mechanisms introduced in~\Cref{chap:macroprogramming}
+ are particularly suited to implementing such architectures dynamically,
+ because leader election, information collection, and model broadcasting
+ can all be expressed as compositions of gradient-cast and converge-cast operators.
+
+A key consequence of removing the central server
+ is that the notion of a single global model becomes ill-defined
+ when devices communicate only with their neighbors.
+%
+In a fully decentralized architecture,
+ each device holds a locally aggregated model
+ that reflects contributions from a spatially limited neighborhood.
+%
+Whether this is a limitation or a feature depends on the data distribution:
+ if local data are heterogeneous, a locally adapted model may be preferable
+ to a single global one.
 
 \section{Clustered Federated Learning}
-\label{sec:clustered-fl}
+\label{sec:fl-clustered}
 
-Clustered Federated Learning (CFL) is a form of personalized FL in which clients
-are partitioned into groups and a separate model is trained for each group
-\cite{tan2023towards}. It occupies an intermediate position between conventional
-FL, which trains one model for the entire population, and purely local learning,
-which trains an independent model for every client. Clients within a cluster
-continue to benefit from collaborative training, while clients associated with
-substantially different distributions are not forced to share the same final
-parameters.
-
-Let
+When a single global model cannot fit the diversity of local data distributions,
+ a natural alternative is to learn \emph{multiple} models,
+ each tailored to a subset of clients with statistically compatible data.
 %
-\[
-    \mathcal{C}
-    =
-    \left\{
-        C_1,C_2,\ldots,C_Q
-    \right\}
-\]
+\emph{Clustered \gls{FL}}~\cite{DBLP:journals/tit/GhoshCYR22,DBLP:journals/tnn/SattlerMS21}
+ achieves this by partitioning clients into groups
+ and running a separate federation within each group,
+ so that each cluster converges on a model that fits its own data distribution
+ rather than compromising across incompatible ones.
+
+The central question is how to determine which clients belong to the same cluster
+ without direct access to their data.
 %
-be a partition of the \(K\) clients, where
-\(C_q\cap C_r=\emptyset\) for \(q\neq r\) and
-\(\bigcup_{q=1}^{Q}C_q=\{1,\ldots,K\}\). Each cluster \(C_q\) is assigned a
-model \(\boldsymbol{\theta}_q\) obtained by minimizing its cluster-specific
-objective:
+The Iterative Federated Clustering Algorithm
+ (IFCA~\cite{DBLP:journals/tit/GhoshCYR22}) approaches this
+ by alternating between assignment and refinement:
+ each client evaluates the current cluster models on its local data
+ and joins the cluster with the lowest loss,
+ then trains locally and uploads its update to the assigned cluster aggregator.
 %
-\[
-    \boldsymbol{\theta}_q^{*}
-    =
-    \operatorname*{arg\,min}_{\boldsymbol{\theta}_q}
-    F_q(\boldsymbol{\theta}_q),
-\]
+Under sufficiently separated distributions,
+ this procedure converges to cluster-specific models
+ that outperform a single global model.
 %
-where
+A related approach~\cite{DBLP:journals/tnn/SattlerMS21}
+ identifies clusters in a post-hoc manner
+ by computing pairwise cosine similarities between client gradient updates:
+ clients with compatible data distributions tend to produce similar gradients,
+ so hierarchical clustering on the server can recover the group structure
+ without requiring clients to evaluate multiple candidate models.
+
+Clustered \gls{FL} can be understood as a form of model personalization,
+ where the degree of personalization is controlled by cluster granularity.
 %
-\[
-    F_q(\boldsymbol{\theta}_q)
-    =
-    \sum_{k\in C_q}
-    \frac{n_k}{N_q}
-    F_k(\boldsymbol{\theta}_q),
-    \qquad
-    N_q
-    =
-    \sum_{k\in C_q}n_k.
-\]
+A single shared model and fully local training sit at the two extremes;
+ clustered approaches occupy the middle ground,
+ sharing model capacity among clients with compatible data
+ while maintaining distinct models for incompatible groups.
 %
-The intended partition places clients with compatible local objectives in the
-same cluster. Exact IID behavior within a cluster is neither necessary nor
-generally attainable; the practical goal is to make intra-cluster heterogeneity
-smaller than the heterogeneity of the complete population.
-
-A basic clustered training process alternates between determining which clients
-should collaborate and optimizing the corresponding cluster models. It can be
-organized through the following phases:
-
-\begin{enumerate}
-    \item \emph{Model initialization.}
-    One or more candidate models are initialized. They may start from common
-    parameters or from independently initialized states.
-
-    \item \emph{Client assignment.}
-    Each client is associated with the model or group considered most compatible
-    with its local data.
-
-    \item \emph{Local training.}
-    Clients train the model associated with their cluster using their local
-    datasets.
-
-    \item \emph{Cluster-wise aggregation.}
-    Updates produced by members of the same cluster are aggregated to obtain a
-    new cluster model. Updates belonging to different clusters remain separate.
-
-    \item \emph{Cluster revision.}
-    Client assignments can be reevaluated, and clusters may be split, merged, or
-    otherwise reorganized as additional evidence about their members becomes
-    available.
-\end{enumerate}
-
-Some methods begin with a common model and split the population when client
-updates become sufficiently dissimilar
-\cite{sattler2021clustered}. Others maintain a predefined set of candidate models
-and alternate between assigning each client to its best-performing model and
-updating the models from the resulting assignments
-\cite{ghosh2022efficient}. In the latter case, a client can select its cluster
-according to the local empirical loss:
+A persistent limitation of these approaches is that the number of clusters
+ must be supplied as a hyperparameter.
 %
-\[
-    c_k^{t}
-    =
-    \operatorname*{arg\,min}_{q\in\{1,\ldots,Q\}}
-    F_k(\boldsymbol{\theta}_q^{t}).
-\]
+In open and dynamic environments, the natural group structure may be unknown a priori,
+ variable over time, or spatially organized in ways not visible to a central server.
 %
-The selected model is then trained locally, and its update contributes only to
-the aggregation for cluster \(c_k^t\).
+Addressing this gap --- discovering and maintaining cluster structure adaptively,
+ under spatial heterogeneity and device mobility ---
+ is the focus of the contributions described in~\Cref{chap:selforg-fl}.
 
-Client similarity can be estimated in several ways. Loss-based strategies
-evaluate candidate cluster models on local data and assign the client to the
-model with the lowest loss. Gradient-based strategies compare the direction or
-magnitude of local updates, under the assumption that compatible objectives
-produce aligned optimization trajectories. Weight-based strategies compare
-model parameters or compact representations derived from them. Additional
-metadata, such as location, communication reachability, device role, or sensing
-context, can be used as a prior when it is expected to correlate with the data
-distribution.
+\section{Toward Self-Organizing Federated Learning}
+\label{sec:fl-selforg-preview}
 
-CFL is particularly interesting when heterogeneity has a group-level structure.
-If several clients observe different samples from the same underlying
-distribution, training them independently would discard useful opportunities for
-data sharing. Conversely, aggregating their updates with those of clients from
-unrelated distributions may degrade their models. Clustering preserves
-collaboration within statistically coherent groups while allowing the resulting
-models to specialize. In spatial settings, the clusters may correspond to
-geographic zones or other environmental contexts, although client location and
-statistical similarity should remain conceptually distinct.
+The approaches reviewed above address individual aspects
+ of federated learning in heterogeneous and dynamic settings,
+ but they are typically studied under simplified assumptions:
+ a fixed cluster count, a known topology, or a static population.
+%
+In a \gls{CAS}, these assumptions fail simultaneously.
 
-Clustered training can be implemented using either centralized or decentralized
-architectures. A central server may maintain all cluster models, evaluate
-membership information, and perform separate aggregations. In a decentralized
-implementation, clients can discover compatible peers and exchange updates only
-within the resulting groups. Hierarchical systems may assign one regional
-aggregator to each cluster. Consequently, CFL specifies which models should be
-learned and which clients should contribute to them, whereas the architecture
-specifies how those clients coordinate.
+The contribution developed in~\Cref{chap:selforg-fl} addresses this
+ by integrating \gls{FL} with the field-based coordination mechanisms
+ introduced in~\Cref{chap:macroprogramming}.
+%
+Rather than treating the clustering structure as a hyperparameter or a preprocessing step,
+ the approach builds it dynamically through self-organizing field computations:
+ devices discover their collaborators through local interactions,
+ elect region leaders without a central coordinator,
+ and adapt their federation membership as spatial context and model similarity change.
+%
+Model sparsification is incorporated directly into the self-organization process,
+ allowing the network structure to reflect both distributional similarity
+ and resource availability.
 
-The approach also introduces challenges absent from single-model FL. The number
-of clusters may be unknown, and an incorrect value can either merge incompatible
-distributions or fragment compatible clients into unnecessarily small groups.
-Similarity estimates obtained early in training can be noisy because models have
-not yet learned sufficiently informative representations. Repeated reassignment
-can cause unstable memberships, while fixed assignments cannot accommodate
-clients whose distributions change over time.
-
-Clustering also has computational and communication costs. Multiple models must
-be initialized, stored, evaluated, and distributed; update comparisons may reveal
-additional information about local training behavior; and small clusters may not
-contain enough data to train a reliable specialized model. Hard assignments force
-each client to select one model even when its data combine multiple distributions,
-whereas soft or overlapping assignments require more complex aggregation.
-Mobility and temporal drift further require the system to decide whether a client
-should change clusters, adapt its current model, or retain knowledge acquired in
-previous environments.
-
-CFL therefore does not eliminate data heterogeneity. Instead, it changes the
-learning objective so that structured heterogeneity can be represented by
-multiple collaborative models. Its effectiveness depends on whether the client
-population contains meaningful groups, whether those groups can be identified
-from information available during federated training, and whether the clustering
-process can remain stable as the system evolves.
+Together, these mechanisms yield a family of methods for
+ \emph{self-organizing federated learning} that operates under
+ the distribution, locality, mobility, and resource constraints
+ that characterize real-world \glspl{CAS}.
