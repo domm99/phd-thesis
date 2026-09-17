@@ -498,159 +498,570 @@ performance.
 \label{sec:fbfl}
 %=============================================================================
 
-This section describes the first instantiation of the framework presented
- in~\Cref{sec:selforgfl-approach}, published in~\cite{FBFL_cite05}.
+This section presents the first instantiation of the framework introduced in \Cref{sec:selforgfl-approach}, 
+ namely \glsentryfull{FBFL}~\cite{DBLP:journals/lmcs/DominiAEV26}.
 %
-In \gls{FBFL} the distance function $d(i,j)$ is set to the physical
- neighborhood range \texttt{nbrRange}: a standard aggregate-computing estimate
- of the Euclidean distance between neighboring devices.
+In this approach, 
+ federation formation is driven exclusively by the physical distance between devices.
 %
-The influence threshold $\sigma$ becomes a communication radius $R$, and
- leader election produces Voronoi-like partitions whose boundaries track the
- physical topology of the network.
-%
-The resulting system addresses two key limitations of standard \gls{FL}:
- the dependence on a central server and the assumption of a homogeneous
- global data distribution.
-%
-\sidenote{qui specificare che FBFL è utile quando vale questa cosa}
-Devices within the same spatial region tend to observe similar label distributions,
- so spatial proximity is a natural proxy for data compatibility in the scenarios
- the framework targets.
+Consequently, 
+ \gls{FBFL} is intended for scenarios in which spatial proximity provides a meaningful proxy 
+ for similarity between local data distributions.
 
-\subsection{Algorithm and Implementation}
-\label{subsec:fbfl-algo}
 
-The algorithm follows the general round structure of~\Cref{sec:selforgfl-approach}.
+\subsection{Algorithm Description}
+\label{sec:fbfl-spatial-algorithm}
+
+\gls{FBFL} instantiates the generic distance function \(d(\cdot,\cdot)\) 
+ with the Euclidean distance between the physical positions of neighboring devices.
 %
-At each round $t$, the distributed leader election algorithm
- $\mathcal{DL}(\texttt{nbrRange}, R)$ runs, producing the leader set
- $\mathcal{L}^{(t)}$ and the partition $\{\mathcal{R}_l^{(t)}\}$.
+Let \(\mathbf{p}_i\) and \(\mathbf{p}_j\) denote the positions 
+ of devices \(d_i\) and \(d_j\), respectively.
 %
-Each device $d$ is assigned to the nearest leader in metric space; 
- if no leader is within radius $R$, the device elects itself.
+Their local distance is defined as
 %
-After local training, models are routed upstream via the \texttt{G}-induced
- gradient field and aggregated at each leader:
-\sidenote{questa equazione è una ripetizione?}
 \begin{equation}
-  \mathbf{w}_l^{(t+1)}
-    = \sum_{d \in \mathcal{R}_l^{(t)}} \alpha_{d,l}^{(t)}\,\tilde{\mathbf{w}}_d^{(t)},
-  \quad \alpha_{d,l}^{(t)} = \frac{n_d}{\sum_{d' \in \mathcal{R}_l^{(t)}} n_{d'}}.
-  \label{eq:fbfl-aggregation}
+  d_{\mathrm{E}}(d_i,d_j)
+  =
+  \left\lVert
+    \mathbf{p}_i-\mathbf{p}_j
+  \right\rVert_2.
+  \label{eq:fbfl-euclidean-distance}
 \end{equation}
 %
-The aggregated model $\mathbf{w}_l^{(t+1)}$ is then broadcast back to all
- region members via \texttt{G}.
+The distributed leader election is therefore instantiated as
+ \(\mathcal{DL}(d_{\mathrm{E}},R)\), where the generic influence threshold
+ \(\sigma\) introduced in the previous section becomes a physical radius \(R\).
+%
+The resulting federations form a Voronoi-like spatial partition of the network:
+ each device is associated with the closest reachable leader according to the
+ path metric induced by \(d_{\mathrm{E}}\).
+%
+Hence, 
+ federation formation is purely spatial and does not depend on either the
+ local datasets or the models trained by the devices.
 
-The ScaFi implementation maps the entire protocol onto four primitive calls:
+\Cref{lst:fbfl-scafi} shows the complete ScaFi~\cite{DBLP:journals/softx/CasadeiVAP22}
+ implementation of the learning process.
 
-\begin{lstlisting}[language=scafi,
-  caption={\gls{FBFL} in ScaFi.
-    \texttt{S} elects leaders via physical range,
-    \texttt{G} propagates routing potentials,
-    \texttt{C} collects model updates,
-    and the second \texttt{G} disseminates the aggregated model.},
-  label={lst:fbfl}]
+\begin{lstlisting}[
+  language=scafi,
+  caption={FBFL implementation using aggregate computing primitives.},
+  label={lst:fbfl-scafi}
+]
 val leaders = S(radius, nbrRange)
-rep(initModel())(localModel => {
-  if(syncCondition) { localModel.trainLocally() }
+
+def syncCondition: Boolean = ???
+
+rep(initModel()) { localModel =>
+  if (syncCondition) {
+    localModel.trainLocally()
+  }
+
   val potential = gradient(leaders)
   val collectedModels =
     C(potential, _ ++ _, Set(localModel), Set.empty)
+
   val aggregatedModel =
-    if (leaders) fedAvg(collectedModels) else emptyModel
-  val globalModel =
+    if (leaders) fedAvg(collectedModels)
+    else emptyModel
+
+  val regionalModel =
     G(leaders, aggregatedModel, identity)
-  mux(syncCondition) { globalModel } { localModel }
-})
+
+  mux(syncCondition) {
+    regionalModel
+  } {
+    localModel
+  }
+}
 \end{lstlisting}
 
-The system was implemented using ScaFi for aggregate computing,
- ScalaPy~\cite{FBFL_cite13} for interoperability between ScaFi and PyTorch,
- and the Alchemist simulator~\cite{FBFL_cite14} for distributed execution.
+The specialization of the general framework is concentrated in the first line:
+ \lstinline[language=scafi]|S(radius, nbrRange)| elects spatially separated
+ leaders using the Euclidean distance exposed by \lstinline[language=scafi]|nbrRange|.
+%
+The remainder implements the learning loop described in \Cref{algo:fbfl-general}.
+%
+The \lstinline[language=scafi]|rep| construct maintains the current model across rounds, 
+ while \lstinline[language=scafi]|syncCondition| determines when a new federated learning round is performed.
+%
+Within each round, \texttt{C} collects locally trained models at the leaders,
+ \lstinline[language=scafi]|fedAvg| produces the regional models, 
+ and \texttt{G} disseminates them to the corresponding federation members.
+
+
+\subsection{Research Questions}
+\label{sec:fbfl-research-questions}
+
+The evaluation investigates whether spatially organized federations can preserve
+ the performance of centralized \gls{FL} under homogeneous data, 
+ improve learning under spatially correlated heterogeneity, 
+ and provide resilience against aggregator failures.
+%
+More specifically, 
+ it addresses the following research questions:
+
+\begin{enumerate}[
+  label=\textbf{RQ\arabic*:},
+  ref=RQ\arabic*,
+  leftmargin=*
+]
+  \item
+  How does Field-Based Federated Learning perform compared with centralized
+  \gls{FL} under \gls{IID} data?
+  \label{rq:fbfl-iid}
+
+  \item
+  Can accuracy be improved by introducing personalized learning regions in
+  which devices are grouped according to the similar experiences commonly
+  observed at spatially close locations?
+  More precisely, what is the effect of this organization under heterogeneous
+  and non-\gls{IID} data distributions?
+  \label{rq:fbfl-non-iid}
+
+  \item
+  What is the effect of using field-based coordination to construct a
+  self-organizing hierarchical architecture in terms of resilience,
+  adaptability, and fault tolerance?
+  \label{rq:fbfl-resilience}
+\end{enumerate}
+
 
 \subsection{Experimental Setup}
-\label{subsec:fbfl-setup}
+\label{sec:fbfl-experimental-setup}
 
-Experiments were conducted on three computer-vision datasets: MNIST~\cite{FBFL_cite15},
- FashionMNIST~\cite{FBFL_cite16}, and Extended MNIST~\cite{FBFL_cite17}.
+The evaluation was conducted on three widely used computer-vision datasets:
+ MNIST~\cite{lecun2010mnist},
+ FashionMNIST~\cite{DBLP:journals/corr/abs-1708-07747}, and
+ Extended MNIST~\cite{DBLP:journals/corr/CohenATS17}.
 %
-Data import and partitioning were managed with the ProFed
- benchmark~\cite{FBFL_cite01} (described in~\Cref{sec:selforgfl-benchmarking}).
+Their main characteristics are summarized in \Cref{tab:fbfl-datasets}.
 %
-Two partitioning strategies were employed to generate non-\gls{IID} distributions:
- Dirichlet-based partitioning, where each device receives samples from most
- classes but with a highly imbalanced distribution; and hard partitioning,
- where each region contains only a strict subset of labels, producing a more
- challenging learning scenario.
-%
-Data were first partitioned by subregion, then each device was assigned to
- exactly one subregion and received a unique random subset of that
- subregion's data.
-%
-Devices within the same subregion are therefore \gls{IID} with each other,
- while devices across subregions are non-\gls{IID}.
-%
-Experiments covered $A \in \{3, 6, 9\}$ spatial areas with $50$ devices in total.
-%
-\gls{FBFL} was compared against \gls{FedAvg}~\cite{FBFL_cite03},
- FedProx~\cite{FBFL_cite18}, and Scaffold~\cite{FBFL_cite10}.
-%
-Each experiment was repeated five times with different random seeds to ensure
- robust results.
+Data import and partitioning were managed using the ProFed benchmark~\cite{DBLP:journals/jors/DominiIALV26}, 
+ described in \Cref{sec:selforgfl-benchmarking}.
 
-A dedicated resilience experiment evaluated the system under sequential leader
- failures.
+\begin{table}[t]
+  \centering
+  \caption{Datasets used in the FBFL evaluation.}
+  \label{tab:fbfl-datasets}
+  \begin{tabular}{lrrrr}
+    \toprule
+    \textbf{Dataset}
+      & \textbf{Training}
+      & \textbf{Test}
+      & \textbf{Features}
+      & \textbf{Classes} \\
+    \midrule
+    MNIST
+      & 60\,000
+      & 10\,000
+      & 784
+      & 10 \\
+    FashionMNIST
+      & 60\,000
+      & 10\,000
+      & 784
+      & 10 \\
+    Extended MNIST
+      & 124\,800
+      & 20\,800
+      & 784
+      & 27 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Three centralized \gls{FL} algorithms were employed as baselines:
+ \gls{FedAvg}~\cite{DBLP:conf/aistats/McMahanMRHA17},
+ FedProx~\cite{DBLP:conf/mlsys/LiSZSTS20}, 
+ and Scaffold~\cite{DBLP:conf/icml/KarimireddyKMRS20}.
 %
-The setup used four spatial areas and $50$ devices.
+First, 
+ \gls{FBFL} was compared with \gls{FedAvg} under a homogeneous data distribution 
+ to assess whether field-based coordination introduces a loss in learning performance 
+ when no data heterogeneity is present.
 %
-After $10$ global communication rounds, two randomly selected leader nodes were
- isolated by severing all their communication links.
+The comparison was then extended to all three baselines under heterogeneous data distributions.
+
+Two synthetic partitioning strategies were used to generate non-\gls{IID} data:
+
+\begin{enumerate}
+  \item
+  \emph{Dirichlet partitioning}, in which each region receives samples from  most classes,
+   but with highly imbalanced class proportions; and
+  \item
+  \emph{hard partitioning}, in which each region contains only a strict subset
+  of the available labels, producing a more challenging learning scenario.
+\end{enumerate}
+
+The three data-distribution scenarios are illustrated in \Cref{fig:fbfl-distributions}.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3.5cm]{IID data distribution}
+    \caption{\gls{IID} data.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3.5cm]{Dirichlet data distribution}
+    \caption{Dirichlet partitioning.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3.5cm]{Hard data partitioning}
+    \caption{Hard partitioning.}
+  \end{subfigure}
+
+  \caption{
+    Data-distribution strategies across five spatial regions.
+    Each color represents a different region.
+    Dirichlet and hard partitioning produce non-IID data across regions.
+  }
+  \label{fig:fbfl-distributions}
+\end{figure}
+
+The data were assigned to devices through the following procedure.
 %
-The experiment assessed whether the system could self-stabilize by re-electing
- new leaders and restoring a stable federation configuration.
+First, 
+ the dataset was partitioned according to the selected strategy, 
+ producing a separate data pool for each spatial region.
+%
+Each device was then assigned to exactly one region 
+ and received a randomly sampled subset of its data pool.
+%
+The selected samples were removed from the pool to ensure 
+ that no two devices shared the same observations.
+%
+Consequently, 
+ devices within the same region received \gls{IID} data relative to one another, 
+ whereas devices belonging to different regions received non-\gls{IID} data.
+%
+The experiments considered \(A\in\{3,6,9\}\) spatial regions 
+ and a total of \(50\) devices.
+
+A dedicated experiment was also conducted to assess the resilience of the self-organizing architecture.
+%
+The scenario comprised four spatial regions and \(50\) devices.
+%
+After \(10\) global communication rounds, 
+ two of the four leaders were selected at random and isolated by removing all their communication links.
+%
+The experiment evaluated whether the remaining devices could autonomously elect new leaders 
+ and restore a stable federation configuration aligned with the spatial regions.
+
+All experiments used PyTorch~\cite{paszke2017automatic}
+ for model training.
+%
+The distributed implementation combined ScaFi for aggregate computing,
+ ScalaPy~\cite{DBLP:conf/scala/LaddadS20} for interoperability between ScaFi and Python, 
+ and Alchemist~\cite{DBLP:journals/jos/PianiniMV13} for simulation.
+%
+Each experiment was repeated five times using different random seeds.
+
+The source code, data, and execution instructions are publicly available for both the 
+baselines\footnote{\url{https://github.com/davidedomini/experiments-2025-lmcs-field-based-FL-baselines}}
+and
+\gls{FBFL}\footnote{\url{https://github.com/davidedomini/experiments-2025-lmcs-field-based-FL}}.
+
 
 \subsection{Results and Discussion}
-\label{subsec:fbfl-results}
+\label{sec:fbfl-results}
 
-Under \gls{IID} data, \gls{FBFL} achieves performance comparable to \gls{FedAvg}.
-%
-As expected, the decentralized approach shows slightly more pronounced oscillations
- in training loss and validation accuracy due to the absence of a central
- coordinating authority; however, final accuracy matches that of centralized learning
- after the same number of communication rounds.
 
-Under non-\gls{IID} conditions the advantage of \gls{FBFL} becomes pronounced.
-%
-Baseline methods suffer substantial performance degradation---particularly under
- hard partitioning---as they optimize a single global model that cannot capture
- region-specific distributions.
-%
-On EMNIST with hard partitioning and $9$ areas, baselines plateau near $0.50$
- validation accuracy, while \gls{FBFL} maintains accuracy above $0.95$.
-%
-The performance gap widens as the number of areas increases, confirming that
- spatial heterogeneity is the primary challenge that \gls{FBFL} addresses.
-%
-These findings hold consistently across datasets and partitioning strategies,
- with FashionMNIST and MNIST showing similar trends albeit with smaller absolute gaps
- due to their lower label complexity.
+\paragraph{\ref{rq:fbfl-iid}: Performance under homogeneous data}
 
-Regarding resilience, the results confirm that the self-organizing architecture
- recovers gracefully from leader failures.
+To answer \ref{rq:fbfl-iid}, 
+ \gls{FBFL} was compared with \gls{FedAvg} under homogeneous data distributions.
 %
-After the two leaders are removed at round $10$, the metrics show only a minor
- transient increase in training loss at the failure instant, with no significant
- long-term degradation.
+As shown in \Cref{fig:fbfl-iid-results}, 
+ training loss and validation accuracy follow similar trends 
+ for both approaches on MNIST and FashionMNIST.
 %
-The Alchemist simulation confirms the visual recovery: after a brief transitional
- period during which multiple leaders compete within each subregion,
- the system converges to a new stable configuration with one leader per subregion.
+The decentralized execution of \gls{FBFL} produces slightly more pronounced oscillations 
+ because aggregation is performed independently within multiple
+ self-organizing regions rather than by a single central coordinator.
 %
-This resilience is structural: it follows directly from the self-stabilizing
- properties of the \gls{SCR} pattern rather than from a purpose-built
- fault-tolerance mechanism.
+Despite these fluctuations, 
+ \gls{FBFL} reaches final performance comparable to 
+ \gls{FedAvg} after the same number of global communication rounds.
+%
+Thus, 
+ under \gls{IID} data, the decentralization and self-organization introduced by \gls{FBFL} 
+ do not result in a substantial loss of learning performance.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      MNIST training loss\\
+      IID partitioning, 3 regions
+    }
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      MNIST validation accuracy\\
+      IID partitioning, 3 regions
+    }
+  \end{subfigure}
+
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      FashionMNIST training loss\\
+      IID partitioning, 3 regions
+    }
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      FashionMNIST validation accuracy\\
+      IID partitioning, 3 regions
+    }
+  \end{subfigure}
+
+  \caption{
+    Comparison between FBFL and FedAvg under IID data.
+    The first row reports results on MNIST and the second on FashionMNIST.
+  }
+  \label{fig:fbfl-iid-results}
+\end{figure}
+
+
+\paragraph{\ref{rq:fbfl-non-iid}: Performance under heterogeneous data}
+
+To answer \ref{rq:fbfl-non-iid}, 
+ \gls{FBFL} was compared with all three baselines using Dirichlet and hard partitioning.
+%
+The results show that the centralized baselines undergo substantial performance
+ degradation as the heterogeneity between spatial regions increases.
+%
+Since these methods optimize a single model across all devices, 
+ incompatible regional distributions result in unstable training and poor generalization.
+
+\Cref{fig:fbfl-non-iid-results} reports representative results from an
+ evaluation comprising more than \(400\) experimental configurations.
+%
+The first row shows Extended MNIST under hard partitioning 
+ with \(6\) and \(9\) regions.
+%
+In these configurations, 
+ the baseline algorithms plateau at approximately \(0.5\) validation accuracy, 
+ whereas \gls{FBFL} remains above \(0.95\).
+%
+Increasing the number of heterogeneous regions further reduces the performance of the centralized baselines, 
+ while \gls{FBFL} remains stable because each regional model is trained only by devices with compatible distributions.
+
+The results on FashionMNIST and MNIST follow the same trend.
+%
+The performance difference is smaller because these datasets are less complex than Extended MNIST, 
+ but \gls{FBFL} still consistently outperforms the baselines.
+%
+These results answer \ref{rq:fbfl-non-iid} positively:
+ when data heterogeneity is spatially structured, 
+ organizing devices into spatial federations enables regional specialization 
+ and prevents interference between incompatible data distributions.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      Extended MNIST validation accuracy\\
+      Hard partitioning, 6 regions
+    }
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      Extended MNIST validation accuracy\\
+      Hard partitioning, 9 regions
+    }
+  \end{subfigure}
+
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      FashionMNIST validation accuracy\\
+      Dirichlet partitioning, 3 regions
+    }
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      FashionMNIST validation accuracy\\
+      Dirichlet partitioning, 9 regions
+    }
+  \end{subfigure}
+
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      MNIST validation accuracy\\
+      Hard partitioning, 3 regions
+    }
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      MNIST validation accuracy\\
+      Dirichlet partitioning, 6 regions
+    }
+  \end{subfigure}
+
+  \caption{
+    Comparison between FBFL and the baseline algorithms under non-IID data.
+    The rows report results on Extended MNIST, FashionMNIST, and MNIST,
+    respectively.
+  }
+  \label{fig:fbfl-non-iid-results}
+\end{figure}
+
+
+\paragraph{\ref{rq:fbfl-resilience}: Resilience to leader failures}
+
+The final experiment evaluates the resilience of the self-organizing
+ hierarchical architecture introduced by \gls{FBFL}.
+%
+After the system had stabilized, 
+ two leaders were removed at global communication round \(10\).
+%
+The objective was to determine whether the system could autonomously recover,
+ elect replacement leaders, and continue training without substantial
+ performance degradation.
+
+As shown in \Cref{fig:fbfl-failure-metrics}, 
+ the failure causes only a minor temporary increase in training loss, 
+ with no significant long-term reduction in validation accuracy.
+%
+The learning process continues while the coordination layer 
+ reorganizes the affected regions.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      Training loss under leader failures
+    }
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder{
+      Validation accuracy under leader failures
+    }
+  \end{subfigure}
+
+  \caption{
+    Training loss and validation accuracy under leader failures.
+    Two leaders fail at communication round \(10\), causing only a temporary
+    increase in training loss while the system reorganizes.
+  }
+  \label{fig:fbfl-failure-metrics}
+\end{figure}
+
+The evolution of the federation structure is illustrated in
+ \Cref{fig:fbfl-failure-evolution}.
+%
+Immediately after the failure, 
+ the system enters a transitional state in which the affected regions have not yet stabilized.
+%
+The remaining devices subsequently elect new leaders 
+ and reconstruct the spatial federations.
+%
+Once coordination stabilizes, 
+ each spatial region is again managed by a single leader 
+ and the normal learning process resumes.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Initialization}
+    \caption{Initialization.}
+    \label{fig:fbfl-failure-initialization}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Region stabilization}
+    \caption{Region stabilization.}
+    \label{fig:fbfl-failure-stabilization}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Learning}
+    \caption{Learning.}
+    \label{fig:fbfl-failure-learning}
+  \end{subfigure}
+
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Leader failures}
+    \caption{Leader failures.}
+    \label{fig:fbfl-failure-event}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Federation reorganization}
+    \caption{Reorganization.}
+    \label{fig:fbfl-failure-reorganization}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Restored learning}
+    \caption{Restored learning.}
+    \label{fig:fbfl-failure-recovery}
+  \end{subfigure}
+
+  \caption{
+    Evolution of the FBFL federation structure following leader failures.
+    The background colors represent the spatial data distributions, node colors
+    identify federation membership, and black markers identify leaders.
+    After two leaders fail, the system autonomously elects replacements and
+    converges to a new stable configuration.
+  }
+  \label{fig:fbfl-failure-evolution}
+\end{figure}
+
+These results answer \ref{rq:fbfl-resilience} positively.
+%
+The architecture recovers from leader failures without requiring an external
+ reconfiguration mechanism and without suffering a significant long-term performance loss.
+%
+This resilience follows from the self-stabilizing behavior of the \gls{SCR} pattern: 
+ leader election and region formation are continuously recomputed rather
+ than permanently assigned before training begins.
+
+Overall, 
+ the evaluation shows that purely spatial federation formation is effective when spatial proximity reflects similarity 
+ between local data distributions.
+%
+However, 
+ physical distance alone cannot distinguish between nearby devices observing different phenomena 
+ or recognize compatible devices whose similarity is not captured by their locations.
+%
+This limitation motivates the data-aware distance function introduced in the following section.
 
 
 %=============================================================================

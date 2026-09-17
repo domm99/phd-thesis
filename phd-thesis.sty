@@ -17,11 +17,16 @@
 \usepackage{amsthm}
 
 \newtheorem{assumption}{Assumption}
-%% define non-standard environments BEYOND the ones already supplied
-%% here, for example
-%\theoremstyle{plain}\newtheorem{satz}[thm]{Satz} %\crefname{satz}{Satz}{S\"atze}
-%% Do NOT replace the proclamation environments lready provided by
-%% your own.
+
+\newcommand{\imageplaceholder}[2][4cm]{%
+  \fbox{%
+    \parbox[c][#1][c]{%
+      \dimexpr\linewidth-2\fboxsep-2\fboxrule\relax
+    }{%
+      \centering\small #2
+    }%
+  }%
+}
 
 \RequirePackage{my-acronyms}
 \RequirePackage{minitoc}
