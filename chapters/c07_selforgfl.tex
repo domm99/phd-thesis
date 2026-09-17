@@ -57,10 +57,11 @@ Standard \gls{FL} algorithms such as \gls{FedAvg}~\cite{DBLP:conf/aistats/McMaha
  are designed under the assumption that a global model is both
  attainable and desirable.
 %
+\sidenote{ref here}
 In practice, this assumption frequently fails.
 %
 When data distributions vary significantly across clients 
- (a condition commonly referred to as statistical heterogeneity or \emph{non-\gls{IID}} data) 
+ (a condition commonly referred to as statistical heterogeneity or non-\gls{IID} data) 
  training a single global model introduces a bias toward the majority distribution and degrades
  performance for underrepresented clients.
 
@@ -68,7 +69,7 @@ The heterogeneity problem is especially acute in spatially distributed
  \gls{CAS}:
  devices co-located in the same urban district, sensor field, or
  industrial site observe correlated local phenomena,
- while devices in distant regions observe systematically different ones.
+ while devices in distant regions observe systematically different ones~\cite{esterle2022deep}.
 %
 As discussed in \Cref{sec:fl-heterogeneity},
  this spatial structure implies that the globally optimal partition
@@ -117,6 +118,7 @@ This design answers a concrete gap identified in
 The following notation is used consistently throughout the chapter
  and summarized in~\Cref{tab:selforgfl-notation}.
 
+\sidenote{double check symbols}
 \begin{table}[htbp]
   \centering
   \caption{Notation used in \Cref{chap:selforg-fl}.}
@@ -144,121 +146,171 @@ The following notation is used consistently throughout the chapter
   \end{tabular}
 \end{table}
 
-\subsection{Network Model}
+%\subsection{Network Model}
 
-The system consists of a set of autonomous devices $\mathcal{V}$
- that communicate over a peer-to-peer network modeled as a graph
- $\mathcal{G} = (\mathcal{V}, \mathcal{E})$,
- where an edge $(d, d') \in \mathcal{E}$ indicates that $d$ and $d'$
- can exchange messages directly.
+Consider a distributed network comprising a set of devices, 
+ denoted as $\mathcal{V}$.
 %
-The neighborhood of device $d$ is
- $\mathcal{N}_d = \{d' \in \mathcal{V} \mid (d, d') \in \mathcal{E}\}$.
+This network can be modelled as a graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$,
+ with nodes representing devices and edges symbolizing direct communication links. 
 %
-\sidenote{check in paper FBFL se questa la supportavamo con ref}
-The graph $\mathcal{G}$ is assumed to be connected,
- ensuring that field-based coordination can eventually propagate
- information between any pair of devices.
-%
-Messages between neighbors are reliable but may experience bounded delays.
+The neighbors of a device $d$, with which $d$ can exchange messages, 
+ are denoted by $\mathcal{N}_d = \{d' \in \mathcal{V} \mid (d, d') \in \mathcal{E}\}$.
 
-There is no central server: all coordination, model aggregation,
- and model dissemination happen through device-to-device exchanges
- mediated by the aggregate computing runtime.
+\begin{assumption}[Network Connectivity]\label{assumption:network-connectivity}
+The communication graph $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ is connected, 
+ ensuring information can eventually propagate between any two devices.
+\end{assumption}
 %
-\sidenote{check in paper FBFL se questa la supportavamo con ref}
-Devices progress through federated learning rounds in discrete time
- steps $t \in \{0, 1, \ldots, \mathcal{T}\}$,
- synchronized by a shared clock condition implemented through
- the aggregate computing execution model.
+\begin{assumption}[Reliable Message Delivery]\label{assumption:reliable-message-delivery}
+Communication between neighboring devices $d, d' \in \mathcal{V}$ where $(d, d') \in \mathcal{E}$ is reliable, 
+ though messages may experience bounded delays.
+\end{assumption}
 
-\subsection{Local Data and Heterogeneity}
-
-Each device $d \in \mathcal{V}$ holds a private dataset
- $\mathcal{D}_d = \{(x_i, y_i)\}_{i=1}^{n_d}$,
- where $x_i \in \mathbb{R}^m$ are input features,
- $y_i \in \mathcal{Y}$ are labels,
- and $n_d = |\mathcal{D}_d|$ is the local sample count.
+The devices in $\mathcal{V}$ are deployed across a spatial area
+ $A = \{a_1, a_2, \ldots, a_k\}$ divided into $k$ distinct contiguous subregions.
 %
-The key departure from the standard \gls{FL} assumption is that
- data distributions are \emph{spatially structured}:
- devices that are close in the network (or in physical space)
- tend to have similar distributions, while distant devices have
- systematically different ones~\cite{FBFL_cite07}.
+Each subregion $a_j$ is characterized by a unique data distribution $P_j$
+ over the input-output space $\mathbb{R}^m \times \mathcal{Y}$,
+ reflecting the localized phenomena observed in that portion of the environment.
 %
-Formally, devices in $\mathcal{V}$ are partitioned into
- $K$ \emph{ground-truth clusters} $\mathcal{C}_1, \ldots, \mathcal{C}_K$
- such that within each cluster the data are approximately \gls{IID},
- while across clusters they are not.
+The number of devices far exceeds the number of subregions ($n = |\mathcal{V}| \gg k$),
+ so that each subregion contains multiple devices.
 %
-The number $K$ is not known to any device.
+Each device $d$ resides in some subregion $a_j$
+ and its local dataset is drawn from the corresponding distribution $P_j$:
+ devices within the same subregion share a common data distribution,
+ while devices in different subregions may observe statistically distinct data.
+%
+\begin{assumption}[Spatial-Data Correlation]\label{assumption:spatial-data-correlation}
+Devices within the same subregion $a_j \in A$ exhibit similar data distributions:
+ for any $d, d' \in \mathcal{V}$ residing in the same subregion,
+ the statistical distance between their local distributions satisfies
+ $D(\mathbb{P}_d, \mathbb{P}_{d'}) < \epsilon$ for some threshold $\epsilon > 0$,
+ while devices in distinct subregions may have significantly different distributions.
+\end{assumption}
 
-\subsection{Learning Objective}
+Each device $d \in \mathcal{V}$ possesses a local dataset $\mathcal{D}_d = \{(x_i, y_i)\}_{i=1}^{n_d}$,
+ where $x_i \in \mathbb{R}^m$ represents the input features, $y_i \in \mathcal{Y}$ the corresponding labels,
+ and $n_d = |\mathcal{D}_d|$ the number of samples on device $d$.
+%
+The local data distribution $\mathbb{P}_d(x,y)$ coincides with $P_j$ for the subregion $a_j$
+ in which $d$ resides,
+ and may therefore differ across devices in different subregions
+ ($\mathbb{P}_d \neq \mathbb{P}_{d'}$ for $d, d'$ in distinct subregions). 
 
-In standard \gls{FL} the goal is to minimize the global loss:
+The dataset on device $d$ is used to train a local model, 
+ characterized by a weights vector $\mathbf{w}_d \in \mathbb{R}^p$, 
+ where $p$ represents the total number of parameters in the neural network architecture. 
+%
+\begin{assumption}[Shared Model Initialization]\label{assumption:shared-model-initialization}
+All devices $d \in \mathcal{V}$ start with the same initial model $\mathbf{w}_d^{(0)} = \mathbf{w}^{(0)}$, 
+ ensuring a common starting point for the learning process.
+%
+This may be a pre-trained model or a randomly initialized model shared via a global elected leader.
+\end{assumption}
+
+\begin{assumption}[Synchronized Federated Learning Rounds]\label{assumption:synchronized-fl-rounds}
+There exists a global synchronization mechanism that ensures all devices 
+ progress through federated learning rounds in discrete time steps $t \in \{0, 1, 2, \ldots, \mathcal{T}\}$, 
+ where devices complete local training, model sharing, and aggregation phases 
+ within bounded time intervals before proceeding to round $t+1$.
+\end{assumption}
+%
+At federated learning round $t$, 
+ the local objective function $f_d: \mathbb{R}^p \rightarrow \mathbb{R}$ measures the empirical risk 
+ on device $d$'s local dataset:
+%
 \begin{equation}
-  f(\mathbf{w}) = \sum_{d \in \mathcal{V}} \alpha_d \, f_d(\mathbf{w}),
-  \qquad \alpha_d = \frac{n_d}{|D|},
-  \label{eq:global-loss}
-\end{equation}
-where $f_d(\mathbf{w}) = \frac{1}{n_d} \sum_{(x,y) \in \mathcal{D}_d} \ell(\mathbf{w}; x, y)$
- is the local loss and $|D| = \sum_d n_d$ is the total dataset size.
-%
-In the heterogeneous setting, minimizing~\eqref{eq:global-loss} with a
- \emph{single} model $\mathbf{w}$ yields a solution that is suboptimal
- for every cluster.
-%
-The proposed approach instead trains one regional model
- $\mathbf{w}_l$ per elected leader $l \in \mathcal{L}^{(t)}$,
- minimizing the regional objective:
-\begin{equation}
-  f_l^{(t)}(\mathbf{w}_l) = \sum_{d \in \mathcal{R}_l^{(t)}} \alpha_{d,l}^{(t)} \, f_d(\mathbf{w}_l),
-  \label{eq:regional-loss}
-\end{equation}
-where $\alpha_{d,l}^{(t)} = n_d / \sum_{d' \in \mathcal{R}_l^{(t)}} n_{d'}$
- and $\sum_{d \in \mathcal{R}_l^{(t)}} \alpha_{d,l}^{(t)} = 1$~\cite{FBFL_cite05}.
-%
-The regions $\{\mathcal{R}_l^{(t)}\}_{l \in \mathcal{L}^{(t)}}$ partition
- $\mathcal{V}$,
- so each device contributes to exactly one regional model per round.
-
-\subsection{Region Formation}
-
-Leader election assigns each device to the nearest leader within radius $R$.
-%
-Given the leader set $\mathcal{L}^{(t)}$ produced by a distributed election
- algorithm $\mathcal{DL}(\mathrm{dist}, R)$,
- device $d$ is assigned to leader $l \in \mathcal{L}^{(t)}$ if and only if:
-\begin{equation}
-  \mathrm{dist}(d, l) \le R
-  \quad \text{and} \quad
-  \forall l' \in \mathcal{L}^{(t)} \setminus \{l\},\;
-  \mathrm{dist}(d, l) < \mathrm{dist}(d, l').
-  \label{eq:leader-assignment}
+f_d(\mathbf{w}_d^{(t)}) = \frac{1}{n_d} \sum_{i=1}^{n_d} \ell(h(\mathbf{w}_d^{(t)}; x_i), y_i),
 \end{equation}
 %
-If no leader is within radius $R$, the device promotes itself to leader.
-%
-In case of equidistance, a deterministic tie-breaking rule based on
- device identifiers is applied.
-%
-The resulting partition is Voronoi-like with respect to the chosen metric,
- and it adapts automatically when devices join, leave, or fail.
+where $h(\mathbf{w}_d^{(t)}; x_i)$ denotes the model's prediction for input $x_i$ given parameters $\mathbf{w}_d^{(t)}$, 
+ and $\ell(\cdot, \cdot)$ represents the loss function (e.g. cross-entropy for classification tasks).
 
-The choice of metric $\mathrm{dist}$ determines what ``proximity'' means
- for cluster formation.
+In traditional federated learning, 
+ the global objective seeks to minimize a weighted combination of all local objectives:
+\begin{equation}
+  f(\mathbf{w}) = \sum_{d \in \mathcal{V}} \alpha_d f_d(\mathbf{w}),
+\end{equation}
 %
-In the spatial variant (\Cref{sec:fbfl}) the metric is the Euclidean
- distance or the hop count over $\mathcal{G}$, grouping devices that
- are geographically close.
+where $\alpha_d = \frac{n_d}{|D|}$ represents the relative weight of device $d$'s data contribution, 
+ with $|D| = \sum_{d \in \mathcal{V}} n_d$ being the total number of samples across all devices.
+
+Rather than optimizing a single global model,
+ the approach pursued in this chapter is to partition $\mathcal{V}$ into groups of compatible devices
+ and train a specialized model for each group.
 %
-In the space-fluid variant (\Cref{sec:psfl}) the metric is replaced by
- a model-dissimilarity measure, grouping devices whose local data are
- statistically compatible regardless of physical distance.
+Formally, assume the devices admit a latent partition into $k$ clusters
+ $C_1, \ldots, C_k$, with $C_q \cap C_r = \emptyset$ for $q \neq r$
+ and $\bigcup_{q=1}^k C_q = \mathcal{V}$.
 %
-Both variants are developed in \Cref{sec:selforgfl-approach}.
+This partition reflects the underlying spatial and distributional structure of the data,
+ but is \emph{not known} to the devices at learning time.
+
+The learning problem can then be framed as finding a mapping $\mathcal{M}$
+ from the set of devices to a collection of \emph{federations}:
+\begin{equation}
+  \mathcal{M} : \mathcal{V} \;\rightarrow\; \mathcal{F} \subseteq \mathcal{P}(\mathcal{V}),
+\end{equation}
+where $\mathcal{P}(\mathcal{V})$ denotes the power set of $\mathcal{V}$
+ and $\mathcal{F} = \{F_1, \ldots, F_f\}$ is the set of discovered federations.
+%
+Each federation $F_q \subseteq \mathcal{V}$ runs an independent federated learning process,
+ training a specialized model $\mathbf{w}_q$ by minimizing a weighted combination
+ of the local objectives of its members:
+\begin{equation}
+  f_q(\mathbf{w}_q) = \sum_{d \in F_q} \alpha_{d,q} \, f_d(\mathbf{w}_q),
+  \label{eq:cluster-objective}
+\end{equation}
+where $\alpha_{d,q} = \frac{n_d}{\sum_{d' \in F_q} n_{d'}}$ is the normalized data weight
+ of device $d$ within federation $F_q$.
+%
+The overall goal is that each discovered federation $F_q$ recovers the corresponding true cluster
+ as closely as possible;
+ following, this is formalized as minimizing the \emph{misclassification rate}:
+\begin{equation}
+  \min_{\mathcal{M}} \;\frac{1}{|\mathcal{V}|} \min_{\pi \in \Pi_k}
+    \sum_{q=1}^{f} \bigl|F_q \mathbin{\triangle} C_{\pi(q)}\bigr|,
+  \label{eq:misclassification}
+\end{equation}
+where $\Pi_k$ is the set of all permutations over $\{1, \ldots, k\}$
+ and $\triangle$ denotes the symmetric difference between sets.
+%
+The concrete mechanisms through which the federations $\mathcal{F}$ are discovered
+ and maintained are the subject of the contributions described in the following sections. 
 
 
+% \paragraph{\emph{Discussion of Modeling Assumptions}}
+% The theoretical framework of FBFL rests on several key assumptions that warrant further discussion 
+%  regarding their practical implications.
+% %
+% Regarding~\Cref{assumption:network-connectivity}, 
+%  strict, permanent full connectivity is not a prerequisite for the system's operation. 
+% % 
+% As long as a communication path exists between any pair of devices, 
+%  field-based coordination mechanisms ensure that information eventually propagates across the network, 
+%  with convergence occurring in $O(D)$ time, where $D$ denotes the network diameter. 
+% %
+% Concerning~\Cref{assumption:reliable-message-delivery}, 
+%  although our experimental evaluation does not explicitly consider message losses, 
+%  prior work~\cite{DBLP:journals/lmcs/AguzziCV25} on aggregate computing 
+%  and its foundational building blocks has extensively studied unreliable communication settings, 
+%  demonstrating robust collective behavior even under severe message drop rates (up to 70\%).
+% %
+% \Cref{assumption:shared-model-initialization} can be satisfied in practice through a lightweight initialization phase: 
+%  a preliminary gossip-based consensus step is sufficient to align devices 
+%  on a shared initial model before the learning process starts.
+% %
+% Finally, 
+%  \Cref{assumption:spatial-data-correlation} reflects empirical evidence observed in many real-world scenarios, 
+%  where spatial proximity induces correlations in local data distributions, 
+%  yielding approximately i.i.d.\ data within regions and heterogeneous distributions across regions. 
+% % 
+% While purely spatial partitioning may sometimes be overly restrictive, 
+%  recent extensions of this line of work~\cite{DBLP:journals/iot/DominiFAVE26} propose adaptive notions of \emph{space fluidity}, 
+%  in which initially spatial regions are dynamically refined--expanded or contracted--based on additional metrics, 
+%  such as proxies for data similarity.
 
 %=============================================================================
 \section{Field-Based Federated Learning}
