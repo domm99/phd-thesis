@@ -280,145 +280,215 @@ where $\Pi_k$ is the set of all permutations over $\{1, \ldots, k\}$
 The concrete mechanisms through which the federations $\mathcal{F}$ are discovered
  and maintained are the subject of the contributions described in the following sections. 
 
-
-% \paragraph{\emph{Discussion of Modeling Assumptions}}
-% The theoretical framework of FBFL rests on several key assumptions that warrant further discussion 
-%  regarding their practical implications.
-% %
-% Regarding~\Cref{assumption:network-connectivity}, 
-%  strict, permanent full connectivity is not a prerequisite for the system's operation. 
-% % 
-% As long as a communication path exists between any pair of devices, 
-%  field-based coordination mechanisms ensure that information eventually propagates across the network, 
-%  with convergence occurring in $O(D)$ time, where $D$ denotes the network diameter. 
-% %
-% Concerning~\Cref{assumption:reliable-message-delivery}, 
-%  although our experimental evaluation does not explicitly consider message losses, 
-%  prior work~\cite{DBLP:journals/lmcs/AguzziCV25} on aggregate computing 
-%  and its foundational building blocks has extensively studied unreliable communication settings, 
-%  demonstrating robust collective behavior even under severe message drop rates (up to 70\%).
-% %
-% \Cref{assumption:shared-model-initialization} can be satisfied in practice through a lightweight initialization phase: 
-%  a preliminary gossip-based consensus step is sufficient to align devices 
-%  on a shared initial model before the learning process starts.
-% %
-% Finally, 
-%  \Cref{assumption:spatial-data-correlation} reflects empirical evidence observed in many real-world scenarios, 
-%  where spatial proximity induces correlations in local data distributions, 
-%  yielding approximately i.i.d.\ data within regions and heterogeneous distributions across regions. 
-% % 
-% While purely spatial partitioning may sometimes be overly restrictive, 
-%  recent extensions of this line of work~\cite{DBLP:journals/iot/DominiFAVE26} propose adaptive notions of \emph{space fluidity}, 
-%  in which initially spatial regions are dynamically refined--expanded or contracted--based on additional metrics, 
-%  such as proxies for data similarity.
-
 %=============================================================================
 \section{Field-Based Federated Learning}
 \label{sec:selforgfl-approach}
 %=============================================================================
 
-The self-organizing \gls{FL} framework developed in this thesis builds on
- the \gls{SCR} pattern introduced in~\Cref{chap:macroprogramming}.
+As discussed in~\Cref{sec:selforgfl-motivation}, 
+ the approach developed in this chapter frames the custering problem as a self-organization problem 
+ amenable to field-based coordination.
 %
-The central idea is to use aggregate computing fields to perform, in a
- fully decentralized way, the three coordination tasks that any clustered
- \gls{FL} system must solve: elect a set of leaders, route local models
- toward those leaders, and disseminate aggregated models back to every
- device in each region.
+The main objective of this line of work has therefore been to map the key
+concepts and operations of \gls{FL} onto the abstractions provided by aggregate
+computing.
 %
-These three tasks map directly onto the three \gls{SCR} operators:
- \texttt{S} (sparse choice) elects a set of leaders such that no two
- leaders are within a given influence threshold of each other;
- \texttt{G} (gradient cast) propagates routing potentials from every
- device toward its nearest leader;
- and \texttt{C} (collect cast) routes model updates upstream along the
- minimum-potential paths.
+Under this mapping, a federation corresponds to a self-organizing region, its
+aggregator corresponds to the region leader, and the exchange of models between
+devices and aggregators is expressed through collective information flows.
 %
-The threshold used by \texttt{S} and the potential accumulated by
- \texttt{G} are computed through a device-pair \emph{distance function}
- $d(i,j)$, which is the only point where the three instantiations of the
- framework diverge.
+This makes it possible to describe the entire learning process as a distributed
+aggregate program, without relying on a distinguished server or requiring the
+number and composition of the federations to be known in advance.
 
-Formally, a training round proceeds through six steps regardless of the
- distance function chosen.
+The coordination structure is obtained through the
+Self-organizing Coordination Regions (\gls{SCR}) pattern introduced in
+Chapter~3.
 %
-First, the distributed leader election algorithm
- $\mathcal{DL}(d, \sigma)$ runs, producing the leader set
- $\mathcal{L}^{(t)} \subseteq \mathcal{V}$ and the induced partition
- into regions $\{\mathcal{R}_l^{(t)}\}_{l \in \mathcal{L}^{(t)}}$.
+The pattern combines three aggregate computing building blocks.
 %
-Each device $d_i$ then performs $E$ epochs of local \gls{SGD}
- on $\mathcal{D}_i$, starting from the current regional model
- $\mathbf{w}_i^{(t)}$ and producing an updated model
- $\tilde{\mathbf{w}}_i^{(t)}$.
+The sparse-choice operator \texttt{S} performs a distributed multi-leader
+election, selecting leaders that are sufficiently separated according to a
+generic device-to-device distance function \(d(\cdot,\cdot)\) and an influence
+threshold \(\sigma\).
 %
-Updated models are forwarded upstream to their respective leaders via
- the gradient-field routing induced by \texttt{G},
- after which each leader $l$ aggregates all received models:
+The elected leaders induce a Voronoi-like partition of the network, with each
+device associated with its closest leader according to the path metric induced
+by \(d\).
+
+More precisely, the coordination layer constructs a gradient field
+\(\Phi : \mathcal{V} \rightarrow \mathbb{R}_{\geq 0}\) that associates each
+device with its cumulative distance from the closest federation leader.
+%
+At round \(t\), the field is defined recursively as
+%
 \begin{equation}
-  \mathbf{w}_l^{(t+1)}
-    = \sum_{d \in \mathcal{R}_l^{(t)}} \alpha_{d,l}^{(t)}\,
-        \tilde{\mathbf{w}}_d^{(t)},
-  \label{eq:fl-aggregation}
-\end{equation}
-where $\alpha_{d,l}^{(t)} = n_d / \sum_{d' \in \mathcal{R}_l^{(t)}} n_{d'}$
- are data-size weights.
-%
-Finally, the aggregated regional model $\mathbf{w}_l^{(t+1)}$ is
- disseminated back to all devices in $\mathcal{R}_l^{(t)}$ via
- \texttt{G}:
-\begin{equation}
-  \forall d \in \mathcal{R}_l^{(t)}:\quad
-    \mathbf{w}_d^{(t+1)} \mathrel{\mathop{:}}= \mathbf{w}_l^{(t+1)}.
-  \label{eq:fl-dissemination}
+  \Phi^{(t)}(d_i) =
+  \begin{cases}
+    0,
+      & \text{if } d_i \in \mathcal{L}^{(t)}, \\[2mm]
+    \displaystyle
+    \min_{d_j \in \mathcal{N}_i}
+    \left\{
+      \Phi^{(t)}(d_j) + d(d_i,d_j)
+    \right\},
+      & \text{otherwise}.
+  \end{cases}
+  \label{eq:generic-federation-gradient}
 \end{equation}
 %
-\sidenote{check in paper FBFL se questa la supportavamo con ref}
-Because the coordination fields stabilize on a timescale faster than the
- federation round period, the partition presented to the aggregation step
- is always consistent.
-
-\Cref{sec:fbfl,sec:psfl,sec:sparseful} present the three instantiations of this
- framework in the order in which they were developed, each specializing the general
- structure described here, reporting its experimental setup, and discussing results.
+Consequently, \(\Phi^{(t)}(d_i)\) represents the minimum cumulative distance
+between device \(d_i\) and any elected leader, computed over the paths in the
+communication graph.
 %
-\Cref{algo:fbfl-general} summarizes the round structure as pseudocode.
+Together with a deterministic tie-breaking rule, this field determines both
+the leader associated with each device and the gradient paths connecting the
+device to that leader.
+
+Within each resulting region, the collect-cast operator \texttt{C} exploits
+these paths to establish an upstream information flow from the devices to the
+leader, possibly through intermediate devices.
+%
+Conversely, the gradient-cast operator \texttt{G} establishes the corresponding
+downstream flow from the leader to the region members.
+%
+In the \gls{FL} setting, these operations support the three main coordination
+phases of the learning process: federation formation, collection of the locally
+trained models, and dissemination of the aggregated regional models.
+
+The resulting learning loop is summarized in
+\Cref{algo:fbfl-general}.
+%
+At each round \(t\), the distributed leader election algorithm
+\(\mathcal{DL}(d,\sigma)\) determines a set of leaders
+\(\mathcal{L}^{(t)}\) and induces the corresponding partition
+\(\{\mathcal{R}_l^{(t)}\}_{l \in \mathcal{L}^{(t)}}\).
+%
+Each device then trains its current model on its local dataset and sends the
+resulting update to its region leader through the paths established by
+\texttt{C}.
+%
+The leader aggregates the collected updates into a region-specific model and
+disseminates it to the region members through \texttt{G}.
+%
+The same procedure is executed concurrently in every region, resulting in
+multiple federated learning processes coordinated exclusively through local
+interactions.
+%
+Although \Cref{algo:fbfl-general} leaves the aggregation operator unspecified,
+standard aggregation rules such as \gls{FedAvg} can be employed without
+altering the coordination structure.
 
 \begin{algorithm}[t]
   \caption{General Field-Based Federated Learning round.}
   \label{algo:fbfl-general}
   \begin{algorithmic}[1]
-    \Require Communication graph $\mathcal{G}=(\mathcal{V},\mathcal{E})$,
-             distance function $d(\cdot,\cdot)$,
-             influence threshold $\sigma$,
-             local epochs $E$,
-             total rounds $\mathcal{T}$,
-             initial model $\mathbf{w}^{(0)}$
-    \For{$t = 0$ \textbf{to} $\mathcal{T}-1$}
-      \State $\mathcal{L}^{(t)} \gets \mathcal{DL}(d, \sigma)$
-             \Comment{distributed leader election via \texttt{S}}
-      \State induce partition $\{\mathcal{R}_l^{(t)}\}_{l \in \mathcal{L}^{(t)}}$
-             via gradient field \texttt{G}
-      \ForAll{$d_i \in \mathcal{V}$} \Comment{in parallel}
-        \State $\tilde{\mathbf{w}}_i^{(t)} \gets
-               \mathrm{LocalTrain}(\mathbf{w}_i^{(t)}, \mathcal{D}_i, E)$
-        \State route $\tilde{\mathbf{w}}_i^{(t)}$ to leader $d_{\mathcal{L}}^{(t)}$
-               via \texttt{C} along gradient path
+    \Require Communication graph
+             \(\mathcal{G}=(\mathcal{V},\mathcal{E})\),
+             distance function \(d(\cdot,\cdot)\),
+             influence threshold \(\sigma\),
+             local epochs \(E\),
+             total rounds \(\mathcal{T}\),
+             initial model \(\mathbf{w}^{(0)}\)
+
+    \For{\(t = 0\) \textbf{to} \(\mathcal{T}-1\)}
+      \State
+        \(\mathcal{L}^{(t)} \gets \mathcal{DL}(d,\sigma)\)
+        \Comment{distributed leader election via \texttt{S}}
+
+      \State
+        induce partition
+        \(\{\mathcal{R}_l^{(t)}\}_{l \in \mathcal{L}^{(t)}}\)
+        via gradient field \texttt{G}
+
+      \ForAll{\(d_i \in \mathcal{V}\)}
+        \Comment{in parallel}
+
+        \State
+          \(\tilde{\mathbf{w}}_i^{(t)}
+          \gets
+          \mathrm{LocalTrain}
+          (\mathbf{w}_i^{(t)},\mathcal{D}_i,E)\)
+
+        \State
+          route \(\tilde{\mathbf{w}}_i^{(t)}\) to leader
+          \(d_{\mathcal{L}}^{(t)}\) via \texttt{C}
+          along the gradient path
       \EndFor
-      \ForAll{$l \in \mathcal{L}^{(t)}$} \Comment{in parallel}
-        \State $\mathbf{w}_l^{(t+1)} \gets
-               \mathrm{Aggregate}\!\left(\{\tilde{\mathbf{w}}_d^{(t)}\}_{d \in \mathcal{R}_l^{(t)}}\right)$
-               \Comment{any aggregation rule, e.g.\ \gls{FedAvg}}
-        \State broadcast $\mathbf{w}_l^{(t+1)}$ to all $d \in \mathcal{R}_l^{(t)}$
-               via \texttt{G}
+
+      \ForAll{\(l \in \mathcal{L}^{(t)}\)}
+        \Comment{in parallel}
+
+        \State
+          \(\mathbf{w}_l^{(t+1)}
+          \gets
+          \mathrm{Aggregate}
+          \left(
+            \{\tilde{\mathbf{w}}_d^{(t)}\}_{d \in \mathcal{R}_l^{(t)}}
+          \right)\)
+          \Comment{any aggregation rule, e.g., \gls{FedAvg}}
+
+        \State
+          broadcast \(\mathbf{w}_l^{(t+1)}\) to all
+          \(d \in \mathcal{R}_l^{(t)}\) via \texttt{G}
       \EndFor
-      \ForAll{$d_i \in \mathcal{V}$}
-        \State $\mathbf{w}_i^{(t+1)} \gets \mathbf{w}_{d_{\mathcal{L}}^{(t)}}^{(t+1)}$
+
+      \ForAll{\(d_i \in \mathcal{V}\)}
+        \State
+          \(\mathbf{w}_i^{(t+1)}
+          \gets
+          \mathbf{w}_{d_{\mathcal{L}}^{(t)}}^{(t+1)}\)
       \EndFor
     \EndFor
   \end{algorithmic}
 \end{algorithm}
 
+The distance function \(d(\cdot,\cdot)\) is the main specialization point of
+the framework.
+%
+Since sparse choice operates over the path metric induced by \(d\), changing
+this function affects both the placement of the leaders and the boundaries of
+the resulting regions, while leaving the remaining learning loop unchanged.
+%
+When \(d\) represents the physical distance between neighboring devices, the
+framework produces spatially compact federations and is therefore suitable for
+scenarios in which spatial proximity is a reliable proxy for similarity between
+local data distributions.
+%
+Alternatively, \(d\) can be defined using information derived from the models
+and their performance on local data, allowing federation formation to account
+for learning compatibility in addition to network proximity.
+%
+The approaches presented in the following sections instantiate this common
+framework using different distance functions and, consequently, different
+notions of which devices should participate in the same federation.
+
+As with other aggregate computing processes, the regions and their associated
+information flows converge when the network topology and the values involved in
+the distance function remain stable for sufficiently long.
+%
+Changes in topology, device state, or model similarity may temporarily alter
+leader selection and federation membership; the repeated evaluation of the
+\gls{SCR} pattern then drives the system toward a new stable organization.
+%
+Federation formation is therefore not a preliminary centralized clustering
+step, but an integral and continuously adaptive component of the distributed
+learning process.
+%
+Unlike clustered \gls{FL} approaches such as IFCA, the proposed framework
+does not require the number of federations to be specified in advance.
+%
+Instead, both their number and composition emerge from local interactions among
+devices according to the selected distance function and influence threshold.
+%
+This property is particularly important in \glspl{CAS}, where the underlying
+number of data clusters may be difficult to estimate and may change as the
+system evolves.
+%
+As shown in the following sections, incorrectly specifying this number can force
+devices with incompatible data distributions into the same federation or
+unnecessarily separate compatible devices, ultimately degrading learning
+performance.
 
 %=============================================================================
 
