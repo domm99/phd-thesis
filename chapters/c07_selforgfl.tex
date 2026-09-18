@@ -1065,204 +1065,884 @@ This limitation motivates the data-aware distance function introduced in the fol
 
 
 %=============================================================================
-\section{Proximity-Based Self-Federated Learning}
+\section{Space-Fluid Self-Organizing Federated Learning}
 \label{sec:psfl}
 %=============================================================================
 
-\gls{PSFL}~\cite{FBFL_cite07} extends the framework of~\Cref{sec:selforgfl-approach}
- to arbitrary distance metrics, replacing physical proximity with a model-based
- dissimilarity measure.
+The purely spatial organization adopted by \gls{FBFL} is effective when physical
+proximity reflects similarity between local data distributions.
 %
-The change makes federation boundaries \emph{space-fluid}: a device joins
- the federation whose leader produces the lowest cumulative dissimilarity
- along the routing path, regardless of geographic distance.
+\sidenote{
+  Questa è da spiegare meglio
+}
+However, as discussed in \Cref{sec:fbfl-results}, this assumption does not always
+hold: nearby devices may observe different phenomena, while devices with
+compatible data may not necessarily be geographically close.
 %
-\sidenote{qui va migliorato, è la stessa motivazione di su }
-This generalization is motivated by scenarios where spatially close devices
- observe heterogeneous data---for instance, devices at an urban intersection
- may belong to different statistical populations depending on the time of day
- or the type of activity being monitored.
+Proximity-Aware Self-Federated Learning
+(\gls{PSFL})~\cite{DBLP:journals/iot/DominiFAVE26} addresses this limitation by replacing
+Euclidean distance with a data-aware measure derived from the models trained by
+neighboring devices.
 
-\subsection{Algorithm and Implementation}
-\label{subsec:psfl-algo}
-
-The key innovation over \gls{FBFL} is the dissimilarity function used as the
- distance metric for the \texttt{S} and \texttt{G} operators.
+This change makes federation formation \emph{space-fluid}: the coordination
+structure remains embedded in the communication network, but the perceived
+distance between devices depends on their learning compatibility.
 %
-After each local training step, neighboring devices $i$ and $j$ exchange their
- current models and compute the symmetric cross-evaluation loss:
+Consequently, federation boundaries can expand across devices whose models
+behave similarly and contract when neighboring devices observe incompatible data
+distributions.
+
+
+\subsection{Algorithm Description}
+\label{sec:psfl-algorithm}
+
+\gls{PSFL} follows the general learning loop introduced in
+\Cref{sec:selforgfl-approach}.
+%
+Its distinguishing element is the distance function used by sparse choice and
+gradient propagation.
+%
+Instead of the Euclidean metric \(d_{\mathrm{E}}\) adopted by \gls{FBFL},
+\gls{PSFL} defines a loss-based dissimilarity \(d_{\mathrm{s}}\) between the
+models of neighboring devices.
+
+After local training at round \(t\), each device \(d_i\) exchanges its locally
+trained model \(\widetilde{\mathbf{w}}_i^{(t)}\) with its neighbors.
+%
+Device \(d_i\) evaluates the model received from \(d_j\) on its own local data,
+obtaining the cross-evaluation loss
+%
 \begin{equation}
-  ds(i,j) = L_{i,j} + L_{j,i}, \quad
-  L_{i,j} = \frac{1}{|\mathcal{D}_i|}
-    \sum_{(x,y)\in\mathcal{D}_i} \ell\!\left(f(x;\mathcal{M}_j), y\right).
-  \label{eq:psfl-ds}
+  L_{i,j}^{(t)}
+  =
+  \frac{1}{|\mathcal{D}_i|}
+  \sum_{(\mathbf{x},y)\in\mathcal{D}_i}
+  \ell\left(
+    h\left(\widetilde{\mathbf{w}}_j^{(t)};\mathbf{x}\right),
+    y
+  \right).
+  \label{eq:psfl-cross-evaluation-loss}
 \end{equation}
 %
-Low values of $ds(i,j)$ indicate that the two models generalize well on each
- other's data, signaling distributional compatibility.
+The value \(L_{i,j}^{(t)}\) measures how well the model trained by \(d_j\)
+generalizes to the data observed by \(d_i\).
 %
-This measure is agnostic to model architecture and can be replaced by gradient-
- or weight-based alternatives without modifying the rest of the protocol.
-
-The gradient field $G(n)$ propagates cumulative dissimilarity from each device
- toward its nearest leader:
-\sidenote{questo forse puo essere messo nella parte generale}
+Since this evaluation is directional, \(L_{i,j}^{(t)}\) and
+\(L_{j,i}^{(t)}\) may differ.
+%
+The two devices therefore exchange their cross-evaluation losses and combine
+them into the symmetric distance
+%
 \begin{equation}
-  G(n) =
-  \begin{cases}
-    0 & \text{if } n \text{ is a leader,} \\
-    \displaystyle\min_{m \in \mathcal{N}(n)}\bigl\{G(m) + ds(n,m)\bigr\} & \text{otherwise.}
-  \end{cases}
-  \label{eq:psfl-gradient}
+  d_{\mathrm{s}}^{(t)}(d_i,d_j)
+  =
+  L_{i,j}^{(t)} + L_{j,i}^{(t)}.
+  \label{eq:psfl-model-dissimilarity}
 \end{equation}
 %
-A device belongs to a federation if and only if its accumulated dissimilarity
- $G(n) \le \sigma$, where $\sigma$ is the influence threshold.
+A low value indicates that both models generalize well to the other device's
+data and therefore suggests compatible local distributions.
 %
-The field encodes both topological proximity and model compatibility in a single
- quantity: longer paths accumulate more dissimilarity, and statistically
- incompatible neighbors cause the field to rise faster.
+Conversely, a high value in either direction increases the distance between the
+devices.
 %
-The resulting regions are simultaneously spatially compact and distributionally coherent.
-
-\sidenote{questa è una ripetizione}
-Federation formation proceeds in four distributed steps: each device initially
- declares itself a potential leader; leaders broadcast their candidacy with
- accumulated dissimilarity via gradient cast; devices with $G(n) > \sigma$
- discard the candidacy; and a deterministic tie-breaking policy based on
- accumulated dissimilarity and device identifiers resolves ambiguities.
+This bidirectional evaluation prevents two devices from being considered
+compatible merely because one of their models generalizes to the other's data.
 %
-The structure adapts continuously as models evolve across rounds, tightening
- the match between regions and data distributions.
+Moreover, the computation does not require raw data to be exchanged: devices
+share only their locally trained models and the resulting scalar losses.
 
-In ScaFi, the sole change with respect to Listing~\ref{lst:fbfl} is the
- substitution of \texttt{nbrRange} with the model-based \texttt{metric}:
+The complete procedure is illustrated in
+\Cref{fig:psfl-loss-similarity}.
+%
+After local training, neighboring devices exchange their models, evaluate the
+received model on their private data, exchange the resulting losses, and compute
+their symmetric distance.
 
-\begin{lstlisting}[language=scafi,
-  caption={\gls{PSFL} in ScaFi.
-    The \texttt{metric()} function computes $ds(i,j)$ from the
-    locally trained models; the coordination structure is otherwise
-    identical to \gls{FBFL}.},
-  label={lst:psfl}]
+\begin{figure}[t]
+  \centering
+  \imageplaceholder[6cm]{
+    Loss-based similarity estimation between two neighboring devices:
+    local training, model exchange, cross-evaluation, loss exchange,
+    and symmetric-distance computation
+  }
+  \caption{
+    Loss-based similarity estimation between neighboring devices.
+    After local training, the devices exchange their models and evaluate the
+    received model on their own data.
+    The resulting cross-evaluation losses are then exchanged and summed to
+    obtain the symmetric distance \(d_{\mathrm{s}}\).
+  }
+  \label{fig:psfl-loss-similarity}
+\end{figure}
+
+% The generic distance function of \Cref{eq:generic-federation-gradient} is thus
+% instantiated as
+% %
+% \begin{equation}
+%   d(d_i,d_j) = d_{\mathrm{s}}^{(t)}(d_i,d_j).
+%   \label{eq:psfl-distance-instantiation}
+% \end{equation}
+%
+The corresponding path metric accumulates model dissimilarity along the
+communication graph.
+%
+As a result, federation formation accounts for both model compatibility and
+topological proximity: incompatible neighbors sharply increase the accumulated
+distance, while longer paths naturally accumulate the contributions of multiple
+device pairs.
+%
+The threshold \(\sigma\) controls the maximum cumulative dissimilarity that can
+be covered by one leader.
+%
+Smaller values produce finer partitions, whereas larger values allow
+federations to span longer and potentially more heterogeneous paths.
+
+\Cref{lst:psfl-scafi} shows the corresponding ScaFi implementation.
+
+\begin{lstlisting}[
+  language=scafi,
+  caption={
+    PSFL implementation using a loss-based space-fluid metric.
+  },
+  label={lst:psfl-scafi}
+]
 def proximityAwareSelfFederatedLearning(
-    sigma: Double, initialModel: Model
+    sigma: Double,
+    initialModel: Model
 ): Model =
-  rep(initialModel) { prevModel =>
-    val localModel = localTraining(localDataset, prevModel)
+  rep(initialModel) { previousModel =>
+    val localModel =
+      localTraining(localDataset, previousModel)
+
     def metric(): Double =
-      computeModelLossDissimilarity(localModel, nbr(localModel))
+      computeModelLossDissimilarity(
+        localModel,
+        nbr(localModel)
+      )
+
     val leaders = S(sigma, metric)
-    val region  = G(leaders, metric)
+    val region = G(leaders, metric)
+
     val collectedModels =
-      C(region, _ ++ _, Set(localModel), Set.empty)
+      C(
+        region,
+        _ ++ _,
+        Set(localModel),
+        Set.empty
+      )
+
     val aggregatedModel =
-      mux(leaders)(aggregateModelsFunction(collectedModels))(localModel)
+      mux(leaders)(
+        fedAvg(collectedModels)
+      )(
+        localModel
+      )
+
     G(leaders, aggregatedModel, region)
   }
 \end{lstlisting}
 
-The \texttt{metric} function is evaluated lazily between neighbors;
- its cost scales with neighborhood size rather than the total device population.
+As in the \gls{FBFL} implementation presented in
+\Cref{lst:fbfl-scafi}, the program maintains the local model through
+\lstinline[language=scafi]|rep| and uses \texttt{C} and \texttt{G} for model
+collection and dissemination.
+%
+The relevant difference lies in
+\lstinline[language=scafi]|metric|, which computes
+\Cref{eq:psfl-model-dissimilarity} between neighboring devices and is used by
+both leader election and gradient construction.
+%
+Thus, the coordination structure changes as the models evolve, allowing
+federation membership to adapt throughout the learning process.
+
+
+\subsection{Research Questions}
+\label{sec:psfl-research-questions}
+
+The evaluation investigates whether the loss-based space-fluid metric can form
+coherent federations without central coordination, improve learning under
+non-\gls{IID} data, and preserve the adaptive and resilient behavior observed
+for \gls{FBFL}.
+%
+More specifically, it addresses the following research questions:
+
+\begin{enumerate}[
+  label=\textbf{RQ\arabic*:},
+  ref=RQ\arabic*,
+  leftmargin=*
+]
+  \item
+  Can devices be clustered according to both topological proximity and data
+  distribution similarity in a fully decentralized manner?
+  \label{rq:psfl-clustering}
+
+  \item
+  Can the resulting clustering strategy improve model accuracy under
+  non-\gls{IID} data distributions?
+  \label{rq:psfl-accuracy}
+
+  \item
+  Can the self-organizing architecture adapt to device mobility and recover
+  from leader failures?
+  \label{rq:psfl-resilience}
+\end{enumerate}
+
 
 \subsection{Experimental Setup}
-\label{subsec:psfl-setup}
+\label{sec:psfl-experimental-setup}
 
-Experiments were conducted on Extended MNIST and CIFAR-100~\cite{FBFL_cite19}
- imported from the ProFed benchmark, using simulations with
- $|A| \in \{3, 5, 9\}$ subareas and $50$ devices.
+The evaluation was conducted on Extended MNIST
+(EMNIST)~\cite{DBLP:journals/corr/CohenATS17} and
+CIFAR-100~\cite{krizhevsky2009learning}, imported through the ProFed
+benchmark~\cite{DBLP:journals/jors/DominiIALV26}.
 %
-For EMNIST, the handwritten-letters version was used ($124\,800$ train samples,
- $20\,800$ test samples, $26$ classes); for CIFAR-100, the standard split
- ($50\,000$ train, $10\,000$ test, $100$ classes).
+For EMNIST, the handwritten-letters variant was used, containing \(124\,800\)
+training samples and \(20\,800\) test samples from \(26\) classes.
 %
-Data were synthetically partitioned to produce label skewness: devices within
- the same subregion receive \gls{IID} data, while devices across subregions
- are non-\gls{IID}.
-%
-The learning process ran for $60$ global rounds; at each round every device
- performed $2$ local epochs using the Adam optimizer (learning rate $10^{-3}$,
- weight decay $10^{-4}$, batch size $64$).
-%
-A multilayer perceptron was used for EMNIST and
- MobileNet~\cite{FBFL_cite20} for CIFAR-100.
-%
-\gls{PSFL} was compared against \gls{FedAvg}, FedProx, Scaffold, and
- IFCA~\cite{FBFL_cite02}.
-%
-For \gls{PSFL}, $180$ simulations were run varying the random seed
- (0--19), the number of areas ($3$, $5$, $9$), and the loss threshold
- $\sigma \in \{20, 40, 80\}$; for baselines, $20$ simulations per configuration.
+CIFAR-100 contains \(50\,000\) training images and \(10\,000\) test images from
+\(100\) classes.
 
-Two additional experiments were included.
+Data were synthetically partitioned to produce label skew across spatial
+regions.
 %
-A node-movement experiment introduced a special node $\bigstar$ that traversed
- all nine areas in sequence, spending $5$ time steps in each, over a total of
- $140$ time steps; the goal was to assess the ability of the system to
- self-adapt without disrupting existing federations.
+The allocation followed the same region-based procedure described in
+\Cref{sec:fbfl-experimental-setup}: devices assigned to the same region received
+\gls{IID} data relative to one another, while devices in different regions
+observed different subsets of labels.
 %
-A resilience experiment (9 areas, 56 devices, $\sigma = 40$, 5 seeds) assessed
- recovery from the failure of two randomly chosen leader nodes.
+Synthetic partitioning made it possible to control the degree of heterogeneity
+and evaluate configurations with \(3\), \(5\), and \(9\) underlying regions.
+%
+Each simulation comprised \(50\) devices.
 
-Beyond learning metrics (training loss, validation loss, validation accuracy),
- two federation-specific metrics were tracked: federation count $|F|$ (the
- number of active leaders at a given time step) and federation correctness
- $\Diamond(f_j)$ (the number of devices misassigned to a federation whose
- leader is in a different area).
+\gls{PSFL} was compared with \gls{FedAvg}, FedProx, Scaffold, and
+IFCA.
+%
+The same learning hyperparameters were used for all approaches.
+%
+Training lasted \(60\) global rounds, with each device performing \(2\) local
+epochs per round using batches of \(64\) samples.
+%
+The models were optimized using Adam with a learning rate of \(0.001\) and
+weight decay of \(0.0001\).
+%
+An MLP was employed for EMNIST, while CIFAR-100 used
+MobileNet~\cite{DBLP:conf/cvpr/SandlerHZZC18}.
+%
+Within each \gls{PSFL} federation, models were aggregated using
+\gls{FedAvg}.
+
+The implementation combined ScaFi~\cite{DBLP:journals/softx/CasadeiVAP22}
+for aggregate computing, PyTorch~\cite{paszke2017automatic} for model training,
+and Alchemist~\cite{DBLP:journals/jos/PianiniMV13} for simulation.
+%
+The baseline algorithms were implemented directly in PyTorch.
+%
+The source code and execution instructions are publicly
+available\footnote{\url{https://github.com/davidedomini/experiments-2025-iot-self-fl}}.
+
+For each baseline, \(20\) simulations were performed using different random
+seeds.
+%
+For \gls{PSFL}, \(180\) simulations explored all combinations of:
+
+\sidenote{use inline enum}
+\begin{enumerate}
+  \item
+  \(20\) random seeds;
+
+  \item
+  \(3\), \(5\), and \(9\) spatial regions; and
+
+  \item
+  dissimilarity thresholds
+  \(\sigma\in\{20,40,80\}\).
+\end{enumerate}
+
+In addition to the main evaluation, two experiments assessed adaptation to
+system dynamics.
+%
+The first introduced a new device, denoted by \(\bigstar\), into a stable
+nine-region system.
+%
+The device traversed the nine regions sequentially, remaining in each one for
+\(5\) time steps.
+%
+The experiment lasted \(140\) time steps and was repeated \(10\) times with
+\(\sigma=20\).
+
+The second experiment evaluated resilience to leader failures.
+%
+It considered \(9\) regions and \(56\) devices, used \(\sigma=40\), and was
+repeated with \(5\) random seeds.
+%
+After stabilization, two leaders were removed at global round \(7\), allowing
+the system's ability to elect replacements and restore coherent federations to
+be evaluated.
+
+In addition to training loss, validation loss, and validation accuracy, the
+evaluation monitored two properties of the emerging federations.
+%
+The federation count
+%
+\begin{equation}
+  |\mathcal{F}^{(t)}|
+  =
+  |\mathcal{L}^{(t)}|
+  \label{eq:psfl-federation-count}
+\end{equation}
+%
+is the number of active leaders at round \(t\).
+%
+Federation correctness measures the number of devices assigned to a leader
+located in a different ground-truth region:
+%
+\begin{equation}
+  \Diamond(\mathcal{F}_j)
+  =
+  \sum_{d\in\mathcal{F}_j}
+  \mathbb{I}
+  \left[
+    \xi(d)\neq\xi(l_j)
+  \right],
+  \label{eq:psfl-federation-correctness}
+\end{equation}
+%
+where \(\xi(d)\) identifies the region containing device \(d\), and \(l_j\) is
+the leader of federation \(\mathcal{F}_j\).
+%
+The ground-truth region is used only for evaluation and is not available to the
+devices during federation formation.
+%
+A correctness value of zero therefore indicates that a federation contains
+only devices sharing the same underlying data distribution.
+
+For the mobility experiment, a binary leader-change indicator was also used to
+record whether the moving device changed federation between two consecutive
+time steps.
+
 
 \subsection{Results and Discussion}
-\label{subsec:psfl-results}
+\label{sec:psfl-results}
 
-During training, all metrics show the expected behavior: loss decreases
- steadily, accuracy increases, and the periodic small perturbations visible at
- each aggregation step do not prevent convergence.
-%
-Federation formation exhibits clear threshold-dependent behavior.
-%
-With a low threshold ($\sigma = 20$) and only three areas, the system does not
- always converge to exactly three federations---it often stabilizes around
- five---but federation correctness remains zero, meaning all devices are grouped
- with others from the same area; the resulting learning quality is not
- degraded.
-%
-With $\sigma = 40$, the system converges correctly in both federation count and
- area consistency after an initial transient.
-%
-With a high threshold ($\sigma = 80$) and nine areas, the reverse phenomenon
- can occur: multiple distinct areas are merged into a single federation,
- leading to slightly above-zero correctness errors.
-%
-These findings confirm that $\sigma$ must be tuned relative to the spatial
- scale and the degree of label skewness of the target deployment.
 
-At test time, \gls{PSFL} consistently outperforms the non-clustered baselines
- across all configurations.
-%
-On EMNIST the best \gls{PSFL} threshold achieves accuracy between $0.80$ and
- $0.95$ depending on the number of areas, well above \gls{FedAvg} ($\approx 0.50$),
- FedProx ($\approx 0.55$), and Scaffold ($\approx 0.52$).
-%
-On CIFAR-100, \gls{PSFL} achieves $0.56$--$0.69$ depending on the number of
- subregions, versus $0.35$--$0.45$ for the baselines.
-%
-\gls{PSFL} performs comparably to IFCA when IFCA is configured with the correct
- number of clusters.
-%
-An important practical advantage is that \gls{PSFL} does not require the number
- of federations to be specified in advance: IFCA's performance degrades sharply
- when the number of clusters is misestimated, whereas \gls{PSFL} discovers the
- appropriate granularity autonomously.
+\paragraph{\ref{rq:psfl-clustering}: Decentralized federation formation}
 
-The node-movement experiment shows that the system self-reorganizes gracefully
- when a new device enters the network.
+Training and validation results on EMNIST are summarized in
+\Cref{fig:psfl-training-results}.
 %
-After a brief instability when $\bigstar$ transitions between areas, the leader-
- change metric $DL$ stabilizes near zero, the validation loss returns to its
- pre-transition level, and the federation count $|F|$ converges back to nine.
+Training and validation loss decrease throughout the learning process, while
+validation accuracy increases.
 %
-The resilience experiment confirms the same recovery behavior observed in
- \gls{FBFL}: after two leader failures, only a transient perturbation in $|F|$
- is visible at round $7$, with no significant impact on validation accuracy or
- loss.
+Small periodic perturbations occur when newly aggregated regional models are
+disseminated, but they do not prevent convergence.
+%
+The same overall behavior is observed for all three values of \(\sigma\).
+
+\begin{figure}[t]
+  \centering
+  \imageplaceholder[10cm]{
+    PSFL training results on EMNIST:
+    training loss, validation loss, validation accuracy,
+    federation count, and federation correctness for
+    \(\sigma\in\{20,40,80\}\) and \(3\), \(5\), and \(9\) regions
+  }
+  \caption{
+    Training and federation-formation metrics for PSFL on EMNIST.
+    Each column represents a different dissimilarity threshold, while the rows
+    report training loss, validation loss, validation accuracy, federation
+    count, and federation correctness.
+    The curves distinguish configurations with \(3\), \(5\), and \(9\)
+    underlying regions.
+  }
+  \label{fig:psfl-training-results}
+\end{figure}
+
+Federation formation exhibits a clear dependence on the selected threshold.
+%
+With \(\sigma=20\) and three relatively large regions, the system often
+stabilizes around five federations instead of three.
+%
+Nevertheless, federation correctness remains zero: some regions are divided
+into multiple federations, but devices with incompatible distributions are not
+grouped together.
+%
+This finer partition does not produce a measurable degradation in final model
+accuracy.
+
+With \(\sigma=40\), federation count and correctness converge to the expected
+configuration after an initial transient.
+%
+Conversely, with \(\sigma=80\) and nine smaller regions, the coarser threshold
+can allow devices from distinct regions to be grouped into the same federation,
+resulting in a small nonzero correctness error.
+%
+These findings answer \ref{rq:psfl-clustering} positively while showing that
+\(\sigma\) controls a trade-off between splitting compatible devices into
+multiple federations and merging devices with incompatible distributions.
+
+
+\paragraph{\ref{rq:psfl-accuracy}: Learning under non-IID data}
+
+The test results are reported in \Cref{fig:psfl-test-accuracy} for EMNIST and
+in \Cref{tab:psfl-cifar-results} for CIFAR-100.
+%
+The non-clustered baselines deteriorate as the number of regions, and therefore
+the degree of label skew, increases.
+%
+FedProx and Scaffold improve slightly over \gls{FedAvg}, but they still optimize
+a single model across incompatible distributions.
+
+\begin{figure}[t]
+  \centering
+  \imageplaceholder[6cm]{
+    EMNIST test-accuracy comparison among
+    FedAvg, FedProx, Scaffold, IFCA, and PSFL
+    for \(3\), \(5\), and \(9\) regions and
+    \(\sigma\in\{20,40,80\}\)
+  }
+  \caption{
+    Test accuracy of PSFL and the baseline algorithms on EMNIST for different
+    numbers of regions and dissimilarity thresholds.
+    IFCA is configured using the correct number of underlying regions.
+  }
+  \label{fig:psfl-test-accuracy}
+\end{figure}
+
+In contrast, \gls{PSFL} maintains stable performance across the evaluated
+thresholds and region counts.
+%
+On EMNIST, its test accuracy ranges approximately between \(0.80\) and \(0.95\),
+depending on the configuration.
+%
+On CIFAR-100, it achieves accuracies between \(0.56\) and \(0.69\), consistently
+outperforming the other approaches.
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{
+    CIFAR-100 test accuracy using the mean PSFL threshold.
+    Values report mean and standard deviation.
+  }
+  \label{tab:psfl-cifar-results}
+  \begin{tabular}{lccc}
+    \toprule
+    \textbf{Algorithm}
+      & \textbf{3 regions}
+      & \textbf{5 regions}
+      & \textbf{9 regions} \\
+    \midrule
+    FedAvg
+      & \(0.45 \pm 0.100\)
+      & \(0.42 \pm 0.010\)
+      & \(0.35 \pm 0.010\) \\
+    FedProx
+      & \(0.51 \pm 0.050\)
+      & \(0.49 \pm 0.030\)
+      & \(0.41 \pm 0.003\) \\
+    Scaffold
+      & \(0.49 \pm 0.010\)
+      & \(0.47 \pm 0.002\)
+      & \(0.40 \pm 0.002\) \\
+    IFCA
+      & \(0.53 \pm 0.003\)
+      & \(0.54 \pm 0.001\)
+      & \(0.62 \pm 0.020\) \\
+    PSFL
+      & \(\mathbf{0.56 \pm 0.010}\)
+      & \(\mathbf{0.57 \pm 0.006}\)
+      & \(\mathbf{0.69 \pm 0.002}\) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+When IFCA is configured with the correct number of clusters, its
+performance is comparable to that of \gls{PSFL}.
+%
+However, IFCA requires this number to be specified before training,
+whereas \gls{PSFL} determines both the number and composition of the
+federations through local interactions.
+%
+As shown in \Cref{fig:psfl-ifca-sensitivity}, incorrectly specifying the number
+of IFCA clusters substantially reduces its accuracy and increases result
+variability.
+
+\begin{figure}[t]
+  \centering
+  \imageplaceholder[5.5cm]{
+    IFCA test accuracy under matched and mismatched
+    numbers of predefined clusters
+  }
+  \caption{
+    Sensitivity of IFCA to the predefined number of clusters.
+    Accuracy decreases and variability increases when the specified number of
+    clusters does not match the underlying number of data distributions.
+  }
+  \label{fig:psfl-ifca-sensitivity}
+\end{figure}
+
+These results answer \ref{rq:psfl-accuracy} positively.
+%
+The loss-based federation strategy isolates incompatible data distributions and
+therefore preserves specialized models without requiring prior knowledge of the
+number of clusters.
+
+
+\paragraph{\ref{rq:psfl-resilience}: Adaptation and fault tolerance}
+
+The mobility experiment evaluates whether federation formation can adapt when a
+new device moves through an already stable system.
+%
+As shown in \Cref{fig:psfl-movement}, movement produces only temporary
+instability.
+%
+After each transition, the validation loss returns to a low value, the
+leader-change indicator stabilizes, and the federation count returns to nine.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3.5cm]{
+      Validation loss during node movement
+    }
+    \caption{Validation loss.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3.5cm]{
+      Federation count during node movement
+    }
+    \caption{Federation count.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3.5cm]{
+      Leader changes during node movement
+    }
+    \caption{Leader changes.}
+  \end{subfigure}
+
+  \caption{
+    Adaptation of PSFL as device \(\bigstar\) moves through nine regions.
+    Results are averaged over \(10\) simulations with \(\sigma=20\).
+    Transient changes are followed by autonomous reorganization into a stable
+    federation structure.
+  }
+  \label{fig:psfl-movement}
+\end{figure}
+
+When entering a new region, the moving device may initially attempt to create a
+new federation.
+%
+As the local dissimilarity estimates stabilize, it joins a compatible existing
+federation without disrupting the surrounding organization.
+
+The leader-failure experiment exhibits a similar recovery pattern.
+%
+After two leaders are removed at round \(7\), the federation count undergoes a
+brief perturbation, while validation loss and accuracy remain substantially
+stable.
+%
+New leaders are subsequently elected and the affected regions are reconstructed.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3.5cm]{
+      Validation loss under leader failures
+    }
+    \caption{Validation loss.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3.5cm]{
+      Validation accuracy under leader failures
+    }
+    \caption{Validation accuracy.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3.5cm]{
+      Federation count under leader failures
+    }
+    \caption{Federation count.}
+  \end{subfigure}
+
+  \caption{
+    PSFL resilience to leader failures.
+    Two leaders fail at round \(7\), producing only a temporary perturbation in
+    the federation count while learning performance remains stable.
+  }
+  \label{fig:psfl-failure-results}
+\end{figure}
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Initialization}
+    \caption{Initialization.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Federation stabilization}
+    \caption{Stabilization.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Stable learning}
+    \caption{Learning.}
+  \end{subfigure}
+
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Leader failures}
+    \caption{Leader failures.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Federation reorganization}
+    \caption{Reorganization.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \imageplaceholder[3cm]{Restored learning}
+    \caption{Recovery.}
+  \end{subfigure}
+
+  \caption{
+    Evolution of the PSFL federation structure following two leader failures.
+    The system elects replacement leaders and converges to a new stable
+    configuration without external intervention.
+  }
+  \label{fig:psfl-failure-evolution}
+\end{figure}
+
+These experiments answer \ref{rq:psfl-resilience} positively.
+%
+Because leader election and region formation are continuously recomputed using
+the current models and communication topology, \gls{PSFL} adapts to both
+mobility and device failures while preserving the learning process.
+
+Overall, \gls{PSFL} removes the strict spatial-data correlation assumption
+required by \gls{FBFL} and discovers data-compatible federations without knowing
+their number in advance.
+%
+This flexibility requires neighboring devices to exchange and evaluate dense
+models when computing their loss-based distance.
+%
+The resulting computational and communication costs motivate the sparsified
+extension presented in the following section.
+
+% \gls{PSFL}~\cite{FBFL_cite07} extends the framework of~\Cref{sec:selforgfl-approach}
+%  to arbitrary distance metrics, replacing physical proximity with a model-based
+%  dissimilarity measure.
+% %
+% The change makes federation boundaries \emph{space-fluid}: a device joins
+%  the federation whose leader produces the lowest cumulative dissimilarity
+%  along the routing path, regardless of geographic distance.
+% %
+% \sidenote{qui va migliorato, è la stessa motivazione di su }
+% This generalization is motivated by scenarios where spatially close devices
+%  observe heterogeneous data---for instance, devices at an urban intersection
+%  may belong to different statistical populations depending on the time of day
+%  or the type of activity being monitored.
+
+% \subsection{Algorithm and Implementation}
+% \label{subsec:psfl-algo}
+
+% The key innovation over \gls{FBFL} is the dissimilarity function used as the
+%  distance metric for the \texttt{S} and \texttt{G} operators.
+% %
+% After each local training step, neighboring devices $i$ and $j$ exchange their
+%  current models and compute the symmetric cross-evaluation loss:
+% \begin{equation}
+%   ds(i,j) = L_{i,j} + L_{j,i}, \quad
+%   L_{i,j} = \frac{1}{|\mathcal{D}_i|}
+%     \sum_{(x,y)\in\mathcal{D}_i} \ell\!\left(f(x;\mathcal{M}_j), y\right).
+%   \label{eq:psfl-ds}
+% \end{equation}
+% %
+% Low values of $ds(i,j)$ indicate that the two models generalize well on each
+%  other's data, signaling distributional compatibility.
+% %
+% This measure is agnostic to model architecture and can be replaced by gradient-
+%  or weight-based alternatives without modifying the rest of the protocol.
+
+% The gradient field $G(n)$ propagates cumulative dissimilarity from each device
+%  toward its nearest leader:
+% \sidenote{questo forse puo essere messo nella parte generale}
+% \begin{equation}
+%   G(n) =
+%   \begin{cases}
+%     0 & \text{if } n \text{ is a leader,} \\
+%     \displaystyle\min_{m \in \mathcal{N}(n)}\bigl\{G(m) + ds(n,m)\bigr\} & \text{otherwise.}
+%   \end{cases}
+%   \label{eq:psfl-gradient}
+% \end{equation}
+% %
+% A device belongs to a federation if and only if its accumulated dissimilarity
+%  $G(n) \le \sigma$, where $\sigma$ is the influence threshold.
+% %
+% The field encodes both topological proximity and model compatibility in a single
+%  quantity: longer paths accumulate more dissimilarity, and statistically
+%  incompatible neighbors cause the field to rise faster.
+% %
+% The resulting regions are simultaneously spatially compact and distributionally coherent.
+
+% \sidenote{questa è una ripetizione}
+% Federation formation proceeds in four distributed steps: each device initially
+%  declares itself a potential leader; leaders broadcast their candidacy with
+%  accumulated dissimilarity via gradient cast; devices with $G(n) > \sigma$
+%  discard the candidacy; and a deterministic tie-breaking policy based on
+%  accumulated dissimilarity and device identifiers resolves ambiguities.
+% %
+% The structure adapts continuously as models evolve across rounds, tightening
+%  the match between regions and data distributions.
+
+% In ScaFi, the sole change with respect to Listing~\ref{lst:fbfl} is the
+%  substitution of \texttt{nbrRange} with the model-based \texttt{metric}:
+
+% \begin{lstlisting}[language=scafi,
+%   caption={\gls{PSFL} in ScaFi.
+%     The \texttt{metric()} function computes $ds(i,j)$ from the
+%     locally trained models; the coordination structure is otherwise
+%     identical to \gls{FBFL}.},
+%   label={lst:psfl}]
+% def proximityAwareSelfFederatedLearning(
+%     sigma: Double, initialModel: Model
+% ): Model =
+%   rep(initialModel) { prevModel =>
+%     val localModel = localTraining(localDataset, prevModel)
+%     def metric(): Double =
+%       computeModelLossDissimilarity(localModel, nbr(localModel))
+%     val leaders = S(sigma, metric)
+%     val region  = G(leaders, metric)
+%     val collectedModels =
+%       C(region, _ ++ _, Set(localModel), Set.empty)
+%     val aggregatedModel =
+%       mux(leaders)(aggregateModelsFunction(collectedModels))(localModel)
+%     G(leaders, aggregatedModel, region)
+%   }
+% \end{lstlisting}
+
+% The \texttt{metric} function is evaluated lazily between neighbors;
+%  its cost scales with neighborhood size rather than the total device population.
+
+% \subsection{Experimental Setup}
+% \label{subsec:psfl-setup}
+
+% Experiments were conducted on Extended MNIST and CIFAR-100~\cite{FBFL_cite19}
+%  imported from the ProFed benchmark, using simulations with
+%  $|A| \in \{3, 5, 9\}$ subareas and $50$ devices.
+% %
+% For EMNIST, the handwritten-letters version was used ($124\,800$ train samples,
+%  $20\,800$ test samples, $26$ classes); for CIFAR-100, the standard split
+%  ($50\,000$ train, $10\,000$ test, $100$ classes).
+% %
+% Data were synthetically partitioned to produce label skewness: devices within
+%  the same subregion receive \gls{IID} data, while devices across subregions
+%  are non-\gls{IID}.
+% %
+% The learning process ran for $60$ global rounds; at each round every device
+%  performed $2$ local epochs using the Adam optimizer (learning rate $10^{-3}$,
+%  weight decay $10^{-4}$, batch size $64$).
+% %
+% A multilayer perceptron was used for EMNIST and
+%  MobileNet~\cite{FBFL_cite20} for CIFAR-100.
+% %
+% \gls{PSFL} was compared against \gls{FedAvg}, FedProx, Scaffold, and
+%  IFCA~\cite{FBFL_cite02}.
+% %
+% For \gls{PSFL}, $180$ simulations were run varying the random seed
+%  (0--19), the number of areas ($3$, $5$, $9$), and the loss threshold
+%  $\sigma \in \{20, 40, 80\}$; for baselines, $20$ simulations per configuration.
+
+% Two additional experiments were included.
+% %
+% A node-movement experiment introduced a special node $\bigstar$ that traversed
+%  all nine areas in sequence, spending $5$ time steps in each, over a total of
+%  $140$ time steps; the goal was to assess the ability of the system to
+%  self-adapt without disrupting existing federations.
+% %
+% A resilience experiment (9 areas, 56 devices, $\sigma = 40$, 5 seeds) assessed
+%  recovery from the failure of two randomly chosen leader nodes.
+
+% Beyond learning metrics (training loss, validation loss, validation accuracy),
+%  two federation-specific metrics were tracked: federation count $|F|$ (the
+%  number of active leaders at a given time step) and federation correctness
+%  $\Diamond(f_j)$ (the number of devices misassigned to a federation whose
+%  leader is in a different area).
+
+% \subsection{Results and Discussion}
+% \label{subsec:psfl-results}
+
+% During training, all metrics show the expected behavior: loss decreases
+%  steadily, accuracy increases, and the periodic small perturbations visible at
+%  each aggregation step do not prevent convergence.
+% %
+% Federation formation exhibits clear threshold-dependent behavior.
+% %
+% With a low threshold ($\sigma = 20$) and only three areas, the system does not
+%  always converge to exactly three federations---it often stabilizes around
+%  five---but federation correctness remains zero, meaning all devices are grouped
+%  with others from the same area; the resulting learning quality is not
+%  degraded.
+% %
+% With $\sigma = 40$, the system converges correctly in both federation count and
+%  area consistency after an initial transient.
+% %
+% With a high threshold ($\sigma = 80$) and nine areas, the reverse phenomenon
+%  can occur: multiple distinct areas are merged into a single federation,
+%  leading to slightly above-zero correctness errors.
+% %
+% These findings confirm that $\sigma$ must be tuned relative to the spatial
+%  scale and the degree of label skewness of the target deployment.
+
+% At test time, \gls{PSFL} consistently outperforms the non-clustered baselines
+%  across all configurations.
+% %
+% On EMNIST the best \gls{PSFL} threshold achieves accuracy between $0.80$ and
+%  $0.95$ depending on the number of areas, well above \gls{FedAvg} ($\approx 0.50$),
+%  FedProx ($\approx 0.55$), and Scaffold ($\approx 0.52$).
+% %
+% On CIFAR-100, \gls{PSFL} achieves $0.56$--$0.69$ depending on the number of
+%  subregions, versus $0.35$--$0.45$ for the baselines.
+% %
+% \gls{PSFL} performs comparably to IFCA when IFCA is configured with the correct
+%  number of clusters.
+% %
+% An important practical advantage is that \gls{PSFL} does not require the number
+%  of federations to be specified in advance: IFCA's performance degrades sharply
+%  when the number of clusters is misestimated, whereas \gls{PSFL} discovers the
+%  appropriate granularity autonomously.
+
+% The node-movement experiment shows that the system self-reorganizes gracefully
+%  when a new device enters the network.
+% %
+% After a brief instability when $\bigstar$ transitions between areas, the leader-
+%  change metric $DL$ stabilizes near zero, the validation loss returns to its
+%  pre-transition level, and the federation count $|F|$ converges back to nine.
+% %
+% The resilience experiment confirms the same recovery behavior observed in
+%  \gls{FBFL}: after two leader failures, only a transient perturbation in $|F|$
+%  is visible at round $7$, with no significant impact on validation accuracy or
+%  loss.
 
 
 %=============================================================================
@@ -1270,166 +1950,166 @@ The resilience experiment confirms the same recovery behavior observed in
 \label{sec:sparseful}
 %=============================================================================
 
-\textsc{SParSeFuL}~\cite{FBFL_cite12} integrates neural-network sparsification into the
- self-organizing protocol of~\Cref{sec:selforgfl-approach}.
-%
-\sidenote{anche sta motivazione va rivista}
-The motivation is bandwidth: each round of \gls{PSFL} requires every device to
- transmit a dense model copy to its aggregating leader, which becomes the
- dominant cost in networks with limited connectivity or large architectures.
-%
-\textsc{SParSeFuL} treats compression as a structural property of the system rather
- than a post-processing optimization, embedding it at multiple points in the
- training pipeline so that sparsification affects both the communicated payloads
- and the similarity-based federation discovery process.
+% \textsc{SParSeFuL}~\cite{FBFL_cite12} integrates neural-network sparsification into the
+%  self-organizing protocol of~\Cref{sec:selforgfl-approach}.
+% %
+% \sidenote{anche sta motivazione va rivista}
+% The motivation is bandwidth: each round of \gls{PSFL} requires every device to
+%  transmit a dense model copy to its aggregating leader, which becomes the
+%  dominant cost in networks with limited connectivity or large architectures.
+% %
+% \textsc{SParSeFuL} treats compression as a structural property of the system rather
+%  than a post-processing optimization, embedding it at multiple points in the
+%  training pipeline so that sparsification affects both the communicated payloads
+%  and the similarity-based federation discovery process.
 
-\subsection{Algorithm and Implementation}
-\label{subsec:sparseful-algo}
+% \subsection{Algorithm and Implementation}
+% \label{subsec:sparseful-algo}
 
-The federation formation logic is identical to that of \gls{PSFL}: the
- space-fluid \texttt{S} operator with the loss-based dissimilarity $ds(i,j)$
- and threshold $\sigma$ governs leader election and region membership.
-%
-The change is that the model exchanged during both the similarity estimation
- and the aggregation phases is \emph{sparse}.
-%
-Sparsification is implemented as magnitude-based unstructured pruning: at each
- pruning step, the bottom $\psi \times 100\%$ of weights by absolute value
- across all layers are zeroed and masked out for the remainder of training.
-%
-After local training the operator $\mathcal{S}(\cdot)$ at global sparsity
- level $\psi$ is applied before sharing:
-\begin{equation}
-  \hat{\theta}_i^{(t)} \leftarrow \mathcal{S}\!\left(\hat{\theta}_i^{(t)}\right).
-  \label{eq:sparseful-prune}
-\end{equation}
-%
-The sparse model $\hat{\theta}_i^{(t)}$ serves two roles simultaneously:
- it is used to compute $L_{i,j}$ for dissimilarity estimation, and it is
- routed to the leader for aggregation.
-%
-Because all devices share the same sparsity ratio $\psi$, the aggregated model
- retains the same sparse structure, so the compression benefit applies
- symmetrically to uploads and to the dissemination step.
-%
-Unstructured pruning was chosen specifically because it does not alter the
- network architecture, preserving compatibility with the aggregation and
- similarity-estimation phases; magnitude-based selection requires no additional
- hyperparameters beyond $\psi$.
+% The federation formation logic is identical to that of \gls{PSFL}: the
+%  space-fluid \texttt{S} operator with the loss-based dissimilarity $ds(i,j)$
+%  and threshold $\sigma$ governs leader election and region membership.
+% %
+% The change is that the model exchanged during both the similarity estimation
+%  and the aggregation phases is \emph{sparse}.
+% %
+% Sparsification is implemented as magnitude-based unstructured pruning: at each
+%  pruning step, the bottom $\psi \times 100\%$ of weights by absolute value
+%  across all layers are zeroed and masked out for the remainder of training.
+% %
+% After local training the operator $\mathcal{S}(\cdot)$ at global sparsity
+%  level $\psi$ is applied before sharing:
+% \begin{equation}
+%   \hat{\theta}_i^{(t)} \leftarrow \mathcal{S}\!\left(\hat{\theta}_i^{(t)}\right).
+%   \label{eq:sparseful-prune}
+% \end{equation}
+% %
+% The sparse model $\hat{\theta}_i^{(t)}$ serves two roles simultaneously:
+%  it is used to compute $L_{i,j}$ for dissimilarity estimation, and it is
+%  routed to the leader for aggregation.
+% %
+% Because all devices share the same sparsity ratio $\psi$, the aggregated model
+%  retains the same sparse structure, so the compression benefit applies
+%  symmetrically to uploads and to the dissemination step.
+% %
+% Unstructured pruning was chosen specifically because it does not alter the
+%  network architecture, preserving compatibility with the aggregation and
+%  similarity-estimation phases; magnitude-based selection requires no additional
+%  hyperparameters beyond $\psi$.
 
-A key observation is that sparsification is not neutral with respect to
- federation discovery: as $\psi$ increases, the cross-evaluation losses used
- to compute $ds(i,j)$ become less reliable, eventually causing the system to
- overestimate the number of federations.
-%
-The sparsity level $\psi$ therefore jointly controls communication cost and
- cluster granularity, creating a trade-off that must be navigated by the
- system designer.
+% A key observation is that sparsification is not neutral with respect to
+%  federation discovery: as $\psi$ increases, the cross-evaluation losses used
+%  to compute $ds(i,j)$ become less reliable, eventually causing the system to
+%  overestimate the number of federations.
+% %
+% The sparsity level $\psi$ therefore jointly controls communication cost and
+%  cluster granularity, creating a trade-off that must be navigated by the
+%  system designer.
 
-Experiments used the Phyelds framework~\cite{FBFL_cite21} for
- field-based coordination, replacing the ScaFi + Alchemist stack used in the
- earlier papers.
+% Experiments used the Phyelds framework~\cite{FBFL_cite21} for
+%  field-based coordination, replacing the ScaFi + Alchemist stack used in the
+%  earlier papers.
 
-\subsection{Experimental Setup}
-\label{subsec:sparseful-setup}
+% \subsection{Experimental Setup}
+% \label{subsec:sparseful-setup}
 
-Experiments were conducted on Extended MNIST and CIFAR-100, using the same
- synthetic non-\gls{IID} partitioning strategy described
- in~\Cref{subsec:psfl-setup}, with $50$ devices distributed across
- $\{3, 5, 9\}$ subareas.
-%
-Each device communicates only with devices within a predefined communication
- range, forming a neighborhood structure that limits connectivity.
-%
-Dataset-specific CNN architectures were adopted: a compact CNN with one
- convolutional layer and a two-layer linear classifier for EMNIST, and a
- three-layer CNN with batch normalization and a single output layer for
- CIFAR-100.
-%
-Both networks are intentionally lightweight to limit training time in the
- distributed setting.
-%
-All sparsification levels $\psi \in \{0.0, 0.4, 0.6, 0.8, 0.85, 0.9\}$
- were evaluated and compared against \gls{FedAvg}, FedProx, Scaffold, and IFCA.
-%
-Metrics collected during training included training loss, validation loss,
- validation accuracy, and federation count $|F|$.
-%
-Final performance was assessed on a per-area held-out test set never observed
- during training, with test accuracy averaged over subareas.
-%
-Multiple random seeds were used for all experiments; reported values are means
- with standard deviations.
+% Experiments were conducted on Extended MNIST and CIFAR-100, using the same
+%  synthetic non-\gls{IID} partitioning strategy described
+%  in~\Cref{subsec:psfl-setup}, with $50$ devices distributed across
+%  $\{3, 5, 9\}$ subareas.
+% %
+% Each device communicates only with devices within a predefined communication
+%  range, forming a neighborhood structure that limits connectivity.
+% %
+% Dataset-specific CNN architectures were adopted: a compact CNN with one
+%  convolutional layer and a two-layer linear classifier for EMNIST, and a
+%  three-layer CNN with batch normalization and a single output layer for
+%  CIFAR-100.
+% %
+% Both networks are intentionally lightweight to limit training time in the
+%  distributed setting.
+% %
+% All sparsification levels $\psi \in \{0.0, 0.4, 0.6, 0.8, 0.85, 0.9\}$
+%  were evaluated and compared against \gls{FedAvg}, FedProx, Scaffold, and IFCA.
+% %
+% Metrics collected during training included training loss, validation loss,
+%  validation accuracy, and federation count $|F|$.
+% %
+% Final performance was assessed on a per-area held-out test set never observed
+%  during training, with test accuracy averaged over subareas.
+% %
+% Multiple random seeds were used for all experiments; reported values are means
+%  with standard deviations.
 
-\subsection{Results and Discussion}
-\label{subsec:sparseful-results}
+% \subsection{Results and Discussion}
+% \label{subsec:sparseful-results}
 
-\paragraph*{Federation dynamics.}
-Without sparsification ($\psi = 0.0$) the algorithm consistently converges to
- the correct number of federations across all configurations.
-%
-As $\psi$ increases, convergence degrades: beyond a dataset-dependent threshold,
- the system overestimates the number of federations.
-%
-On EMNIST, the threshold is around $\psi = 0.8$---for $\psi \ge 0.85$ the
- federation count exceeds the ground-truth number of subareas.
-%
-On CIFAR-100 the threshold is much lower ($\psi \approx 0.4$), reflecting the
- greater difficulty of the classification task and the higher sensitivity of
- cross-evaluation losses to model degradation.
-%
-This dataset dependence is consistent with the underlying mechanism: sparsification
- reduces model capacity, making dissimilarity estimates noisier and causing
- the similarity-based discovery to fragment unnecessarily.
+% \paragraph*{Federation dynamics.}
+% Without sparsification ($\psi = 0.0$) the algorithm consistently converges to
+%  the correct number of federations across all configurations.
+% %
+% As $\psi$ increases, convergence degrades: beyond a dataset-dependent threshold,
+%  the system overestimates the number of federations.
+% %
+% On EMNIST, the threshold is around $\psi = 0.8$---for $\psi \ge 0.85$ the
+%  federation count exceeds the ground-truth number of subareas.
+% %
+% On CIFAR-100 the threshold is much lower ($\psi \approx 0.4$), reflecting the
+%  greater difficulty of the classification task and the higher sensitivity of
+%  cross-evaluation losses to model degradation.
+% %
+% This dataset dependence is consistent with the underlying mechanism: sparsification
+%  reduces model capacity, making dissimilarity estimates noisier and causing
+%  the similarity-based discovery to fragment unnecessarily.
 
-\paragraph*{Training and validation dynamics.}
-Validation accuracy curves mirror the federation dynamics.
-%
-At $\psi = 0.0$ the algorithm achieves stable and fast convergence, reaching
- the highest accuracy values.
-%
-Performance degrades gradually as $\psi$ increases, with slower convergence
- and lower final accuracy; the degradation accelerates past the same
- dataset-dependent thresholds.
-%
-This coupling between accuracy and federation structure reveals that the
- performance loss is not purely due to reduced model capacity, but also to
- the fragmentation of collaboration groups induced by unreliable similarity
- estimates---a tight coupling between model structure and self-organization
- that is specific to the \textsc{SParSeFuL} design.
+% \paragraph*{Training and validation dynamics.}
+% Validation accuracy curves mirror the federation dynamics.
+% %
+% At $\psi = 0.0$ the algorithm achieves stable and fast convergence, reaching
+%  the highest accuracy values.
+% %
+% Performance degrades gradually as $\psi$ increases, with slower convergence
+%  and lower final accuracy; the degradation accelerates past the same
+%  dataset-dependent thresholds.
+% %
+% This coupling between accuracy and federation structure reveals that the
+%  performance loss is not purely due to reduced model capacity, but also to
+%  the fragmentation of collaboration groups induced by unreliable similarity
+%  estimates---a tight coupling between model structure and self-organization
+%  that is specific to the \textsc{SParSeFuL} design.
 
-\paragraph*{Test accuracy.}
-On EMNIST, \textsc{SParSeFuL} maintains accuracy comparable to the dense
- baseline ($\psi = 0.0$) up to $\psi = 0.8$, while consistently outperforming
- all non-clustered baselines even at $\psi = 0.85$.
-%
-On CIFAR-100, degradation appears earlier, with a noticeable drop at
- $\psi = 0.4$; at high sparsification levels ($\psi \ge 0.8$) all methods
- converge to poor performance with marginal differences between them.
-%
-These results confirm that the clustered structure of \textsc{SParSeFuL} provides
- a performance floor that non-clustered methods cannot match under spatially
- non-\gls{IID} data, and that the sparsification mechanism preserves this
- advantage at moderate compression levels.
-%
-Regarding the comparison with IFCA: \textsc{SParSeFuL} achieves competitive
- accuracy without requiring the number of clusters to be specified in advance,
- without a central server, and with sparsification natively integrated rather
- than added as an external component.
+% \paragraph*{Test accuracy.}
+% On EMNIST, \textsc{SParSeFuL} maintains accuracy comparable to the dense
+%  baseline ($\psi = 0.0$) up to $\psi = 0.8$, while consistently outperforming
+%  all non-clustered baselines even at $\psi = 0.85$.
+% %
+% On CIFAR-100, degradation appears earlier, with a noticeable drop at
+%  $\psi = 0.4$; at high sparsification levels ($\psi \ge 0.8$) all methods
+%  converge to poor performance with marginal differences between them.
+% %
+% These results confirm that the clustered structure of \textsc{SParSeFuL} provides
+%  a performance floor that non-clustered methods cannot match under spatially
+%  non-\gls{IID} data, and that the sparsification mechanism preserves this
+%  advantage at moderate compression levels.
+% %
+% Regarding the comparison with IFCA: \textsc{SParSeFuL} achieves competitive
+%  accuracy without requiring the number of clusters to be specified in advance,
+%  without a central server, and with sparsification natively integrated rather
+%  than added as an external component.
 
-\paragraph*{Computational efficiency.}
-FLOPs and inference latency decrease monotonically with $\psi$ for both
- datasets, confirming that sparsification effectively reduces the computational
- burden at inference time.
-%
-The relative reduction is consistent across EMNIST and CIFAR-100, with CIFAR-100
- showing higher absolute values due to the larger network.
-%
-At the communication level, a model with sparsity $\psi$ has at most
- $(1-\psi)$ non-zero parameters, yielding a theoretical transmission reduction
- of $\psi \times 100\%$ relative to a dense model; in practice the effective
- saving is slightly smaller because sparse representations require additional
- metadata (masks or parameter indices).
+% \paragraph*{Computational efficiency.}
+% FLOPs and inference latency decrease monotonically with $\psi$ for both
+%  datasets, confirming that sparsification effectively reduces the computational
+%  burden at inference time.
+% %
+% The relative reduction is consistent across EMNIST and CIFAR-100, with CIFAR-100
+%  showing higher absolute values due to the larger network.
+% %
+% At the communication level, a model with sparsity $\psi$ has at most
+%  $(1-\psi)$ non-zero parameters, yielding a theoretical transmission reduction
+%  of $\psi \times 100\%$ relative to a dense model; in practice the effective
+%  saving is slightly smaller because sparse representations require additional
+%  metadata (masks or parameter indices).
 
 
 \section{ProFed: Benchmarking Proximity-Based Federated Learning}
