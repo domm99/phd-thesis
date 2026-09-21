@@ -1664,11 +1664,677 @@ extension presented in the following section.
 
 
 %=============================================================================
-\section{SParSeFuL: Federated Learning with Gradient Sparsification}
+\section{SParSeFuL: Self-Organizing Sparse Federated Learning}
 \label{sec:sparseful}
 %=============================================================================
 
+The approach presented in \Cref{sec:psfl} addresses spatially non-IID data by
+allowing devices to form federations according to the compatibility of their
+locally trained models.
+%
+However, computing the loss-based distance requires neighboring devices to
+exchange and evaluate their models, while federation-level aggregation involves
+the periodic transmission of model parameters across multiple hops.
+%
+These operations may become expensive on resource-constrained devices,
+particularly as the size of the adopted neural networks increases.
 
+To address this limitation, this chapter introduces
+\emph{SParSeFuL} (\emph{Sparse Proximity-based Self-Federated
+Learning})~\cite{DBLP:conf/ijcnn/DominiEACZLV25}.
+%
+SParSeFuL extends the self-organizing learning process described in
+\Cref{sec:psfl} by integrating neural network sparsification into the local
+training and coordination loop.
+%
+The objective is to reduce the computational cost of the learned models and
+the amount of information that must be exchanged, while retaining the ability
+to discover the spatial organization of non-IID data.
+
+Unlike sparsification methods applied only after training, SParSeFuL uses
+sparse models throughout the distributed learning process.
+%
+Consequently, sparsification affects not only model efficiency, but also the
+loss-based similarity estimates used to form federations.
+%
+This establishes a direct interaction between model structure, learning
+performance, and the self-organization of the collective.
+
+\subsection{Algorithm Description}
+\label{sec:sparseful-algorithm}
+
+SParSeFuL retains the federation formation mechanism introduced for
+\gls{PSFL} in \Cref{sec:psfl-algorithm}.
+%
+In particular, neighboring devices are compared through the same loss-based
+distance, and the resulting distance field is used by the SCR pattern to elect
+leaders and induce a Voronoi-like partition of the network.
+%
+We therefore focus here only on the integration of sparsification into this
+learning process.
+
+Let
+\(\boldsymbol{\theta}
+  = (\theta_1,\ldots,\theta_p)\)
+denote a model containing \(p\) trainable parameters, and let
+\(\psi \in [0,1)\) be the target sparsity level.
+%
+SParSeFuL applies magnitude-based unstructured pruning, retaining the parameters
+with the largest absolute values and setting the remaining
+\(\psi \times 100\%\) to zero.
+%
+The pruning operator can be expressed as
+
+\begin{equation}
+  \left[
+    \mathcal{P}_{\psi}(\boldsymbol{\theta})
+  \right]_k
+  =
+  \begin{cases}
+    \theta_k,
+      & \text{if } |\theta_k| > \tau_{\psi},\\
+    0,
+      & \text{otherwise},
+  \end{cases}
+  \label{eq:sparseful-pruning}
+\end{equation}
+
+where \(\tau_{\psi}\) is the magnitude threshold corresponding to the
+\(\psi\)-quantile of the model parameters.
+%
+The resulting zero-valued parameters are masked so that the selected sparse
+structure is preserved during subsequent training.
+
+Unstructured pruning is particularly suitable for the proposed coordination
+process because it leaves the neural network architecture unchanged.
+%
+All devices therefore retain compatible models, allowing the existing
+similarity estimation, aggregation, and integration operations to be reused
+without structural adaptations.
+
+\begin{figure}[t]
+  \centering
+  \imageplaceholder[5cm]{
+    SParSeFuL algorithm overview
+  }
+  \caption{
+    Overview of SParSeFuL.
+    Sparsification is applied after local training, before models are used for
+    similarity estimation, federation formation, and collaborative aggregation.
+  }
+  \label{fig:sparseful-overview}
+\end{figure}
+
+As illustrated in \Cref{fig:sparseful-overview}, each device first evolves its
+current model using its private training data and then prunes the resulting
+model according to \(\psi\).
+%
+The sparse model is subsequently used to compute the loss-based distance from
+neighboring devices.
+%
+This means that federation formation reflects the compatibility of the models
+that devices can actually exchange and deploy, rather than that of their dense
+counterparts.
+
+The remaining operations follow the field-based coordination loop introduced
+in the previous sections.
+%
+Sparse choice elects a set of federation leaders using the loss-based distance
+field; a gradient identifies the closest leader; and the sparse local models
+are collected toward their respective leaders.
+%
+Each leader averages the collected parameters and broadcasts the resulting
+federation model throughout its region.
+
+Finally, devices periodically integrate their locally evolved model
+\(\hat{\boldsymbol{\theta}}_i^{(t)}\) with the received federation model
+\(\boldsymbol{\theta}_{\mathrm{fed},i}^{(t)}\):
+
+\begin{equation}
+  \boldsymbol{\theta}_i^{(t+1)}
+  =
+  \begin{cases}
+    \alpha\hat{\boldsymbol{\theta}}_i^{(t)}
+    +
+    (1-\alpha)\boldsymbol{\theta}_{\mathrm{fed},i}^{(t)},
+      & \text{if } t \bmod \Delta = 0,\\[3pt]
+    \hat{\boldsymbol{\theta}}_i^{(t)},
+      & \text{otherwise},
+  \end{cases}
+  \label{eq:sparseful-integration}
+\end{equation}
+
+where \(\Delta\) is the integration period and \(\alpha\) controls the balance
+between local and federation knowledge.
+%
+In our implementation, the federation model is assigned a weight of \(0.9\),
+while the locally evolved model receives a weight of \(0.1\).
+
+\sidenote{controlla bene sta sezione che si puo fare meglio }
+\Cref{lst:sparseful-client} reports a simplified version of the actual
+SParSeFuL client implemented in Phyelds.
+%
+The \texttt{@aggregate} decorator identifies a field-based program that is
+executed independently by every device.
+%
+The \texttt{remember} construct preserves the local model and the current
+learning round across executions.
+%
+The other Phyelds operations directly implement the SCR coordination process:
+\texttt{elect\_leaders} performs sparse choice,
+\texttt{distance\_to} constructs the gradient,
+\texttt{collect\_with} routes models toward the elected leaders, and
+\texttt{broadcast} disseminates the aggregated models.
+
+Implementation-specific operations unrelated to the algorithmic behavior,
+such as experiment identifiers, metric logging, and dataset inspection, are
+omitted from the listing for clarity.
+
+\begin{lstlisting}[
+  language=Python,
+  caption={
+    Simplified Phyelds implementation of the SParSeFuL client.
+  },
+  label={lst:sparseful-client}
+]
+@aggregate
+def psfl_client(
+    initial_model_params,
+    data,
+    threshold,
+    sparsity_level,
+    pruning_for_check,
+    device,
+    dataset_name,
+):
+    training_data, validation_data, _ = data
+
+    # Preserve the model and the current learning round.
+    set_value, stored_model = remember(
+        (initial_model_params, 0)
+    )
+    local_model_weights, tick = stored_model
+    local_model = load_from_weights(
+        local_model_weights,
+        dataset_name,
+        sparsity_level,
+    )
+
+    # Local training and model sparsification.
+    evolved_model, _ = local_training(
+        local_model,
+        2,
+        training_data,
+        128,
+        device,
+    )
+
+    if pruning_for_check:
+        evolved_model = prune_model(
+            evolved_model,
+            sparsity_level,
+            dataset_name,
+        )
+
+    # Loss-based similarity estimation.
+    distances = loss_based_distances(
+        evolved_model,
+        validation_data,
+        device,
+        dataset_name,
+        sparsity_level,
+    )
+
+    # Self-organizing federation formation.
+    leader, _ = elect_leaders(
+        threshold,
+        distances,
+    )
+    potential = distance_to(
+        leader,
+        distances,
+    )
+
+    # Model collection and federation-level aggregation.
+    models = collect_with(
+        potential,
+        [evolved_model],
+        lambda x, y: x + y,
+    )
+    aggregated_model = average_weights(
+        models,
+        [1.0 for _ in models],
+    )
+
+    # Distribution of the federation model.
+    area_model = broadcast(
+        leader,
+        aggregated_model,
+        distances,
+    )
+
+    # Periodic integration of local and federation models.
+    if tick % impulsesEvery == 0:
+        next_model = average_weights(
+            [evolved_model, area_model],
+            [0.1, 0.9],
+        )
+    else:
+        next_model = evolved_model
+
+    set_value((next_model, tick + 1))
+\end{lstlisting}
+
+Sparsification is thus not implemented as an independent post-processing step.
+%
+The pruned model participates directly in similarity estimation, federation
+formation, aggregation, and dissemination.
+%
+As a result, increasing \(\psi\) reduces model complexity but may also alter
+the loss landscape observed by neighboring devices and, consequently, the
+federations that emerge from their interactions.
+
+\subsection{Research Question}
+\label{sec:sparseful-rq}
+
+The evaluation investigates the extent to which model sparsification can be
+combined with decentralized and proximity-based learning without compromising
+either federation formation or predictive performance.
+%
+Accordingly, we consider the following research question:
+
+\begin{quote}
+  \textbf{RQ1.}
+  \emph{To what extent can neural network sparsification be integrated into
+  proximity-based decentralized federated learning to reduce communication
+  and computational overhead while preserving model accuracy under spatially
+  non-IID data distributions?}
+\end{quote}
+
+Answering this question requires considering both sides of the trade-off.
+%
+Higher sparsity can reduce the number of active parameters and the
+computational cost of inference, but excessive pruning may prevent models from
+capturing the local data distributions accurately.
+%
+In SParSeFuL, this loss of information may additionally affect the estimated
+distances and destabilize the federation structure.
+
+\subsection{Experimental Setup}
+\label{sec:sparseful-setup}
+
+The evaluation was conducted using PhyLDS as the platform for field-based
+coordination~\cite{DBLP:journals/corr/abs-2603-29999}.
+%
+Each experiment was repeated with multiple random seeds, and the reported
+results show the mean and variability across runs.
+
+\paragraph{Datasets and data distribution}
+
+We considered EMNIST~\cite{DBLP:conf/ijcnn/CohenATS17} and
+CIFAR-100~\cite{krizhevsky2009learning}, obtained through the
+ProFed benchmark~\cite{DBLP:journals/jors/DominiIALV26}.
+%
+EMNIST contains grayscale images of \(26\) handwritten letter classes, whereas
+CIFAR-100 contains RGB images belonging to \(100\) fine-grained object classes.
+%
+The latter therefore represents a substantially more challenging learning
+task.
+
+Both datasets were partitioned to reproduce the proximity-based label skew
+considered in \Cref{sec:psfl-setup}.
+%
+The network was divided into \(\{3,5,9\}\) spatial regions, each associated
+with a different subset of labels.
+%
+Devices located in the same region received IID samples from the corresponding
+subset, whereas devices belonging to different regions observed distinct data
+distributions.
+
+\paragraph{Network and learning configuration}
+
+Each simulation involved \(50\) devices connected through a range-limited
+communication graph.
+%
+Devices could therefore exchange information only with their spatial
+neighbors, while the aggregate coordination operators supported multi-hop
+federation formation and model dissemination.
+
+Dataset-specific convolutional neural networks were used.
+%
+For EMNIST, we adopted a compact CNN composed of one convolutional layer,
+two max-pooling operations, and a two-layer linear classifier.
+%
+For CIFAR-100, we used a larger network with three convolutional layers,
+each followed by batch normalization and max pooling, and a final linear
+classifier.
+%
+Both architectures were deliberately kept lightweight to make the distributed
+experiments computationally tractable.
+
+SParSeFuL was evaluated with the following sparsity levels:
+
+\begin{equation}
+  \psi \in
+  \left\{
+    0.0,\,
+    0.4,\,
+    0.6,\,
+    0.8,\,
+    0.85,\,
+    0.9
+  \right\}.
+  \label{eq:sparseful-levels}
+\end{equation}
+
+The configuration with \(\psi=0\) corresponds to the dense version of the
+approach and provides a reference for assessing the effects of pruning.
+%
+SParSeFuL was compared with \gls{FedAvg}, FedProx, Scaffold, and IFCA.
+%
+The baselines cover centralized global learning, methods designed to mitigate
+statistical heterogeneity, and clustered federated learning.
+
+\paragraph{Evaluation metrics}
+
+During training, we recorded training loss, validation loss, and validation
+accuracy at each communication round.
+%
+For SParSeFuL, we additionally monitored the number of federations formed over
+time.
+%
+This metric makes it possible to determine whether sparsification interferes
+with the identification of the underlying spatial data partition.
+
+After training, the models were evaluated on held-out test sets containing
+samples that had not been observed during either training or validation.
+%
+A separate test set was retained for each spatial region, and the reported test
+accuracy was computed by averaging the results across regions.
+
+Finally, we measured the number of floating-point operations and inference
+latency of the resulting models.
+%
+These metrics quantify the computational benefits obtained at different
+sparsity levels.
+%
+The communication benefit is instead characterized analytically through the
+fraction of nonzero model parameters.
+
+\subsection{Results and Discussion}
+\label{sec:sparseful-results}
+
+\subsubsection{Federation Formation}
+
+\Cref{fig:sparseful-federations} reports the number of federations formed over
+time for the different sparsity levels.
+%
+Without sparsification, SParSeFuL consistently converges to the number of
+spatial regions used to partition the data.
+%
+This confirms the behavior already observed for the dense approach in
+\Cref{sec:psfl-results}.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \imageplaceholder[4cm]{
+      Number of federations on EMNIST
+    }
+    \caption{EMNIST.}
+    \label{fig:sparseful-federations-emnist}
+  \end{subfigure}
+
+  \vspace{0.5cm}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \imageplaceholder[4cm]{
+      Number of federations on CIFAR-100
+    }
+    \caption{CIFAR-100.}
+    \label{fig:sparseful-federations-cifar}
+  \end{subfigure}
+
+  \caption{
+    Evolution of the number of federations for different sparsity levels and
+    numbers of spatial regions.
+    Shaded areas indicate variability across runs.
+  }
+  \label{fig:sparseful-federations}
+\end{figure}
+
+The effect of increasing sparsity is strongly dataset-dependent.
+%
+For EMNIST, the correct federation structure is generally recovered up to
+\(\psi=0.8\).
+%
+At \(\psi\geq0.85\), the number of federations is overestimated, indicating
+that highly sparse models no longer provide sufficiently stable loss-based
+similarity estimates.
+
+The degradation appears earlier on CIFAR-100, where federation formation starts
+to become unstable at approximately \(\psi=0.4\).
+%
+The difference can be attributed to the greater complexity of CIFAR-100 and to
+the limited capacity of the lightweight model used in the experiments.
+%
+Pruning this model removes parameters that are more important for representing
+the larger number of classes and their more complex visual features.
+
+These results demonstrate that sparsification affects not only the accuracy of
+individual models but also the topology of the learning collective.
+%
+When pruning substantially changes cross-evaluation losses, devices that should
+belong to the same federation may appear dissimilar, producing excessive
+fragmentation.
+
+\subsubsection{Training and Validation Performance}
+
+The validation results in \Cref{fig:sparseful-validation} follow the same
+dataset-dependent pattern.
+%
+For both datasets, the dense configuration converges rapidly and reaches the
+highest validation accuracy.
+%
+Moderate sparsification introduces only a limited loss in performance, whereas
+values beyond the previously identified thresholds lead to slower and less
+stable convergence.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \imageplaceholder[4cm]{
+      Validation accuracy on EMNIST
+    }
+    \caption{EMNIST.}
+    \label{fig:sparseful-validation-emnist}
+  \end{subfigure}
+
+  \vspace{0.5cm}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \imageplaceholder[4cm]{
+      Validation accuracy on CIFAR-100
+    }
+    \caption{CIFAR-100.}
+    \label{fig:sparseful-validation-cifar}
+  \end{subfigure}
+
+  \caption{
+    Validation accuracy over communication rounds for different sparsity
+    levels in the experiments with five spatial regions.
+  }
+  \label{fig:sparseful-validation}
+\end{figure}
+
+On EMNIST, validation accuracy remains comparatively stable up to
+\(\psi=0.8\).
+%
+For CIFAR-100, a substantial degradation is already visible around
+\(\psi=0.4\), with higher sparsity producing unstable learning and markedly
+lower accuracy.
+
+The correspondence between validation performance and federation stability
+suggests that the degradation is not caused solely by the reduced capacity of
+the sparse models.
+%
+Once the underlying spatial organization is no longer identified correctly,
+devices collaborate within smaller or incompatible groups, further reducing
+the amount and relevance of the knowledge exchanged during training.
+
+\subsubsection{Test Accuracy}
+
+The test results reported in \Cref{fig:sparseful-test} confirm the trends
+observed during training.
+%
+In the dense configuration, SParSeFuL achieves the highest accuracy on both
+datasets by learning a specialized model for each emergent federation.
+%
+Increasing sparsity progressively reduces accuracy, with a sharper decline
+after the dataset-specific stability threshold.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \imageplaceholder[4cm]{
+      Test accuracy on EMNIST
+    }
+    \caption{EMNIST.}
+    \label{fig:sparseful-test-emnist}
+  \end{subfigure}
+
+  \vspace{0.5cm}
+
+  \begin{subfigure}{\textwidth}
+    \centering
+    \imageplaceholder[4cm]{
+      Test accuracy on CIFAR-100
+    }
+    \caption{CIFAR-100.}
+    \label{fig:sparseful-test-cifar}
+  \end{subfigure}
+
+  \caption{
+    Test accuracy for different sparsity levels in the experiments with five
+    spatial regions.
+    Bars report mean accuracy, while error bars indicate variability across
+    runs.
+  }
+  \label{fig:sparseful-test}
+\end{figure}
+
+On EMNIST, SParSeFuL retains comparatively high test accuracy up to
+\(\psi=0.8\) and continues to outperform the baselines at higher sparsity
+levels.
+%
+On CIFAR-100, degradation begins substantially earlier, and all the considered
+methods exhibit poor performance at \(\psi\geq0.8\).
+
+IFCA often obtains results close to those of SParSeFuL, confirming the
+advantage of learning multiple specialized models under non-IID data.
+%
+However, IFCA relies on a centralized coordinator and requires the number of
+clusters to be specified in advance.
+%
+SParSeFuL instead allows both the number and composition of federations to
+emerge from local interactions, retaining the decentralization and adaptive
+properties discussed in \Cref{sec:psfl}.
+
+\subsubsection{Computational and Communication Efficiency}
+
+As shown in \Cref{fig:sparseful-efficiency}, increasing \(\psi\) progressively
+reduces both the number of floating-point operations and inference latency.
+%
+The absolute costs are higher for CIFAR-100 because its model contains more
+layers and processes larger color images, but the decreasing trend is
+consistent across both datasets.
+
+\begin{figure}[t]
+  \centering
+
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder[4cm]{
+      FLOPs by sparsity level
+    }
+    \caption{Floating-point operations.}
+    \label{fig:sparseful-flops}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.47\textwidth}
+    \centering
+    \imageplaceholder[4cm]{
+      Inference latency by sparsity level
+    }
+    \caption{Inference latency.}
+    \label{fig:sparseful-latency}
+  \end{subfigure}
+
+  \caption{
+    Computational efficiency of the EMNIST and CIFAR-100 models under
+    increasing sparsity.
+  }
+  \label{fig:sparseful-efficiency}
+\end{figure}
+
+Sparsification also limits the number of parameter values that must be
+represented in exchanged models.
+%
+At sparsity level \(\psi\), only a fraction \(1-\psi\) of the parameters is
+nonzero.
+%
+Ignoring representation metadata, this corresponds to an ideal reduction of
+
+\begin{equation}
+  \psi \times 100\%
+  \label{eq:sparseful-communication-reduction}
+\end{equation}
+
+in the transmitted parameter values relative to a dense model.
+%
+For example, \(\psi=0.5\) and \(\psi=0.9\) correspond to theoretical payload
+reductions of \(50\%\) and \(90\%\), respectively.
+
+The actual communication saving depends on the sparse representation because
+masks or parameter indices must also be transmitted.
+%
+Therefore, \Cref{eq:sparseful-communication-reduction} represents an upper
+bound rather than a direct measurement of network traffic.
+%
+The experiments evaluate computational cost and inference latency but do not
+measure the number of transmitted bytes.
+
+\subsubsection{Answer to the Research Question}
+
+The results provide a positive but conditional answer to \textbf{RQ1}.
+%
+Neural network sparsification can be integrated directly into proximity-based
+decentralized federated learning, reducing model complexity and potentially
+limiting communication payloads while preserving both federation formation and
+predictive accuracy at moderate sparsity levels.
+
+The maximum effective sparsity depends on the difficulty of the learning task
+and on model capacity.
+%
+EMNIST tolerates comparatively aggressive pruning, with stable behavior up to
+approximately \(\psi=0.8\), whereas CIFAR-100 begins to degrade at much lower
+levels.
+%
+Beyond these thresholds, pruning distorts the loss-based distances, destabilizes
+the emergent federation structure, and compounds the accuracy loss caused by
+the reduced model capacity.
+
+SParSeFuL therefore reveals a trade-off specific to self-organizing federated
+learning: sparsification changes not only the efficiency and accuracy of the
+models, but also the organization of the distributed learning process itself.
 
 \section{ProFed: Benchmarking Proximity-Based Federated Learning}
 \label{sec:selforgfl-benchmarking}
