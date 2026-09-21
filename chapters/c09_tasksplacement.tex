@@ -7,6 +7,144 @@
 \minitoc
 %----------------------------------------------------------------------------------------
 \section{Motivation}
+
+The learning architectures presented in the previous chapters 
+ enable collections of devices to coordinate 
+ and learn without relying on a centralized view of the system.
+%
+Their deployment at the network edge, however, 
+ introduces an additional challenge:
+ the devices participating in the collective may not have sufficient computational, 
+ energy, or memory resources to execute every component of their applications locally.
+%
+This limitation is becoming increasingly relevant as the number of connected devices 
+ and the complexity of edge applications continue to grow.
+%
+The number of active IoT devices is expected to reach approximately 29.4 billion 
+ by 2030\footnote{\url{https://transformainsights.com/news/global-iot-connections-294}}.
+%
+At this scale, 
+ transferring all data and computation to remote cloud infrastructures is often impractical, 
+ particularly for applications with strict latency, bandwidth, 
+ or privacy requirements~\cite{DBLP:journals/computer/Satyanarayanan17}.
+
+Cloud-edge computing addresses these limitations 
+ by distributing computation across a continuum comprising end devices, edge servers, 
+ and cloud data centers~\cite{DBLP:journals/jpdc/RosendoCVA22}.
+%
+Instead of executing an application entirely on a single device or moving it entirely to the cloud,
+ its components may be placed at different points of this continuum according to the resources 
+ and network conditions currently available.
+%
+This flexibility gives rise to the \emph{component offloading problem}: 
+ determining where each application component should execute in order to balance objectives such as response time, 
+ energy consumption, and infrastructure cost.
+
+Offloading decisions become particularly difficult when applications 
+ are structured as workflows rather than as indivisible tasks.
+%
+A workflow may be represented as a directed acyclic graph whose nodes correspond 
+ to computational components and whose edges encode data and execution dependencies.
+%
+The placement of one component therefore affects the cost and feasibility of placing the others:
+ executing two dependent components on different devices may reduce local computation 
+ but introduce additional communication latency and energy consumption.
+%
+Component models, architecture description languages, 
+ and service-oriented frameworks provide abstractions for decomposing 
+ applications~\cite{DBLP:journals/tse/CrnkovicSVC11,DBLP:conf/isola/BallouliBBS18,DBLP:journals/csur/LemosDB16}.
+%
+However, 
+ their deployment is commonly managed through centralized policies, 
+  while approaches such as pulverization~\cite{DBLP:journals/fgcs/FarabegoliPCV24} 
+  primarily address the decomposition of individual devices and provide limited support 
+  for dynamically placing only selected parts of an application.
+
+A further complication is that offloading decisions cannot be optimized independently.
+%
+When many devices concurrently select the same server or communication path, 
+ their individually reasonable choices may collectively produce congestion, 
+ resource contention, and server overload.
+%
+Conversely, 
+ distributing requests without accounting for the current state of neighboring devices 
+ may leave available resources underutilized.
+%
+The edge should therefore be understood as a \gls{CAS}~\cite{DBLP:conf/huc/Ferscha15}, 
+ in which system-level behavior emerges from the local decisions
+ and interactions of multiple heterogeneous entities.
+%
+An effective offloading policy must account not only for the state of the device making the decision, 
+ such as its battery level and computational load, 
+ but also for collective information describing the surrounding network and infrastructure.
+
+A large body of work formulates offloading as an optimization problem and addresses it through mathematical programming, 
+ heuristic search, genetic algorithms, or machine-learning 
+ techniques~\cite{DBLP:journals/comsur/MachB17,DBLP:journals/jnca/LinZCLW20,DBLP:journals/jsa/IslamDGC21,DBLP:journals/cn/SaeikASSDVLAMP21,DBLP:journals/tvt/Al-HabobDAM20}.
+%
+In particular, 
+ reinforcement learning is well suited to dynamic environments because it can learn placement policies directly through interaction, 
+ without requiring an exact analytical model of workload and network evolution.
+%
+Deep reinforcement learning has consequently been applied to offloading in domains including satellite communications, 
+ vehicular networks, and crowd management~\cite{DBLP:journals/tvt/ChaiZYXGG23,DBLP:journals/iotj/CuiLZZLQ23,DBLP:journals/tits/WangPLQRWYZZ23}.
+%
+Nevertheless, 
+ existing learning-based approaches commonly reduce offloading to a binary choice between local and remote execution,
+  assume a homogeneous infrastructure, or rely on a centralized representation of the global system state.
+%
+These assumptions limit their applicability to large-scale edge systems, where applications are only partially offloaded, 
+ devices and communication links have different roles, and no entity can continuously observe the complete deployment.
+
+Graph-based learning offers a natural foundation for overcoming some of these limitations because 
+ both the infrastructure and the application workflow can be represented relationally.
+%
+However, 
+ homogeneous graph representations do not distinguish among end devices, 
+ edge servers, cloud servers, communication links, and application dependencies.
+%
+Moreover, 
+ a graph representation alone does not solve the problem of acquiring collective state in a decentralized system.
+%
+Each agent still requires a compact description of phenomena such as neighborhood density, 
+ network congestion, and server utilization, obtained without introducing a central coordinator 
+ or assuming global observability.
+
+Accordingly, this chapter addresses the following research question:
+
+\begin{enumerate}[
+label=\textbf{RQ\arabic*:},
+ref=RQ\arabic*,
+leftmargin=*
+]
+    \item
+    How can deep reinforcement learning support decentralized component offloading while accounting 
+    for both individual device constraints and collective phenomena such as network congestion and server load?
+\label{rq}
+\end{enumerate}
+
+To answer this question, 
+ the chapter introduces \emph{Informed Deep Heterogeneous Graph Q-Learning} (IDHGQL), 
+ a distributed learning approach that combines Deep Q-Learning, \glspl{HGNN}, and aggregate computing.
+%
+The heterogeneous graph representation preserves the distinct semantics of infrastructure resources, 
+ communication links, and application dependencies.
+%
+Aggregate computing complements this representation by producing decentralized and self-stabilizing summaries 
+ of the collective context, allowing each agent to observe relevant system-level phenomena through local interactions.
+%
+Finally, 
+ the macro-component model introduced in previous work~\cite{acsos-model} enables the policy to place individual components 
+  of a DAG-structured application rather than choosing only between entirely local and entirely remote execution.
+%
+The resulting approach uses centralized training and decentralized execution, 
+ allowing agents to learn from system-wide experience during training
+ while making placement decisions autonomously at runtime.
+%
+In this way, 
+ the chapter extends the thesis investigation from the coordination of distributed learning processes 
+ to the resource-aware deployment of their applications across heterogeneous edge infrastructures.
+
 \section{Proposed method: IDHGQL}
 \section{Evaluation}
 \section{Related Works}
