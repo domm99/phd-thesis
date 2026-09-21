@@ -2903,3 +2903,205 @@ Building on this unified design,
 \label{sec:selforgfl-future}
 %=============================================================================
 
+The approaches presented in this chapter establish a decentralized foundation 
+ for forming and training spatial federations.
+%
+Two limitations nevertheless remain open.
+%
+First, 
+ federation discovery is still coupled to the task model 
+ and must therefore be repeated as part of the learning process.
+%
+Second, 
+ although the federation structure can adapt when devices move, 
+ the local models are not explicitly designed to retain knowledge acquired 
+ in previously visited regions.
+%
+The following directions address these two limitations by separating cluster discovery 
+ from task learning and by introducing continual adaptation for mobile devices.
+
+\subsection{Novelty-Driven Federation Discovery}
+\label{subsec:future-rnd-clustering}
+
+In the methods discussed so far, 
+ device compatibility is estimated through the model being trained.
+%
+This makes federation discovery task-dependent and requires devices to exchange
+ and evaluate comparatively large models, even when the underlying collaboration
+ structure is stable.
+%
+A promising alternative is to decouple these two processes 
+ and discover federations through lightweight auxiliary models before starting 
+ the primary learning task~\cite{DBLP:journals/corr/abs-2606-30499}.
+
+One preliminary realization of this idea relies on \gls{RND}.
+%
+Each device trains a compact predictor to reproduce the output of a shared,
+ randomly initialized and fixed target network on its local data.
+%
+The prediction error then acts as a novelty signal: a predictor trained 
+ by a device with a compatible distribution also produces a low residual on the local data, 
+ whereas a predictor trained on a different distribution produces a higher one.
+%
+By exchanging these predictors rather than the task model, 
+ devices can construct pairwise compatibility estimates without sharing raw data.
+%
+Federations can subsequently be derived from these estimates 
+ through a compatibility threshold, 
+ allowing both their membership and their number to emerge 
+ from the observed data instead of being fixed in advance.
+
+This separation makes cluster discovery independent of the architecture 
+ and objective used for the primary task.
+%
+In stationary settings, 
+ it can be executed only once before federated training;
+ when the data-generating conditions evolve, 
+ it can instead be re-triggered periodically or in response to a detected change.
+%
+Within the framework developed in this chapter, 
+ RND-based compatibility could replace full-model comparison while retaining 
+ the same field-based mechanisms for decentralized federation formation.
+%
+Moreover, 
+ predictor exchange can be restricted to spatial neighborhoods, 
+ avoiding the all-to-all communication required by a centralized construction 
+ of the full novelty matrix.
+
+Initial experiments under clustered feature skew show that \gls{RND} residuals expose
+ the latent group structure and correctly distinguish devices affected by
+ different feature perturbations.
+%
+As shown in \Cref{fig:future-rnd-novelty}, 
+ the difference between self-novelty and cross-novelty is close to zero within each ground-truth group 
+ and markedly higher across groups.
+%
+The resulting block structure provides direct evidence that the auxiliary predictors 
+ capture distributional compatibility before the primary model is trained.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.6\textwidth]{figures/ch07/rnd/uncertainty_difference_heatmap.png}
+    \caption{
+        Difference between self-novelty and cross-novelty across devices.
+        Devices are arranged by their ground-truth group; the near-zero diagonal
+        blocks show that predictors trained within the same group produce similar
+        residuals, while larger off-diagonal values reveal distributional
+        differences between groups.
+    }
+    \label{fig:future-rnd-novelty}
+\end{figure}
+
+They also indicate substantially lower clustering overhead than IFCA: 
+ even when clustering is repeated at every round, 
+ the measured cost is approximately one order of magnitude lower because the auxiliary predictors 
+ are much smaller than the task model.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.6\columnwidth]{figures/ch07/rnd/cumulative_time.pdf}
+  \caption{
+    Clustering overhead over federated rounds. 
+    Compared with IFCA, RND-based clustering reduces cost by re-clustering less frequently 
+    and by relying on small auxiliary predictors instead of full task models.
+  }
+  \label{fig:chart-time}
+\end{figure}
+
+These results are encouraging, but remain preliminary.
+%
+Further work should evaluate larger device populations, 
+ additional forms of non-IID data, and real distributed sensing scenarios.
+%
+It should also investigate self-adaptive selection of the compatibility threshold,
+ event-driven re-clustering, and robustness against adversarial devices that may
+ manipulate the novelty estimates.
+
+\subsection{Continual Adaptation under Temporal Shift}
+\label{subsec:future-continual-adaptation}
+
+The mobility experiments presented earlier show that field-based coordination 
+ can rapidly reorganize federations after devices cross regional boundaries.
+%
+However, 
+ adapting the collaboration structure does not by itself prevent the
+ model of a moving device from forgetting knowledge acquired in previous regions.
+%
+For that device, 
+ spatial heterogeneity becomes a sequence of temporal distribution shifts, 
+ motivating the integration of \gls{CL} mechanisms into decentralized
+ clustered federated learning.
+
+A first step in this direction is C2FL, 
+ which extends the field-based learning process with experience replay and dwell-time-aware model
+ integration~\cite{DBLP:journals/corr/abs-2606-18003}.
+%
+When a device enters a new region, 
+ samples from the region it has left are added to a local replay memory 
+ and are used together with current observations during subsequent training.
+%
+After receiving the regional consensus, 
+ the device combines it with its locally trained model using a mixing factor that increases 
+ with the time spent in the current region.
+%
+The regional contribution is therefore limited immediately after a transition,
+ when abruptly adopting the new consensus could overwrite previously acquired knowledge, 
+ and becomes stronger as the device remains in the region.
+%
+Replay and adaptive averaging serve complementary purposes: 
+ the former preserves knowledge along the device trajectory, 
+ while the latter progressively exploits the experience of the current federation.
+%
+The replay memory remains local and does not introduce 
+ any additional exchange of raw data.
+
+Preliminary experiments with mobile devices moving across four heterogeneous
+ regions confirm that standard field-based federated learning suffers from
+ catastrophic forgetting after region transitions.
+%
+C2FL substantially preserves accuracy on previously visited regions and achieves
+ higher cumulative accuracy than local learning, replay without federation, and
+ federated learning without replay, as reported in~\Cref{fig:future-c2fl-comparison}.
+%
+The performance increments after successive transitions show that replay retains knowledge 
+ from previously visited regions, while the consistent gap over the continual-learning-only baseline 
+ isolates the additional benefit of regional model integration.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/ch07/c2fl/comparison.pdf}
+    \caption{
+        Cumulative accuracy of C2FL and the three ablation baselines over global
+        rounds.
+        Region transitions occur at rounds 30, 60, and 90.
+        C2FL combines knowledge retention through replay with the benefits of
+        federated collaboration in the currently visited region.
+    }
+    \label{fig:future-c2fl-comparison}
+\end{figure}
+
+This suggests that continual and collective adaptation 
+ should not be treated as alternative strategies: 
+ their combination allows a mobile device to retain its
+ own history while benefiting from knowledge available in its current region.
+
+Several aspects require further study before this approach 
+ can be applied to long-running systems.
+%
+In particular, 
+ an unbounded replay memory is unsuitable for resource-constrained devices, 
+  calling for bounded buffers and selective sampling policies.
+%
+Replay should also be compared with regularization-based 
+ and hybrid continual learning methods to characterize their accuracy, memory, 
+ and computation trade-offs.
+%
+Finally, 
+ future evaluations should replace abrupt region changes with gradual
+ spatial transitions and realistic mobility traces, and should examine how
+ continual adaptation interacts with delayed federation updates, temporary cluster
+ misassignments, and asynchronous communication.
+%
+Together with novelty-driven federation discovery, 
+ this direction would enable a learning system to adapt both its collaboration structure 
+ and its accumulated knowledge as the environment evolves.
