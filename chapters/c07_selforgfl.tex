@@ -670,47 +670,17 @@ First,
 The comparison was then extended to all three baselines under heterogeneous data distributions.
 
 Two synthetic partitioning strategies were used to generate non-\gls{IID} data:
-
-\begin{enumerate}
+%
+\begin{enumerate*}[label=(\roman*)]
   \item
-  \emph{Dirichlet partitioning}, in which each region receives samples from  most classes,
+  \emph{dirichlet partitioning}, in which each region receives samples from  most classes,
    but with highly imbalanced class proportions; and
   \item
   \emph{hard partitioning}, in which each region contains only a strict subset
   of the available labels, producing a more challenging learning scenario.
-\end{enumerate}
-
-\sidenote{here ref to profed sect}
-The three data-distribution scenarios are illustrated in \Cref{fig:??}.
-
-% \begin{figure}[t]
-%   \centering
-
-%   \begin{subfigure}{0.31\textwidth}
-%     \centering
-%     \imageplaceholder[3.5cm]{IID data distribution}
-%     \caption{\gls{IID} data.}
-%   \end{subfigure}
-%   \hfill
-%   \begin{subfigure}{0.31\textwidth}
-%     \centering
-%     \imageplaceholder[3.5cm]{Dirichlet data distribution}
-%     \caption{Dirichlet partitioning.}
-%   \end{subfigure}
-%   \hfill
-%   \begin{subfigure}{0.31\textwidth}
-%     \centering
-%     \imageplaceholder[3.5cm]{Hard data partitioning}
-%     \caption{Hard partitioning.}
-%   \end{subfigure}
-
-%   \caption{
-%     Data-distribution strategies across five spatial regions.
-%     Each color represents a different region.
-%     Dirichlet and hard partitioning produce non-IID data across regions.
-%   }
-%   \label{fig:fbfl-distributions}
-% \end{figure}
+\end{enumerate*}
+%
+The data-distribution scenarios are illustrated in \Cref{fig:skewness}.
 
 The data were assigned to devices through the following procedure.
 %
@@ -2330,6 +2300,404 @@ SParSeFuL therefore reveals a trade-off specific to self-organizing federated le
 \label{sec:selforgfl-benchmarking}
 %=============================================================================
 
+\subsection{Motivation}
+
+The evaluation of federated learning algorithms relies heavily 
+ on benchmark suites that provide common datasets, partitioning strategies, 
+ and evaluation protocols.
+%
+Existing frameworks cover several complementary aspects of this process.
+%
+For example, 
+ FedScale~\cite{DBLP:conf/icml/LaiDSLZMC22} supports large-scale experiments 
+ on realistic datasets while accounting for system heterogeneity 
+ and client resource constraints.
+%
+Similarly, 
+ LEAF~\cite{DBLP:journals/corr/abs-1812-01097} 
+  promotes reproducible evaluation through standardized datasets, metrics, 
+  and reference implementations, including measurements of model performance and training costs.
+%
+Other benchmarks provide configurable environments for comparing federated learning algorithms 
+ on established datasets under different client-level
+ partitions~\cite{DBLP:journals/corr/abs-2007-13518,DBLP:journals/corr/abs-2007-14390}.
+
+These frameworks provide valuable support for the evaluation 
+ of general-purpose federated learning methods.
+%
+However, 
+ their data-partitioning procedures typically abstract away 
+ the spatial organization of the clients.
+%
+Data are assigned directly to individual devices without representing the fact that, 
+ in many collective adaptive systems, nearby devices experience similar conditions 
+ and consequently observe correlated data distributions.
+%
+Examples include vehicles operating within the same urban district, 
+ sensors deployed in a shared physical environment, 
+ and devices located within the same industrial site.
+
+This limitation is particularly relevant to the methods introduced in this chapter.
+%
+All the algorithms presented in this chapter explicitly exploit 
+ the relation between spatial proximity and data similarity, 
+ assuming that data are relatively homogeneous within a region 
+ but heterogeneous across different regions.
+%
+Evaluating such algorithms through conventional client-level partitions 
+ does not capture this structure and makes it difficult to systematically investigate how
+ regional heterogeneity affects federation formation and learning performance.
+
+ProFed~\cite{DBLP:journals/jors/DominiIALV26} addresses this gap 
+ by providing a standardized benchmark  for generating region-aware federated learning scenarios.
+%
+Rather than distributing data independently among clients, 
+ it first partitions a dataset across spatial regions according to a configurable degree of heterogeneity
+ and subsequently distributes each regional partition among the devices located within that region.
+%
+This enables reproducible evaluation of proximity-based federated learning algorithms 
+ under controlled spatial data distributions and facilitates their
+ comparison across datasets, partitioning strategies, and levels of regional skewness.
+
+\subsection{Implementation}
+
+ProFed implementation is based on PyTorch~\cite{DBLP:conf/asplos/AnselYHGJVBBBBC24} 
+ and TorchVision~\cite{TorchVision}, 
+ as it has been specifically designed to facilitate and 
+ standardize research experiments within the scenario described above. 
+%
+ProFed provides an API to partition the supported datasets and 
+ to generate experimental scenarios that follow the proposed system model. 
+% 
+In particular, 
+ given the number of regions and the number of devices per region, 
+ it enables the creation of region-aware data partitions such that 
+ devices belonging to the same region receive datasets sampled from 
+ the same underlying data distribution. 
+%
+This design allows the benchmark to reproduce realistic proximity-based non-IID scenarios, 
+ where data are homogeneous within regions and heterogeneous across regions, 
+ \sidenote{anche qui ref dopo averla messa in background}
+ as illustrated in~\Cref{fig:areas}.
+%
+In the following, we detail the implemented methods to synthesize skewed datasets, 
+ the supported datasets and the API of the benchmark.
+
+
+
+\paragraph{Data Distribution.} As part of our analysis, 
+ we reviewed several studies in the literature on non-IID 
+ Federated Learning to identify and select the most commonly used partitioning methods.
+%
+We observed that several works employed \emph{Dirichlet} distribution for data partitioning. 
+%
+This approach results in each party having instances of most labels, 
+ although the distribution is highly imbalanced, 
+ with some labels being underrepresented and others heavily overrepresented.
+%
+The degree of skewness can be adjusted using the concentration parameter 
+ $\alpha$, where lower values yield more skewed distributions.
+%
+In the literature, $\alpha$ values typically range from 0.1 to 1.0, 
+ with $\alpha=0.5$ commonly used for moderate heterogeneity.
+%
+An example of this distribution, for $5$ subregions and the MNIST dataset (with $10$ classes), 
+ is represented in~\Cref{fig:dirichlet}.
+%
+The second data distribution considered is \emph{hard} partitioning,
+ where each party has access to only a subset of labels.
+%
+This creates a significantly more skewed distribution, 
+ making it considerably more challenging for learning algorithm stability.
+%
+An example of this distribution is represented in~\Cref{fig:hard}.
+%
+In ProFed, we enable fine-grained control over the data distribution, allowing either 
+ balanced label subsets across regions or customizable cardinality per subregion.
+%
+For comparative analysis, we also implement an IID split as a baseline distribution (\Cref{fig:iid}).
+%
+While existing approaches typically apply these partitioning methods 
+ directly at the device level (e.g.,~\cite{DBLP:journals/corr/abs-2302-02949,DBLP:conf/nips/LinKSJ20}), 
+ our framework introduces an intermediate layer of regional clustering.
+% 
+ProFed first distributes data heterogeneously among subregions and 
+ then splits them homogeneously among devices within the same subregion, 
+\sidenote{aggiungere img in background e ref}
+ thereby creating clustered heterogeneity---see~\Cref{fig:areas}.
+%
+To support extensibility, ProFed enables custom partitioning 
+ based on a user-specified distribution matrix. 
+%
+This distribution is represented as an $N \times M$ matrix 
+ where $N$ is the number of labels and $M$ is the number of subregions. 
+%
+Each cell $(i,j)$ indicates the proportion of instances with label $i$ 
+ assigned to subregion $j$.
+
+\begin{figure}
+\centering
+\begin{subfigure}{0.3\textwidth}
+    \includegraphics[width=\textwidth]{figures/ch07/profed/IID.pdf}
+    \caption{IID}
+    \label{fig:iid}
+    \end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+    \includegraphics[width=\textwidth]{figures/ch07/profed/Dirichlet.pdf}
+    \caption{Dirichlet}
+    \label{fig:dirichlet}
+    \end{subfigure}
+\begin{subfigure}{0.3\textwidth}
+    \includegraphics[width=\textwidth]{figures/ch07/profed/Hard.pdf}
+    \caption{Hard}
+    \label{fig:hard}
+\end{subfigure}
+\caption{ 
+    Data distribution patterns across 5 subregions: (a) IID data, (b) Dirichlet (Non-IID), and (c) Hard (Highly Non-IID).
+    Each color represents a different subregion.
+ }
+\label{fig:skewness}
+\end{figure}
+
+
+\paragraph{Supported datasets.}
+ProFed supports various TorchVision datasets widely used in computer vision research 
+ (details in~\Cref{tab:datasets}). 
+%
+We include MNIST~\cite{lecun2010mnist} as a baseline: 
+ grayscale $28 \times 28$ pixel images of handwritten digits across 10 classes.% (\Cref{fig:mnist}). 
+%
+ProFed extends this with Fashion MNIST~\cite{DBLP:journals/corr/abs-1708-07747} (clothing items, 10 classes) %\Cref{fig:fashion}) 
+ and Extended MNIST~\cite{DBLP:journals/corr/CohenATS17} (EMNIST, Latin alphabet letters, 27 classes). 
+% 
+For color images, ProFed includes CIFAR10 and CIFAR100 with 32x32 RGB images. %(\Cref{fig:cifar100}). 
+%
+CIFAR10 has 10 classes while CIFAR100 has 100, offering greater complexity. 
+%
+Beyond classification tasks, ProFed incorporates the UTKFace dataset \cite{DBLP:conf/cvpr/ZhangSQ17}, 
+ containing over 23,000 face images based on 200 $\times$ 200 pixel RGB images, 
+ for age regression tasks.  
+%
+All classification datasets maintain balanced class distributions 
+ (e.g., CIFAR10 provides 6,000 training instances per class).
+
+\begin{table}
+    \centering
+    \caption{
+        Summary of the characteristics of the datasets included in the benchmark.
+        The first five datasets are designed for classification tasks, 
+         with target values corresponding to discrete classes.
+        In contrast, the last dataset is used for a regression task, 
+        where the target values span a continuous range.
+        }
+    \label{tab:datasets}
+    \begin{tabular}{lrrrr}
+    \toprule
+    \textbf{Dataset} & \textbf{Training Size} & \textbf{Test Size} & \textbf{Features} & \textbf{Targets} \\ 
+    \midrule
+    MNIST           & 60,000 & 10,000 & 784  & 10  \\ 
+    Fashion MNIST   & 60,000 & 10,000 & 784  & 10 \\ 
+    EMNIST  & 124,800 & 20,800 & 784  & 27 \\ 
+    CIFAR-10       & 50,000 & 10,000 & 3,072 & 10 \\ 
+    CIFAR-100      & 50,000 & 10,000 & 3,072 & 100 \\ 
+    UTKFace       & 20150 & 3557 & 120000 & $[1;116]$\\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+\paragraph{Benchmark API.} 
+ProFed has been designed with usability and ergonomics in mind. 
+%
+To achieve this, its API provides all the necessary methods 
+ to manage the referenced use case seamlessly---an example is provided in Listing~\ref{lst:api-example}.
+%
+First, ProFed allows users to download the selected dataset directly 
+ and automatically generate training and validation subsets.
+%
+Second, and most important, given a dataset and a predefined number of subregions,
+ it enables users to distribute data among subregions following the
+ specified distribution strategy.
+%
+Finally, once the data distribution among subregions is established, 
+ ProFed facilitates the creation of datasets for individual devices. 
+%
+Each device-specific dataset is represented as an instance of the \texttt{Subset} class from PyTorch, 
+ ensuring full compatibility with existing learning algorithms. % based on it.
+
+%\noindent\begin{minipage}{\columnwidth}
+\lstdefinestyle{proFedStyle}{
+    backgroundcolor=\color{gray!5},
+    frame=single,
+    rulecolor=\color{black!20},
+    frameround=tttt,
+    framesep=8pt,
+    xleftmargin=10pt,
+    xrightmargin=10pt,
+    basicstyle=\ttfamily\scriptsize,
+    breaklines=true,
+    captionpos=b,
+    %numbers=left,
+    numberstyle=\tiny\color{gray!70},
+    language=python,
+    keywordstyle=\color{blue!80!black},
+    commentstyle=\color{green!50!black},
+    stringstyle=\color{red!70!black},
+    showstringspaces=false,
+    tabsize=4,
+    breakatwhitespace=false,
+    breakindent=20pt,
+}
+
+\begin{figure*}
+\begin{lstlisting}[style=proFedStyle, caption={An example of how ProFed is used to partition the EMNIST dataset among devices}, label={lst:api-example}]
+from ProFed.partitioner import Environment, Region, download_dataset, split_train_validation, partition_to_subregions
+
+mapping_devices_area = distribute_nodes_spatially(devices, number_subregions)
+
+train_data, test_data = download_dataset('EMNIST')
+train_data, validation_data = split_train_validation(train_data, 0.8)
+
+environment = partition_to_subregions(train_data, validation_data, 'Hard', number_subregions, seed)
+
+mapping = {}
+
+for region_id, devices in mapping_devices_area.items():
+    mapping_devices_data = environment.from_subregion_to_devices(
+		region_id, 
+		len(devices))
+    for device_index, data in mapping_devices_data.items():
+        device_id = devices[device_index]
+        mapping[device_id] = data
+\end{lstlisting}
+\end{figure*}
+
+\section*{Quality control}
+\paragraph{Experimental setup}
+To evaluate ProFed's effectiveness and usability, 
+ we conducted experiments using supported datasets with three
+ state-of-the-art algorithms: 
+ FedAvg~\cite{DBLP:conf/aistats/McMahanMRHA17}, 
+ FedProx~\cite{DBLP:conf/mlsys/LiSZSTS20}, and 
+ Scaffold~\cite{DBLP:conf/icml/KarimireddyKMRS20}.
+%
+Data were synthetically partitioned using  
+ supported methods: IID, Dirichlet ($\alpha=0.5$), and Hard partitioning.
+%
+Experiments varied the number of subregions $A \in \{3, 6, 9\}$.
+%
+All implementations utilized PyTorch with consistent hyperparameters across approaches. 
+%
+A multi-layer perceptron with 128 hidden neurons was
+ trained for 30 global rounds. 
+% 
+Each global round comprised 2 local epochs per device 
+ with batch size 32, ADAM optimizer (learning rate $10^{-3}$, 
+ weight decay $10^{-4}$).
+% 
+Experiments were repeated with 5 random seeds for statistical robustness,
+ totaling 120 experimental configurations.
+
+All code is publicly available under a permissive license for
+ reproducibility purposes\footnote{\url{https://github.com/davidedomini/experiments-2025-jors}}.
+
+\paragraph{Discussion}
+Results were systematically collected during training, validation, and testing phases.
+We first established a baseline using homogeneous data distribution (IID) to assess model stability and accuracy. 
+%
+FedAvg was the only algorithm evaluated under IID conditions, 
+ whereas FedProx and Scaffold were not considered in this setting, 
+ as they are variants of FedAvg whose distinguishing mechanisms are specifically 
+ designed to address non-IID data distributions and therefore provide meaningful 
+ differences primarily under data heterogeneity.
+%
+Under IID conditions, FedAvg demonstrates stable convergence and achieves high accuracy.
+% 
+This stability is evident in both validation and testing phases.
+%
+Validation convergence is shown in the first column of \Cref{fig:exp}, 
+ where accuracy increases monotonically toward the optimum. 
+%
+Test stability is demonstrated in \Cref{tab:test}, 
+ where the model maintains high accuracy with minimal variance.
+
+The critical impact of data distribution becomes apparent when transitioning 
+ from IID to non-IID conditions.
+Under heterogeneous data distribution, significant performance degradation occurs. 
+% 
+All evaluated algorithms fail to handle extreme data skewness effectively, 
+ resulting in reduced accuracy and convergence instability. 
+%
+This degradation is particularly pronounced under hard partitioning. 
+%
+The bottom row of \Cref{fig:exp} illustrates hard partitioning across nine regions, 
+ where validation accuracy drops from $80\%$ (IID) to $50\%$. 
+%
+Testing results exhibit similar trends. 
+%
+While FedAvg achieves stable performance above $95\%$ under IID conditions, 
+ Dirichlet partitioning introduces substantial instability, 
+ evidenced by increased accuracy variance. 
+%
+Performance decline intensifies under hard partitioning, 
+ highlighting fundamental limitations of current federated learning approaches 
+ in handling extreme data heterogeneity.
+%
+These findings indicate that state-of-the-art algorithms inadequately address 
+ spatially distributed data challenges, necessitating further research 
+ toward more robust solutions.
+\begin{table}
+    \centering
+    \caption{Results on the test set for different algorithms with different partitioning methods.}
+    \label{tab:test}
+    \begin{tabular}{c|ccc}
+    \toprule
+    \textbf{Algorithm} & \textbf{IID} & \textbf{Dirichlet} & \textbf{Hard} \\ 
+    \midrule
+    FedAvg        & 0.95 $\pm$ 0.001 & 0.9 $\pm$ 0.04 & 0.81 $\pm$ 0.01  \\ 
+    FedProx       & \ding{55} &  0.886 $\pm$ 0.04 & 0.86 $\pm$ 0.01 \\ 
+    Scaffold      & \ding{55} & 0.889 $\pm$ 0.06 &  0.81 $\pm$ 0.01 \\ 
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\begin{figure*}
+    \centering
+
+    % MNIST
+
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-MNIST_areas-3_partitioning-Dirichlet.png}
+        % \caption{TBD}
+        % \label{fig:exp-dirichlet}
+    \end{subfigure}
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-FashionMNIST_areas-3_partitioning-Dirichlet.png}
+        % \caption{TBD}
+        % \label{fig:exp-dirichlet}
+    \end{subfigure}
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-EMNIST_areas-9_partitioning-Dirichlet.png}
+    \end{subfigure}
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-MNIST_areas-3_partitioning-Hard.png}
+        % \caption{TBD.}
+        % \label{fig:exp-hard}
+    \end{subfigure}
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-FashionMNIST_areas-3_partitioning-Hard.png}
+        % \caption{TBD.}
+        % \label{fig:exp-hard}
+    \end{subfigure}
+    \begin{subfigure}{0.32\textwidth}
+        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-EMNIST_areas-9_partitioning-Hard.png}   
+    \end{subfigure}
+
+\caption{
+    Validation accuracy results across MNIST, FashionMNIST, and EMNIST datasets using Dirichlet (top row) and Hard (bottom row) partitioning methods.
+}
+\label{fig:exp}
+\end{figure*}
 
 
 %=============================================================================
@@ -2337,7 +2705,198 @@ SParSeFuL therefore reveals a trade-off specific to self-organizing federated le
 \label{sec:selforgfl-related}
 %=============================================================================
 
+\subsection{Baseline Algorithms}
 
+This section describes the baseline algorithms used for comparison in this work.
+%
+\Cref{tab:methods-comparison} summarizes the main characteristics we focus on, 
+ comparing the baselines with the proposed approach.
+
+\paragraph{FedAvg}
+One of the most common algorithms for FL is \emph{FedAvg}, 
+ where the server aggregates the models by averaging the weights of the models received from the client devices.
+%
+Formally, given a population of $K$ devices, each of them with a local dataset $D_k$.
+Each device $k$ performs $E$ epochs of \emph{local training} on its dataset, 
+ computing updates to the weights of its local model, denoted as $\mathbf{w}_k^t$ at 
+ the end of the $t$-th global round.
+%
+The server then computes the weights of the global model $\mathbf{w}^{t+1}$ as the average of the weight 
+ vectors from the local models shared by the devices:
+\begin{equation}
+  \mathbf{w}^{t+1} = \frac{1}{K} \sum_{k=1}^K \mathbf{w}_k^t.
+\end{equation}\label{eq:fedavg}
+%
+This process is repeated for a fixed number of rounds, 
+ with the server distributing the global model to the devices at the beginning of each round.
+
+\paragraph{FedProx}
+This algorithm extends FedAvg by introducing a proximal term to the objective 
+ function that penalizes large local model updates.
+%
+This modification helps address statistical heterogeneity across devices while safely 
+ accommodating varying amounts of local computation due to system heterogeneity.
+
+Formally, the local objective function for device $k$ in FedProx is:
+\begin{equation} 
+  \text{arg}\min_{\mathbf{w}} h_k(\mathbf{w}; \mathbf{w}_t) = F_k(\mathbf{w}) + \frac{\mu}{2} \|\mathbf{w} - \mathbf{w}_t\|^2 
+\end{equation}
+where $F_k(\mathbf{w})$ is the local loss function, $\mathbf{w}_t$ is the global model at round start, 
+ and $\mu \geq 0$ is the proximal term coefficient that controls how far local 
+ updates can deviate from the global model.
+
+\paragraph{Scaffold}
+This algorithm introduces control variates to correct model drift caused by data heterogeneity. 
+%
+Unlike FedAvg, where each client performs model updates locally and communicates its version to the server, 
+ Scaffold tries to minimize this drift using control variates that track the direction of gradient descent for each client.
+%
+In the local model update phase, each client $i$ adjusts its model $\mathbf{y}_i$ using the formula 
+ $\mathbf{y}_i \leftarrow \mathbf{y}_i - \eta_l (g_i(\mathbf{y}_i) + \mathbf{c} - \mathbf{c}_i)$, where $\eta_l$ is the 
+ local learning rate, $g_i(\mathbf{y}_i)$ represents the local gradient, and $\mathbf{c}$ and $\mathbf{c}_i$ are the server 
+ and client control variates respectively.
+%
+The client's control variate $\mathbf{c}_i$ is then updated using either $\mathbf{c}^+_i \leftarrow g_i(\mathbf{x})$ or 
+ $\mathbf{c}^+_i \leftarrow \mathbf{c}_i - \frac{1}{K\eta_l}(\mathbf{x} - \mathbf{y}_i)$, where $\mathbf{x}$ is the server's model 
+ and $K$ represents the number of local updates.
+%
+Finally, the server performs global updates. 
+%
+The global model is updated as $\mathbf{x} \leftarrow \mathbf{x} + \eta_g \frac{1}{|S|} \sum_{i \in S} (\mathbf{y}_i - \mathbf{x})$, 
+ where $\eta_g$ is the global learning rate and $S$ is the set of selected clients. 
+% 
+Simultaneously, the server control variate is adjusted using 
+ $\mathbf{c} \leftarrow \mathbf{c} + \frac{1}{N} \sum_{i \in S} (\mathbf{c}^+_i - \mathbf{c}_i)$, 
+ with $N$ being the total number of clients.
+
+\paragraph{IFCA}
+
+IFCA algorithm is based on two main assumptions:
+\begin{enumerate*}[label=(\roman*)]
+    \item a single global model may not perform optimally across diverse client data distributions; and
+    \item clients can be partitioned into clusters where the data within each cluster are independently and identically distributed.
+\end{enumerate*}
+%
+Accordingly, the algorithm aims to train a separate model for each cluster and to determine the appropriate 
+ cluster membership for each client device.
+%
+In each communication round, the central server broadcasts all cluster models to the clients. 
+%
+Each client evaluates these models on its local data and selects the one yielding the lowest loss, 
+ thereby determining its cluster affiliation. 
+%
+Clients then perform local updates on the selected model and send the updates back to the server. 
+%
+The server aggregates these updates separately for each cluster, typically using the FedAvg algorithm, 
+ to refine the corresponding cluster models.
+% 
+This iterative process continues, allowing both the models and the client-cluster assignments 
+ to converge over time.
+
+\begin{table}[ht]
+    \centering
+    \caption{Comparison of Federated Learning approaches.}
+    \label{tab:methods-comparison}
+    \begin{tabular}{lcccc}
+    \toprule
+    \textbf{Method} & \textbf{Decentralized} & \textbf{Non-IID} & \textbf{Clustered} & \textbf{Spatial Correlation} \\
+    \midrule
+    FedAvg          & \ding{55} & \ding{55} & \ding{55} & \ding{55} \\
+    FedProx         & \ding{55} & \ding{51} & \ding{55} & \ding{55} \\
+    Scaffold        & \ding{55} & \ding{51} & \ding{55} & \ding{55} \\
+    IFCA            & \ding{55} & \ding{51} & \ding{51} & \ding{55} \\
+    % \rowcolor{gray!20}
+    %\rowcolor{blue!10}
+    Field-Based FL     & \ding{51} & \ding{51} & \ding{51} & \ding{51} \\
+    \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\subsection{Sparsification in Federated Learning}
+Prior studies have explored integrating neural network pruning 
+ into FL to address resource constraints. 
+%
+In conventional centralized FL, 
+ pruning techniques are applied to train compact global models 
+ that maintain accuracy close to the full model while reducing complexity.
+% 
+For example, 
+ recent federated sparsification methods 
+ can achieve extremely high model sparsity~\cite{lin2022interspeech,DBLP:journals/corr/abs-2504-05153,DBLP:journals/corr/abs-2504-00308}
+ with negligible accuracy degradation. 
+% 
+Such approaches demonstrate significant gains in communication and computation efficiency, 
+ but they operate under a standard FL paradigm 
+ with a single server coordinating one global model for all clients. 
+% 
+Even when clients prune locally, 
+ existing frameworks typically merge updates into a unified model on the server, 
+ often using uniform or static pruning criteria across the network. 
+% 
+This centralized, 
+ one-model-fits-all strategy does not fully exploit the heterogeneity 
+ of client data and can struggle under non-IID conditions.
+
+A few recent works have started combining pruning with clustered or decentralized FL, 
+ yet they fall short of addressing the full range of challenges tackled by SParSeFuL. 
+%
+For instance, 
+ FedMP~\cite{jiang2022icde} introduces adaptive structured pruning in FL 
+ by assigning personalized model sizes to heterogeneous clients, 
+ with an optional decentralized extension based on peer-to-peer communication. 
+% 
+However, 
+ it still relies on a global server for coordination and lacks spatial awareness in federation formation. 
+% 
+Similarly, 
+ DualPFL~\cite{app142210547} applies dual-stage pruning for object detection in edge FL, 
+ tailoring sparsity to client capacities, 
+ but remains fully centralized and oblivious to proximity or self-organization dynamics.
+
+More closely related, 
+ some decentralized approaches integrate model pruning for communication efficiency, 
+ such as the method proposed by Mu \textit{et al.},~\cite{mu2026tnse}, 
+ where clients are grouped dynamically based on geographical proximity, 
+ and pruning rates are optimized jointly with bandwidth allocation.
+%
+While spatially-aware and decentralized, 
+ their system still aims to converge to a single shared model, 
+ and relies on global clustering routines (\textit{e.g.}, K-means) rather than fully emergent federation structures.
+%
+Moreover, 
+ clustering algorithms like K-means require the number of clusters to be specified a priori, 
+ which is often nontrivial to determine and can lead to suboptimal partitions when misestimated. 
+% 
+By contrast, 
+ relying on self-organizing federations that emerge dynamically 
+ from local interactions alleviates this limitation, 
+ enabling the system to adaptively discover meaningful collaboration groups 
+ without external tuning~\cite{DBLP:journals/iot/DominiFAVE26}.
+
+In summary, 
+ while prior work has explored the combination of federated learning and model pruning, 
+ existing solutions either rely on a central coordinator, 
+ assume a single global model for all clients, 
+ or neglect the potential of spatially-aware self-organization. 
+% 
+Moreover, 
+ in most cases, 
+ sparsification is treated as a post-training optimization 
+ or as an independent mechanism for reducing communication costs.
+%
+In contrast, 
+ SParSeFuL integrates sparsification directly within the self-organization process, 
+ establishing a tight coupling between model structure and federation formation. 
+%
+In this setting, 
+ model sparsity actively influences similarity estimation and the emergence of collaborative groups, 
+ rather than merely reducing model size.
+%
+Building on this unified design, 
+ SParSeFuL is fully decentralized, 
+ leverages spatial proximity to autonomously form federations of similar clients, and trains personalized, 
+ sparse models within each cluster—thereby enabling efficient multi-model learning without a central server.
 
 %=============================================================================
 \section{Future Directions}
