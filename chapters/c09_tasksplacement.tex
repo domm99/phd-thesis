@@ -147,7 +147,7 @@ In this way,
  the chapter extends the thesis investigation from the coordination of distributed learning processes 
  to the resource-aware deployment of their applications across heterogeneous edge infrastructures.
 
-\section{Problem Statemen}
+\section{Problem Statemen}\label{sec:problem-statement}
 
 Following the challenges identified in \Cref{sec:motivation}, 
  and the basic approach of system model introduced in \cite{acsos-model}, 
@@ -667,7 +667,289 @@ $$
 $$
 where $\lambda_i$ are the weights of the objectives.
 
-\section{Proposed method: IDHGQL}
+\section{Proposed method: IDHGQL}\label{sec:methodology}
+To address the collective component offloading problem formulated in~\Cref{sec:problem-statement}, 
+ we introduce the \textbf{I}nformed \textbf{D}eep \textbf{H}etero \textbf{G}raph \textbf{Q}-\textbf{L}earning (IDHGQL) framework. 
+ This approach finds a decentralized offloading policy that optimizes multiple objectives 
+ by leveraging the structural and collective properties of the edge-cloud environment.
+%
+The framework, depicted in \Cref{fig:gnn-ac-marl}, integrates:
+ a \gls{HGNN} to represent agent policies and process heterogeneous graph structures;
+ aggregate computing to enrich observations with collective state information ($c_{\delta,t}$); 
+ and a multi-agent \gls{DQL} algorithm with centralized graph replay buffer for stable training.
+%
+The following subsections detail each of these components.
+
+\begin{figure*}
+  \centering
+  \resizebox{\linewidth}{!}{%
+    \input{figures/ch09/gnn-ac-marl.pdf_tex}%
+  }
+  \caption{
+    An overview of the proposed IDHGQL framework.
+    The system state is modeled as a heterogeneous graph,
+    which is enriched with a collective perception computed via aggregate computing.
+    This informed graph representation serves as the input to a
+    \gls{HGNN}-based reinforcement learning agent,
+    which learns a decentralized policy to determine the optimal offloading
+    strategy for each component instance.
+  }
+  \label{fig:gnn-ac-marl}
+\end{figure*}
+
+\subsection{HeteroGNN for Q-Function Approximation}\label{sec:heterognn-q-function}
+We employ a \gls{HGNN} as our deep Q-network to approximate the action-value function $Q$ in the SwarMDP formulation. 
+%
+This choice is motivated by three key advantages:
+\begin{itemize}
+    \item \textbf{Structural Awareness:} the system state is naturally represented as a heterogeneous graph $G_t$. 
+    A \gls{HGNN} can directly operate on this graph, 
+    capturing the complex topological dependencies between application devices, 
+    edge servers, and cloud servers.
+    \item \textbf{Handling Heterogeneity:} the \gls{HGNN} architecture uses type-specific transformations for different node types 
+    (e.g., $\mathbf{D}$, $\mathbf{D}_I$) and edge types (e.g., $\mathbf{D}-\mathbf{D}$, $\mathbf{D}-\mathbf{D}_I$). 
+    This allows the model to learn distinct representations and interaction patterns for each kind of entity in the system, 
+    which is essential for making nuanced offloading decisions.
+    \item \textbf{Decentralized Execution:} 
+    although trained with access to the global graph, a trained \gls{HGNN} can be executed in a decentralized manner. 
+    Each device computes its own embedding (and subsequent Q-values) 
+    by passing messages only with its direct neighbors. 
+    This aligns perfectly with the operational constraints of a distributed edge-cloud system.
+\end{itemize}
+The \gls{HGNN} takes the feature-augmented graph $G_t$ as input 
+ and produces Q-values for all possible offloading actions for each application device. 
+%
+The action with the highest Q-value is then selected by the policy.
+%
+More details on the \gls{HGNN} architecture and message-passing formulation follow.
+
+\subsubsection{HeteroGNN Architecture and Message-Passing Formulation}
+We now formally describe how the heterogeneous graph structure 
+ is processed to compute Q-values for offloading decisions.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.5\linewidth]{figures/ch09/heterognn.pdf}
+  \caption{Conceptual HeteroGNN architecture for Q-function approximation in our offloading problem.
+}
+\label{fig:heterognn-architecture}
+\end{figure}
+
+\paragraph{Handling Heterogeneous Feature Spaces.}
+Application devices and infrastructural devices have different feature spaces 
+ (e.g., $\mathbf{x}^{\mathbf{D}}_v \in \mathbb{R}^{d_{\mathbf{D}}}$ including battery level, local CPU usage, and collective density; 
+ $\mathbf{x}^{\mathbf{D}_I}_u \in \mathbb{R}^{d_{\mathbf{D}_I}}$ including cost, available capacity, and latency parameters).
+%
+To handle this heterogeneity, 
+ we adopt a practical approach: 
+ we define a homogeneous Graph Attention Network (GAT)~\cite{DBLP:journals/corr/abs-1710-10903} 
+ and automatically convert it into a heterogeneous architecture.
+%
+This conversion \emph{replicates} the message-passing operators for each edge type, 
+ creating separate weight matrices that learn type-specific transformations.
+%
+Crucially, 
+ while input dimensions vary across node types and are inferred lazily at runtime,
+ all replicated operators project their outputs into a \emph{shared hidden space} of dimension $h$.
+%
+This common embedding space enables the aggregation of messages from different edge types
+ and ensures that node representations remain compatible across the heterogeneous graph structure.
+
+
+\paragraph{Edge-Type-Specific Message Passing.}
+Following the heterogeneous message-passing paradigm~\cite{DBLP:conf/www/WangJSWYCY19}, 
+ the replicated GAT layers compute messages differently for each edge type $\tau \in \Psi$,
+ where $\Psi = \{\psi(e) \mid e \in E_t\}$ denotes the set of all edge types in the graph,
+ while operating within the shared $h$-dimensional embedding space.
+%
+For a node $v$ with neighbors $\mathcal{N}^\tau_v$ connected via edge type $\tau$, 
+ the message from neighbor $u$ to $v$ is computed as:
+\begin{equation}\label{eq:message}
+    \mathbf{m}^\tau_{u \to v} = \alpha^\tau_{uv} \cdot \left( \mathbf{W}^\tau \cdot \mathbf{h}^{(\ell)}_u \right)
+\end{equation}
+ where $\mathbf{W}^\tau \in \mathbb{R}^{h \times h}$ is an edge-type-specific weight matrix, 
+ and $\alpha^\tau_{uv}$ is a learned attention coefficient that weighs the importance of each neighbor.
+%
+The attention mechanism considers both node embeddings and edge features $\mathbf{e}_{uv}$ (e.g., communication latency),
+ allowing the model to learn how structural properties influence message importance during aggregation.
+
+\paragraph{Heterogeneous Neighborhood Aggregation.}
+For each node $v$, messages from all edge types are aggregated to form the updated node embedding:
+\begin{equation}\label{eq:aggregation}
+    \mathbf{h}^{(\ell+1)}_v = \sigma\left( \sum_{\tau \in \Psi} \sum_{u \in \mathcal{N}^\tau_v} \mathbf{m}^\tau_{u \to v} \right)
+\end{equation}
+where $\sigma$ is a non-linear activation function.
+%
+This aggregation scheme replicates the message-passing operations 
+ for each edge type and combines incoming messages.
+%
+Consequently, 
+ the embedding of an application device node incorporates:
+\begin{enumerate*}[label=(\roman*)]
+  \item information from neighboring application devices (via $\mathbf{D}\text{-}\mathbf{D}$ edges), capturing local collective phenomena; and
+  \item information from connected infrastructural devices (via $\mathbf{D}\text{-}\mathbf{D}_I$ edges), capturing offloading target characteristics such as cost and capacity.
+\end{enumerate*}
+
+\paragraph{Q-Value Computation.}
+After $L$ message-passing layers, 
+ the final node embeddings $\mathbf{h}^{(L)}_v$ encode both local features and neighborhood context.
+%
+For application device nodes $v \in \mathbf{D}$, 
+ we compute Q-values for all possible offloading actions through a multi-layer perceptron (MLP) with $M$ layers (allowing $M\ge 2$):
+\[
+\begin{aligned}
+\mathbf{z}_v^{(0)} &= \mathbf{h}^{(L)}_v,\\
+\mathbf{z}_v^{(l)} &= \sigma^{(l)}\!\left(\mathbf{W}^{(l)}\mathbf{z}_v^{(l-1)} + \mathbf{b}^{(l)}\right), \quad l=1,\dots,M-1,\\
+\mathbf{Q}_v &= \mathbf{W}^{(M)}\mathbf{z}_v^{(M-1)} + \mathbf{b}^{(M)} \in \mathbb{R}^{|\mathcal{A}|},
+\end{aligned}
+\]
+where $\mathbf{W}^{(l)}$ and $\mathbf{b}^{(l)}$ are the weight matrix and bias of layer $l$, 
+ and $\sigma^{(l)}$ is the (optional) non-linear activation for layer $l$ (e.g., ReLU). 
+% 
+The optimal action for device $v$ is selected as $a^*_v = \arg\max_a \mathbf{Q}_v[a]$.
+
+Critically, 
+ Q-values are computed only for application device nodes, 
+ as these are the agents making offloading decisions.
+%
+Infrastructural device nodes serve as information sources during message passing, 
+ providing features about offloading targets that influence the Q-value computation for application devices.
+
+
+\subsection{Collective Information Integration via Aggregate Computing}\label{sec:aggregate-computing-integration}
+A key challenge in \gls{CAS} is enabling individual agents to act on collective intelligence. 
+%
+Relying solely on the raw graph structure for this can be inefficient, 
+ as information must propagate through many message-passing layers. 
+%
+To address this, we ``inform'' the learning process
+ by directly embedding a high-level summary of the collective state into each agent's observation.
+
+We achieve this using aggregate computing. 
+ Before each decision step, an aggregate program runs across the devices. 
+ This program computes a distributed data structure---a computational field---that represents a specific collective property. 
+ For instance, in the crowd steering scenario, 
+ an aggregate program computes the collective device density, 
+ which serves as a proxy for potential network congestion.
+%
+From an operational perspective, 
+ the aggregate computation executes in \emph{asynchronous rounds} (following our system model in \Cref{sec:system-model}):
+ each device periodically
+\begin{enumerate*}[label=(\roman*)]
+  \item gathers the most recent messages from its neighbors;
+  \item runs the aggregate program locally using this information and its own state; and
+  \item broadcasts the resulting value to its neighbors.
+\end{enumerate*}
+For a comprehensive formal treatment of aggregate computing and its operational semantics, we refer the interested reader to \cite{DBLP:journals/tocl/AudritoVDPB19}.
+%
+This round frequency is a tunable parameter---it can match the learning decision rate,
+ or it can run at a higher frequency to provide fresher collective estimates before each offloading decision.
+%
+Regarding communication delays, aggregate computing is inherently \emph{self-stabilizing}~\cite{DBLP:journals/tocl/AudritoVDPB19}:
+ even when messages arrive late or are temporarily lost,
+ the computation continuously re-executes and converges toward the correct global result,
+ so transient inconsistencies are naturally absorbed without requiring explicit synchronization barriers.
+%
+Finally, the per-round computational cost is $O(|N_\delta|)$---linear in the neighborhood size---since
+ each device only processes data from its direct neighbors,
+ making this approach lightweight and practical for resource-constrained edge devices.
+
+
+The output of this aggregate program, 
+ $c_{\delta,t}$, is then appended to the feature vector of the corresponding device $\delta$ 
+ in the graph $G_t$. 
+% 
+This enriched observation, 
+ $o_{\delta,t} = (i_{\delta,t}, \mathtt{C}_{p, \delta}, N_{\delta,t}, c_{\delta,t})$, 
+ provides the \gls{HGNN} with immediate access to both low-level local state and high-level collective context. 
+
+
+Compared to relying solely on deep message passing to capture collective phenomena,
+ aggregate computing offers distinct advantages.
+%
+Capturing global properties like device density through GNNs alone would require 
+ $O(D)$ message-passing layers (where $D$ is the network diameter),
+ whereas aggregate programs achieve this through self-stabilizing asynchronous rounds with 
+ guaranteed convergence even under message delays.
+%
+Moreover, aggregate programs provide interpretable, domain-specific features 
+ (e.g., congestion gradients, resource hotspots) that complement the HeteroGNN's learned representations,
+ allowing the model to focus on learning optimal decision policies---such as executing locally 
+ in high-density areas to avoid latency, even when battery levels would otherwise favor offloading---rather than 
+ discovering collective properties from scratch.
+%
+This integration accelerates learning and leads to more robust, context-aware offloading strategies.
+
+
+\subsection{The Informed Deep Hetero Graph Q-Learning (IDHGQL) Algorithm}
+The IDHGQL algorithm integrates the \gls{HGNN} policy network and the aggregate computing state enrichment into a coherent learning procedure. 
+ It adapts the core principles of \gls{DQL}, 
+ including experience replay and the use of a target network, 
+ to our multi-agent, graph-based problem.
+
+The algorithm follows a centralized training and decentralized execution pattern.
+During training, the algorithm has access to the global graph state and can sample transitions from the centralized replay buffer to learn optimal policies.
+However, during execution, each device makes offloading decisions independently using only its local observation and neighborhood information,
+enabling fully decentralized operation without requiring a central coordinator.
+
+The key components of the algorithm, detailed in \Cref{alg:idhql}, are as follows:
+\begin{enumerate}
+    \item \textbf{Initialization:} the algorithm begins by initializing the Q-network $\theta$ and the target network $\theta^-$ with identical weights. 
+    A graph replay buffer $\mathcal{D}$ is also initialized. 
+    This buffer is designed to store entire graph transitions $(G_o, a_t, G_r, G'_o)$, 
+    where $G_o$ is the observed graph state, 
+    $a_t$ is the joint action, $G_r$ is the graph of rewards, 
+    and $G'_o$ is the next graph state.
+    \item \textbf{Action Selection:} at each timestep, 
+    the current graph state $G$ is first enriched with the collective state $c_t$ computed by the aggregate function $Agg$ (Line 3). 
+    Then, for each device, an action is selected using an $\epsilon$-greedy strategy (Lines 4-11). 
+    With probability $\epsilon$, a random action is chosen for exploration; 
+    otherwise, the action with the maximum Q-value, as predicted by the current \gls{HGNN} network $\theta$, is selected.
+    \item \textbf{Experience Storage:} the joint action $a_t$ is executed in the environment, 
+    yielding a reward for each device and the next state graph $G'_o$. 
+    This complete transition tuple is stored in the graph replay buffer $\mathcal{D}$ (Line 14).
+    \item \textbf{Model Training:} a mini-batch of transitions is sampled from $\mathcal{D}$ (Line 15). For each transition in the batch, 
+    the target Q-value, $y_\delta$, 
+    is calculated using the reward and the maximum Q-value for the next state, as estimated by the stable target network $\theta^-$ (Line 17). 
+    The loss is then computed as the mean squared error between this target value and the Q-value predicted by the main network $\theta$ (Line 18). 
+    The main network's weights are updated via gradient descent to minimize this loss (Line 20).
+    \item \textbf{Target Network Update:} periodically, 
+    the weights of the target network $\theta^-$ are updated with the weights from the main network $\theta$ to maintain training stability (Line 21).
+\end{enumerate}
+
+\begin{algorithm}
+  \caption{Informed Deep Hetero Graph Q-Learning (IDHGQL)}
+  \label{alg:idhql}
+  \begin{algorithmic}[1]
+  \Require Environment $E$, graph replay buffer $\mathcal{D}$, target network $\theta^-$, current network $\theta$, exploration rate $\epsilon$, aggregate function $Agg$
+  \Ensure Trained IDHGQL model $\theta$
+  \State Initialize $\mathcal{D}$ with random transitions, $\theta$ with random weights, $\theta^- \leftarrow \theta$
+  \While{not done}
+      \State Observe current graph state $G_o$ and compute collective enrichment $c_t = Agg(G_o)$
+      \For{each device $\delta \in \mathbf{D}$}
+          \State Obtain device state $o_{\delta,t}$
+          \If{random() < $\epsilon$}
+              \State Select random action $a_{\delta,t}$
+          \Else
+              \State Compute Q-values: $G_q = Q(G_o; \theta)$
+              \State Select action: $a_{\delta,t} = \arg\max_{a} G_q[\delta](a)$
+          \EndIf
+      \EndFor
+      \State Execute joint action set $a_t = \{a_{\delta,t} \mid \delta \in \mathbf{D}\}$ in $E$
+      \State Observe per-device rewards (reward graph) $G_r$ and next graph state $G'_o$
+      \State Store transition $(G_o, a_t, G_r, G'_o)$ in $\mathcal{D}$
+      \State Sample mini-batch $\{(G^b, a_t^b, G_r^b, G'^{b})\}$ from $\mathcal{D}$
+      \For{each device $\delta$ in batch}
+          \State $y_\delta \leftarrow G_r^b[\delta] + \gamma \max_{a'} Q(G'^{b}; \theta^-)_\delta[a']$
+          \State $\hat{y}_\delta \leftarrow Q(G^{b}; \theta)_\delta[a_t^b[\delta]]$
+      \EndFor
+      \State Update $\theta$ by minimizing $\frac{1}{|\text{batch}|\,|\mathbf{D}|} \sum_\delta (y_\delta - \hat{y}_\delta)^2$
+      \State Every $C$ steps: $\theta^- \leftarrow \theta$
+  \EndWhile
+  \end{algorithmic}
+\end{algorithm}
+
+
 \section{Evaluation}
 \section{Related Works}
 \section{Future Directions}
