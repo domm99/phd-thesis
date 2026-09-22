@@ -951,5 +951,370 @@ The key components of the algorithm, detailed in \Cref{alg:idhql}, are as follow
 
 
 \section{Evaluation}
+
+To validate our proposed IDHGQL framework, we conduct a series of experiments designed to answer our research question (RQ, \Cref{rq2}). Specifically, our evaluation aims to: 
+\begin{enumerate*}[label=(\roman*)]
+    \item assess the framework's ability to learn effective multi-objective offloading policies that balance individual device constraints (battery) and system-wide objectives (cost, server load), and
+    \item demonstrate the critical role of integrating collective information via aggregate computing to handle emergent phenomena like network congestion.
+\end{enumerate*}
+The experiments are conducted in a simulated environment that mirrors the motivating crowd steering application.
+
+\subsection{Experimental Setup}\label{sec:experimental-setup}
+We use the Alchemist simulator~\cite{DBLP:journals/jos/PianiniMV13} 
+ to model a system of 54 physical devices in a $20m \times 20m$ area, 
+ configured to form two high-density zones. 
+%
+Alchemist was chosen because it supports the simulation of large-scale, 
+ complex networks of devices and provides seamless integration with macroprograms written in ScaFi, 
+ while also ensuring coherence with the system model underlying this work, 
+ which builds upon the macrocomponent pulverization approach introduced in~\cite{acsos-model}
+ and originally evaluated using the same simulator.
+
+% 
+The system comprises 47 \emph{application devices} and 7 \emph{infrastructural devices} (5 edge servers, 2 cloud servers). 
+ Application devices can communicate with others within a 20-meter range and are connected to all edge and cloud servers. 
+ Each simulation runs for a set number of timesteps (50 or 100), where each step represents one minute.
+ Initially, all application devices have 100\% battery, and all macroprogram components are executed locally.
+
+The learning component is implemented using PyTorch~\cite{paszke2017automatic}. 
+ The partitioned macroprogram and aggregate computing functionalities are built 
+ on a modified version of the ScaFi framework~\cite{DBLP:journals/softx/CasadeiVAP22}, 
+ enabling the distributed execution of application components. 
+ For full reproducibility, 
+ the complete source code is available on GitHub\footnote{\url{https://github.com/nicolasfara/experiments-2024-taas-edge-cloud-intelligence/}}.
+
+\subsection{Evaluation Scenarios}
+We design two primary experimental scenarios to systematically evaluate the IDHGQL framework.
+\subsubsection{Scenario 1: Multi-Objective Optimization Capability} \label{sec:sanity-check}
+\paragraph{Goal.} This experiment evaluates the learning process's stability 
+ and its ability to find policies that balance the conflicting objectives of battery consumption,
+ infrastructure cost, and edge server load.
+
+\paragraph{Baselines.} 
+We compare our learning-based approach against three static strategies:
+ \texttt{Local Execution}, where all components run on the application devices;
+ \texttt{Edge Offloading}, where all components are offloaded to a random edge server;
+ \texttt{Cloud Offloading}, where all components are offloaded to a random cloud server; and
+ \texttt{Random Allocation}, where at each time step each component is randomly allocated.
+ 
+\paragraph{Learning Configuration.} The reward function is a weighted linear combination of rewards for battery preservation ($\mathcal{R}_{B}$), 
+cost minimization ($\mathcal{R}_{C}$), 
+and preventing edge server overload ($\mathcal{R}_{ES}$):
+\[ \mathcal{R} = \alpha \cdot \mathcal{R}_{B} + \beta \cdot \mathcal{R}_{C} + \gamma \cdot \mathcal{R}_{ES} \quad (\text{s.t. } \alpha + \beta + \gamma = 1) \]
+By varying the weights ($\alpha, \beta, \gamma$), 
+we test the agent's ability to prioritize different objectives. In this scenario, 
+the agent's observation does not include collective information ($c_{\delta,t}$) 
+and relies only on local state and the graph structure.
+
+\subsubsection{Scenario 2: Density-Aware Offloading with Collective Information}
+\paragraph{Goal.} 
+This experiment assesses the benefit of enriching the agent's state with collective information. 
+We create a scenario with varying device densities, 
+where regions of high device density induce network congestion and increased latency, 
+representing a significant collective phenomenon.
+
+\paragraph{Baseline.} 
+We use a heuristic-based strategy that offloads components based on a local density estimate. 
+A device executes components locally if its number of neighbors within a radius $s$ exceeds a threshold $th$; 
+otherwise, it offloads. 
+This baseline highlights the challenge of setting such parameters optimally without a global perspective.
+
+\paragraph{Learning Configuration.} Here, we fully leverage the IDHGQL framework. 
+The agent's state is enriched with collective information ($c_{\delta,t}$), 
+specifically the local device density computed via an aggregate program. 
+The agent's observation also includes local battery level, 
+offloading costs, component allocation, and estimated network latency to servers.
+The reward function balances battery, cost, and latency. 
+To prove the necessity of collective information, we conduct an ablation study where IDHGQL is trained
+ under identical conditions but with the collective density information removed from the agent's observation.
+
+\subsection{Metrics}
+To evaluate the performance of our proposed approach, we measure the following metrics:
+%\paragraph{Battery Consumption:} 
+\begin{itemize}
+  \item \textbf{Battery Consumption:} We measure the average percentage of battery remaining on application devices over time. 
+  The discharge model is based on the work of Grochowski et al.~\cite{Grochowski2006EnergyPI}, considering a 4000 mAh battery, an EPI of 1 nJ/instruction, and a workload of 26.5M instructions per component execution.
+  \item \textbf{Local Executed Components:} This metric represents the percentage of macroprogram components executed locally on application devices versus those offloaded to infrastructure.
+  \item \textbf{Infrastructural Costs:} We measure the total monetary cost incurred from offloading. Edge servers have a fixed cost of \$1.00/h per component instance, while cloud servers cost \$10.00/h per instance.
+\end{itemize}
+
+\subsection{Results and Discussion:}
+\subsubsection{Analysis of Multi-Objective Optimization}
+The baseline results in \Cref{fig:mixed-edge-cases,fig:mixed-tradeoff} establish the fundamental trade-offs: 
+local execution consumes the most battery but incurs no cost, 
+while cloud/edge offloading preserves battery at a high monetary cost.
+
+\Cref{fig:mixed-edge-cases} demonstrates that IDHGQL can successfully navigate these trade-offs. 
+When optimizing solely for battery ($\alpha=1$, top row), 
+ the agent learns to offload nearly all components, 
+ maintaining high battery levels at the expense of high costs. 
+%
+Conversely, 
+ when optimizing for cost ($\beta=1$, middle row), 
+ it learns to execute everything locally, minimizing cost but depleting the battery. 
+%
+When targeting edge server load ($\gamma=1$, bottom row), 
+ the agent effectively avoids offloading to the edge, 
+ showing its ability to respond to specific infrastructure constraints.
+%
+Moreover, 
+ compared to the optimized parameter settings (\Cref{fig:mixed-edge-cases,fig:mixed-tradeoff}), 
+ our approach consistently outperforms the random allocation baseline, 
+ demonstrating that the learning process provides a tangible advantage over uninformed policies.
+
+
+The Pareto front in \Cref{fig:pareto} visualizes the direct, 
+ competitive relationship between battery and cost optimization, 
+ confirming that the learned policies exist along this optimal trade-off curve. 
+% 
+Furthermore, \Cref{fig:mixed-tradeoff} 
+ shows a mixed-objective case ($\alpha=0.3, \beta=0.1, \gamma=0.6$) where the agent learns a sophisticated policy. 
+ It heavily penalizes edge offloading, resulting in low edge usage, high battery, 
+ and correspondingly high costs. 
+ These results validate that our DQL-based approach can effectively learn policies for complex, multi-objective optimization problems.
+
+% \begin{figure}
+%   \centering
+%   \begin{subfigure}[t]{0.8\linewidth}
+%     \centering
+%     \includegraphics[width=\linewidth, keepaspectratio]{experiment/battery_percentage_baseline.pdf}
+%   \end{subfigure}
+%   \begin{subfigure}[t]{0.8\linewidth}
+%       \centering
+%       \includegraphics[width=\linewidth, keepaspectratio]{experiment/total_cost_baseline.pdf}
+%   \end{subfigure}
+%   \caption{
+%     Performance of the baseline strategies in terms of battery percentage (left) and total cost (right). 
+%     The two metrics are evaluated on three different strategies: 
+%     \texttt{local execution} (violet line), 
+%     \texttt{cloud offloading} (dark green line), 
+%     and \texttt{edge offloading} (green line).
+%   }
+%   \label{fig:experiment-baseline}
+% \end{figure}
+
+\begin{figure*}
+  \centering
+  % battery only optimization - alpha = 1, beta = 0, gamma = 0
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=\linewidth, keepaspectratio]{experiment/mixed/review/alpha-1.0_beta-0.0_gamma-0.0_allinone-local.pdf}
+  \end{subfigure}
+
+  % costs only optimization - alpha = 0, beta = 1, gamma = 0
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=\linewidth, keepaspectratio]{experiment/mixed/review/alpha-0.0_beta-1.0_gamma-0.0_allinone-local.pdf}
+  \end{subfigure}
+
+  % es overload only optimization - alpha = 0, beta = 0, gamma = 1
+  \begin{subfigure}[t]{\textwidth}
+    \centering
+    \includegraphics[width=\linewidth, keepaspectratio]{experiment/mixed/review/alpha-0.0_beta-0.0_gamma-1.0_allinone-edge.pdf}
+  \end{subfigure}
+
+  \caption{ 
+    Learning results in the sanity check scenario for edge cases. 
+    Each row represents the optimization of a single component of the reward at a time.
+    The parameters $\alpha$, $\beta$, and $\gamma$ control the relative importance of the reward signals, 
+     corresponding respectively to battery usage, costs, and server load.}
+  \label{fig:mixed-edge-cases}
+\end{figure*}
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.5\linewidth]{experiment/mixed/tradeoff-battery-costs.pdf}
+  \caption{
+     Trade-off between battery consumption and total costs. 
+      Higher battery levels require full offloading, resulting in higher costs, and vice versa.
+  }
+  \label{fig:pareto}
+\end{figure}
+
+\begin{figure}
+  \centering  
+  \centering
+  \includegraphics[width=0.5\linewidth, keepaspectratio]{experiment/mixed/review/alpha-0.3_beta-0.1_gamma-0.6/alpha-0.3_beta-0.1_gamma-0.6_allinone-edge.pdf}
+  \caption{ 
+    Learning results in the sanity check scenario,
+    optimizing all three components of the reward simultaneously, 
+    but with different levels of importance.}
+  \label{fig:mixed-tradeoff}
+\end{figure}
+
+\subsubsection{Impact of Collective Information on Offloading Policy}
+This scenario directly addresses the core of our research question. 
+\Cref{fig:experiment-density-baseline} shows the limitations of the heuristic baseline; 
+its performance is highly sensitive to the choice of parameters ($s$, $th$), 
+leading to either overestimation or underestimation of density and, 
+consequently, suboptimal offloading decisions.
+
+In contrast, 
+\Cref{fig:experiment-density-AC} shows the effectiveness of the full IDHGQL framework. 
+By the end of the learning process (second row), 
+the agents have learned a nuanced, spatially-aware policy: 
+devices in high-density areas (high congestion) learn to execute components locally to avoid latency, while those in sparse areas learn to offload. 
+Devices at the edge of crowded zones learn to partially offload, demonstrating a sophisticated balancing act.
+
+The importance of the collective information is starkly highlighted by the ablation study in \Cref{fig:experiment-density-NO-AC}. 
+Without access to the aggregate density information ($c_{\delta,t}$), 
+ the agents are unable to learn a meaningful policy. 
+ They fail to differentiate their actions based on their location and 
+ converge to a simplistic partial offloading strategy, 
+ regardless of the collective context. 
+ This directly proves that integrating collective perception is crucial for making informed decisions in response to emergent system phenomena.
+
+Finally, 
+ we test the generalization of the learned policy in a dynamic environment where devices move. \Cref{fig:experiment-density-eval} 
+  shows that when three devices move from a high-density to a low-density area (at time 100), 
+  the pre-trained policy correctly adapts their behavior in real-time, 
+  causing them to switch from local execution to full offloading. 
+  This demonstrates that the policy learned by IDHGQL is not merely static 
+  but is robust and adaptive to dynamic changes in the system topology.
+
+\begin{figure*}
+  \centering
+  \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth, keepaspectratio]{experiment/density/s1-th5.pdf}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth, keepaspectratio]{experiment/density/s1-th10.pdf}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}{0.32\textwidth}
+      \centering
+      \includegraphics[width=\linewidth, keepaspectratio]{experiment/density/s3-th20.pdf}
+  \end{subfigure}
+  \caption{
+    Density-based offloading strategy with different fringe values $s$ and threshold $th$. 
+      Yellow nodes execute components locally, violet nodes offload to edge/cloud servers.
+      }
+  \label{fig:experiment-density-baseline}
+\end{figure*}
+
+\begin{figure*}
+  \centering
+  \begin{subfigure}{0.32\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{experiment/density/AC/round-101_time-0.pdf}
+  \end{subfigure}
+  \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{experiment/density/AC/round-101_time-99.pdf}
+  \end{subfigure}
+  \caption{
+    Density-based offloading strategy using IDHGQL with aggregate computing (at the end of the learning process).
+    Color indicates percentage of components executed locally.
+    Nodes learn to execute locally in dense areas and offload in sparse areas.
+  }
+  \label{fig:experiment-density-AC}
+\end{figure*}
+
+\begin{figure*}
+  \centering
+  \begin{subfigure}{0.32\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{experiment/density/NO-AC/round-101_time-0.pdf}
+  \end{subfigure}
+  \begin{subfigure}{0.32\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{experiment/density/NO-AC/round-101_time-99.pdf}
+  \end{subfigure}
+  \caption{
+    Density-based offloading strategy using IDHGQL without collective information (ablative study). 
+    Time flows left to right. Colors indicate percentage of components executed locally. 
+    Without collective information, nodes fail to learn adequate policies and resort to uniform partial offloading.
+  }
+  \label{fig:experiment-density-NO-AC}
+\end{figure*}
+
+\begin{figure*}
+  \centering
+  \begin{subfigure}{0.32\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{experiment/density/eval/time-0.pdf}
+  \end{subfigure}
+  \begin{subfigure}{0.32\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{experiment/density/eval/time-50.pdf}
+  \end{subfigure}
+  \begin{subfigure}{0.32\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{experiment/density/eval/time-150.pdf}
+  \end{subfigure}
+  \caption{
+    Density-based offloading strategy using IDHGQL with collective information and node movements. 
+    Time flows from left to right. Each point represents an application node, and the color indicates the percentage of components being executed locally. 
+    It can be observed that when, at time 100, the three nodes in the bottom-left corner move from a dense area to a less congested one, 
+    the system is able to correctly readjust .
+  }
+  \label{fig:experiment-density-eval}
+\end{figure*}
+
+\section{Limitations}\label{sec:limitations}
+While our proposed IDHGQL framework demonstrates significant promise in addressing the challenges of task offloading in edge-cloud systems,
+some limitations must be acknowledged:
+
+\paragraph{Reality Gap.}
+Our evaluation is conducted in a simulated environment,
+which may not capture all the nuances of real-world deployments.
+Although we strive for realism,
+adopting already validated consumption models~\cite{Grochowski2006EnergyPI,DBLP:journals/fgcs/FarabegoliPCV24} and network conditions,
+real-world data and deployments are necessary to fully validate the approach.
+
+\paragraph{Dynamic Environments.}
+While our experiments include dynamic scenarios like node mobility,
+local features changes,
+and varying network conditions (e.g., variable neighbor counts),
+we did not test highly dynamic environments such as rapid topology changes,
+devices frequently joining/leaving the network,
+or fluctuating workloads.
+%
+Even though a comprehensive evaluation of such scenarios is beyond this paper's scope,
+we are confident that our approach can handle them due to:
+\begin{enumerate*}[label=(\roman*)]
+    \item the inherent adaptability of reinforcement learning, 
+    which allows agents to continuously learn and adjust their policies based on new experiences, and
+    \item the self-stabilizing nature of aggregate computing, 
+    which ensures that collective computations converge to correct values even under message delays or temporary inconsistencies~\cite{DBLP:journals/tocl/AudritoVDPB19}.
+\end{enumerate*}
+% real-world edge-cloud systems may exhibit more complex and unpredictable dynamics. 
+% Further research is needed to ensure robustness in highly dynamic environments,
+% even though preliminary results are encouraging.
+
+\paragraph{Multi-Objective Reward Scalarization.}
+Our approach employs a linear weighted combination of objectives ($\mathcal{R}(o) = \sum_{i=1}^n \lambda_i \mathcal{R}_i(o)$),
+a common scalarization technique that, while interpretable, 
+ cannot capture non-convex Pareto regions and may be sensitive to weight configurations~\cite{Hayes2022}.
+%
+The primary focus of this work is on the IDHGQL architecture---combining \gls{HGNN} with aggregate computing for collective-aware decision-making---rather than 
+ on multi-objective optimization methods per se.
+The linear scalarization 
+ serves as a straightforward mechanism to demonstrate the framework's ability to balance competing objectives.
+%
+More sophisticated approaches exist, 
+ such as multi-objective RL methods that directly learn Pareto-optimal policies~\cite{navon2021learning}, 
+  or adaptive weight schemes that adjust priorities based on environmental conditions.
+Integrating such techniques within IDHGQL represents a promising direction for future research.
+
+\paragraph{Preference Polarization.}
+The current framework exhibits preference polarization in multi-objective scenarios, 
+ where agents tend to select either cloud or edge resources exclusively rather than developing more nuanced, mixed strategies. 
+ This behavior may result from the homogeneous treatment of application nodes in our \gls{HGNN} architecture,
+ which does not differentiate between devices with varying characteristics or workload patterns.
+%
+Future work should explore heterogeneous node representations to enable more sophisticated policy differentiation.
+
+
+\paragraph{Coordination Mechanisms.}
+The framework currently lacks explicit coordination mechanisms for joint component offloading, 
+ which could improve efficiency in scenarios requiring synchronized resource allocation.
+%
+Investigating coordinated offloading strategies for dependent components represents an important direction for future research.
+
+
 \section{Related Works}
 \section{Future Directions}
