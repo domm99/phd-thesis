@@ -1317,4 +1317,195 @@ Investigating coordinated offloading strategies for dependent components represe
 
 
 \section{Related Works}
+\label{sec:related-works}
+
+\subsection{Partial and Workflow-Based Offloading}
+
+Existing offloading approaches differ in the granularity of the migrated workload,
+the adopted control architecture, and the optimization objective.
+The literature distinguishes between independent and workflow-based tasks, full
+and partial offloading, and centralized and distributed decision
+making~\cite{DBLP:journals/access/WangWHSQ20}.
+Most studies focus on independent tasks and determine whether each task should be
+executed locally or transferred to a nearby server.
+Workflow-based offloading is more involved because placement decisions must also
+respect the execution and data dependencies among application components.
+
+A substantial body of work optimizes task completion time or response
+latency~\cite{DBLP:journals/tcc/GuoYZC22,DBLP:conf/infocom/MengTXCLL19,DBLP:conf/IEEEants/SarkarKM19}.
+These approaches employ techniques ranging from centralized mathematical
+optimization~\cite{DBLP:journals/tcc/GuoYZC22,DBLP:journals/jnca/AlkhalailehCNJ20}
+to heuristic algorithms~\cite{DBLP:journals/fgcs/MiaoWLGAH20,DBLP:journals/tccn/KaiZYH21}
+and learning-based strategies~\cite{DBLP:conf/IEEEants/SarkarKM19,DBLP:conf/infocom/OuyangLCZT19}.
+Other works optimize monetary
+cost~\cite{DBLP:conf/icdcs/Zhang0Y0Y19,DBLP:journals/ejwcn/ChabbouhRCA17,DBLP:journals/access/WangZGL20a}
+or energy
+consumption~\cite{DBLP:journals/tvt/ZhaoLGZ19,DBLP:journals/jsac/ChengLQZHSS19,DBLP:journals/twc/TiVLS20}.
+More recent formulations combine several objectives, typically latency, energy,
+and operational cost, through mixed-integer programming or reinforcement
+learning~\cite{DBLP:journals/ejwcn/LongLZLH20,DBLP:journals/access/KhayyatEMAAK20}.
+
+Although these studies cover a broad range of objectives, they commonly assume
+either centralized coordination or simplified application structures.
+Consequently, the combination of partial workflow placement, distributed control,
+and multi-hop cloud-edge infrastructures has received comparatively limited
+attention~\cite{DBLP:journals/access/WangWHSQ20}.
+This limitation is particularly relevant when multiple devices make concurrent
+placement decisions, since optimizing each request independently does not account
+for the congestion and server contention produced by their collective behavior.
+
+\subsection{Learning-Based Offloading}
+
+Reinforcement learning has increasingly been adopted to handle offloading in
+dynamic environments for which an accurate analytical model is unavailable.
+Li et al.~\cite{Li2021PartialOffloadingDQN}, for example, apply deep Q-learning to
+partial offloading across multiple access points, balancing execution latency and
+energy consumption through distributed decisions.
+Other approaches incorporate graph representations into the learning process.
+Sun et al.~\cite{Sun2021GraphRL} and Wang et al.~\cite{Wang2024MGNRL} use graph
+neural networks to encode network structure and improve offloading decisions in
+mobile-edge computing systems.
+However, these methods primarily address binary offloading and rely on centralized
+control, limiting their applicability to component-level placement over a
+distributed infrastructure.
+
+Learning-based offloading has also been investigated in highly dynamic vehicular
+settings.
+Federated Soft Actor-Critic approaches support distributed training while
+optimizing whether individual tasks should be executed locally or at a mobile-edge
+server~\cite{moghaddasi2026adhoc}.
+Multi-agent methods such as PORA-MATD3 similarly distribute offloading decisions
+among vehicles and roadside infrastructure~\cite{Wu2025PORA}.
+These approaches improve scalability and responsiveness under changing wireless
+conditions, but their decisions remain centered on individual tasks and do not
+model the dependencies of a partially offloaded application workflow.
+
+Several recent studies address such dependencies explicitly by representing an
+application as a directed acyclic graph.
+Cao and Deng~\cite{Cao2023GATDAG} combine graph attention with deep reinforcement
+learning to schedule dependent subtasks on heterogeneous servers, while Wu et
+al.~\cite{Wu2025VehicularHGAT} employ a graph-attention representation and
+Proximal Policy Optimization for vehicular task placement.
+Although these methods capture precedence relations and heterogeneous execution
+resources, their decision process is centrally coordinated.
+They therefore assume access to a global system representation that may be
+impractical in large-scale, open, and continuously changing deployments.
+
+Heterogeneous graph representations have also been combined with reinforcement
+learning in domain-specific systems.
+Pamuklu et al.~\cite{Pamuklu2023UAVIoT} model UAVs and IoT devices as distinct
+entity types to support offloading in smart-agriculture scenarios subject to node
+failures and topology changes.
+Related learning- and game-based approaches optimize resource allocation in
+IRS-assisted and secure 5G/6G networks~\cite{chen2025tmc,chen2024jsac}, further
+demonstrating the usefulness of adaptive policies for complex communication
+infrastructures.
+Nevertheless, these methods do not address the combination of workflow-level
+partial offloading and decentralized access to collective infrastructure state.
+
+Overall, prior work addresses individual elements of the problem considered in
+this chapter: partial offloading, dependency-aware workflow placement,
+heterogeneous graph modeling, or decentralized reinforcement learning.
+These elements, however, are generally studied in isolation.
+Existing approaches either simplify placement to a local-versus-remote decision,
+coordinate decisions centrally, or provide each agent with only local information
+without representing emergent conditions such as neighborhood density and shared
+resource contention.
+IDHGQL differs by combining component-level workflow placement with a
+heterogeneous graph representation and decentralized collective information
+computed through aggregate computing.
+
 \section{Future Directions}
+\label{sec:ch09-future-directions}
+
+The results presented in this chapter provide initial evidence that collective
+information can support decentralized component-offloading decisions.
+Several extensions are nevertheless required to assess the approach under the
+scale, heterogeneity, and variability of operational cloud-edge systems.
+
+\subsection{Real-World Validation and Scalability}
+
+The current evaluation relies on simulation.
+Although the adopted energy-consumption models and network assumptions are based
+on previously validated
+formulations~\cite{Grochowski2006EnergyPI,DBLP:journals/fgcs/FarabegoliPCV24}, a simulator
+cannot reproduce all the effects encountered in a physical deployment.
+Future work should therefore evaluate IDHGQL on a testbed containing actual end,
+edge, and cloud devices.
+Such an evaluation should account for hardware-specific execution times, wireless
+interference, message loss, virtualization overhead, and the energy cost of both
+inference and communication.
+It would also make it possible to determine whether the policies learned in
+simulation transfer directly to physical devices or require additional
+fine-tuning.
+
+Scalability should be investigated along multiple dimensions.
+Increasing the number of devices enlarges the collective state and intensifies
+contention for shared resources, while larger application workflows increase both
+the graph size and the number of possible placement decisions.
+More heterogeneous infrastructures additionally introduce a wider variety of node
+and link types.
+Experiments at larger scales should consequently measure not only the quality of
+the learned policy, but also training time, inference latency, communication
+overhead, and the convergence time of the aggregate computations.
+Hierarchical aggregation, neighborhood sampling, and parameter sharing among
+similar agents are possible mechanisms for preserving the decentralized nature of
+the approach while limiting these costs.
+
+\subsection{Adaptation to Dynamic Environments}
+
+The evaluation includes device mobility and variations in local neighborhood
+density, but operational systems may evolve more rapidly and less predictably.
+Devices may frequently join, leave, or fail; communication links may appear and
+disappear; workloads may vary abruptly; and edge servers may become unavailable
+or saturated.
+The self-stabilizing properties of aggregate computing provide a basis for
+reconstructing collective information after these
+changes~\cite{DBLP:journals/tocl/AudritoVDPB19}, but they do not by themselves guarantee
+that a previously learned offloading policy remains effective during the
+transient phase.
+
+Future experiments should therefore combine multiple sources of change and
+quantify both the immediate performance degradation and the time required to
+recover a suitable policy.
+This also motivates mechanisms for detecting distribution shifts and selectively
+updating the agents at runtime, rather than periodically retraining the complete
+system.
+Continual or meta-learning techniques could improve adaptation to new workloads
+and topologies, while constrained exploration would be needed to prevent unsafe
+placement decisions during online learning.
+
+\subsection{Multi-Objective and Coordinated Offloading}
+
+The current reward combines latency, energy consumption, infrastructure cost,
+and server load through a weighted linear scalarization.
+This formulation is interpretable and makes the desired trade-off explicit, but
+it is sensitive to the selected weights and cannot represent non-convex regions
+of the Pareto front~\cite{Hayes2022}.
+Future versions of IDHGQL could instead learn a family of Pareto-optimal
+policies~\cite{navon2021learning}, allowing the preferred operating point to be selected
+at deployment time.
+Alternatively, the objective weights could adapt to the current context, for
+example prioritizing latency during emergencies and energy conservation during
+normal operation.
+
+Richer representations may also mitigate the preference polarization observed in
+the experiments, where agents tend to rely predominantly on either edge or cloud
+resources instead of learning more differentiated placement strategies.
+In particular, application nodes could encode device-specific capabilities,
+workload characteristics, and component requirements rather than being treated
+homogeneously by the graph model.
+This would allow the learned policy to distinguish among components that differ
+in computational demand, communication volume, or latency sensitivity.
+
+Finally, IDHGQL currently produces placement decisions independently for each
+agent and does not include an explicit mechanism for coordinating the offloading
+of interdependent components.
+Future work should investigate decentralized coordination strategies that allow
+agents to negotiate compatible placements or reserve shared resources without
+introducing a central controller.
+Combining learned decisions with field-based coordination could support joint
+placement while preserving locality and resilience.
+This extension would move the approach from collective-aware individual decisions
+toward genuinely coordinated deployment policies for distributed application
+workflows.
