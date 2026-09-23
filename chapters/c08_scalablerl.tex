@@ -2097,3 +2097,90 @@ DGQL complements permutation-invariant models~\cite{hao2023boosting,lin2024hgap}
  providing an empirical baseline on the limits of zero-shot scalability in swarm coordination.
 
 \section{Future Directions}
+
+The studies presented in this chapter address complementary aspects of scalable multi-agent reinforcement learning: 
+ distributing the learning process through local exchanges and representing interactions through graph-based policies 
+ that can operate with variable populations.
+%
+Together, 
+ they suggest that scalability depends not only on limiting global coordination, 
+ but also on adapting what information is exchanged and how local interactions are represented.
+%
+The following directions outline how these two perspectives could be further integrated 
+ and evaluated under more demanding conditions.
+
+\subsection{Adaptive Neighborhood-Based Learning}
+
+The neighbor-based strategies considered in this chapter rely on fixed neighborhood sizes, 
+ communication intervals, and exchange mechanisms.
+%
+However,
+ the most useful interaction pattern may change throughout training and deployment.
+%
+Agents could therefore adaptively select whom to communicate with, 
+ when to communicate, and whether to exchange experiences, model parameters, or compact representations.
+%
+Such decisions could depend on local uncertainty, recent performance, 
+ neighborhood density, or the novelty of the available information.
+
+This direction also motivates event-driven and bandwidth-aware protocols 
+ in which communication occurs only when the expected learning benefit justifies its cost.
+%
+More advanced consensus mechanisms could replace direct parameter selection or averaging,
+ while hybrid strategies could combine experience sharing with occasional model synchronization.
+%
+An important challenge will be preventing rapidly changing neighborhoods
+ and asynchronous updates from destabilizing learning.
+
+\subsection{Scale-Aware Graph Policies}
+
+Graph-based policies naturally support variable numbers of agents, 
+ but architectural invariance alone does not guarantee that the learned behavior remains equally efficient at every scale.
+%
+Future work should expose agents to a broader range of population sizes and densities during training,
+ using population randomization or curricula that progressively increase coordination complexity.
+%
+Policies could also be conditioned on local density estimates,
+ allowing them to distinguish between interaction patterns that appear structurally similar
+  but occur under substantially different deployment conditions.
+
+The graph architecture itself should be made adaptive.
+%
+Possible extensions include dynamically selecting the neighborhood size,
+ combining short- and long-range information through hierarchical message passing,
+  and varying the receptive field according to the current task.
+%
+Deeper, residual, or attention-based architectures may improve information propagation,
+ although their benefits must be evaluated against oversmoothing
+  and the additional communication required by multiple message-passing rounds.
+%
+The objective is to preserve zero-shot deployment while reducing the efficiency loss observed
+ when the operating scale differs substantially from the training configuration.
+
+\subsection{Heterogeneous and Dynamic Deployments}
+
+The current evaluation provides a controlled basis for studying decentralized learning and population scaling,
+ but real collectives introduce additional sources of variability.
+%
+Agents may differ in their sensing, actuation, computational capacity, or communication range,
+ while obstacles, objectives, and network conditions may evolve during execution.
+%
+Future experiments should consequently consider heterogeneous teams,
+ intermittent connectivity, delayed or lost messages, agent failures,
+ and environments whose dynamics change over time.
+
+A particularly promising direction is to combine graph-based policy
+ representations with fully decentralized online training.
+%
+In this setting,
+ each agent could update a graph-based policy from locally collected experience
+ while using adaptive neighborhood exchanges to propagate relevant knowledge through the collective.
+%
+This would remove the assumption of a permanently available centralized training phase
+ and allow the policy to evolve together with the interaction graph.
+%
+Evaluating such systems will require considering not only task performance,
+ but also communication volume, inference latency, energy consumption, adaptation time, and robustness during transient changes.
+%
+Physical swarm platforms and more complex multi-agent benchmarks would provide the necessary next step
+ toward assessing whether these mechanisms remain effective beyond controlled simulations.
