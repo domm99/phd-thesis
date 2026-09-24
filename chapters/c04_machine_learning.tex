@@ -75,8 +75,11 @@ A model
 %
 is characterized by a set of parameters $\boldsymbol{\theta}$ that determine
 the mapping from inputs to outputs.
-
-Learning consists of selecting parameters that minimize an objective function.
+%
+The central task is to select $\boldsymbol{\theta}$ so that $f_{\boldsymbol{\theta}}$
+ captures the structure of $\mathcal{D}$ without merely memorizing it.
+%
+Learning formalizes this task as the minimization of an objective function.
 %
 In the supervised setting, this objective is commonly expressed as the empirical
 risk
@@ -97,42 +100,42 @@ risk
 where $\ell$ is a loss function measuring the discrepancy between a prediction
 and its target.
 %
-The specific interpretation of the model output and loss depends on the task.
+The specific interpretation of the model output and loss depends on the task:
+ classification associates an input with one of a finite set of classes,
+ whereas regression predicts a continuous value.
 %
-Classification associates an input with one of a finite set of classes, whereas
-regression predicts a continuous value.
+In either case, minimizing $\mathcal{L}_{\mathcal{D}}$ on observed data is only a means to an end;
+ the ultimate criterion is how well the learned model performs on data it has not yet seen.
 
 
 \subsection{Training and Generalization}
 \label{subsec:training-generalization}
 
 The purpose of training is not merely to reproduce the observations contained
-in $\mathcal{D}$, but to learn patterns that remain valid for previously unseen
-inputs.
+in $\mathcal{D}$, but to discover patterns that remain valid for previously unseen inputs.
 %
-This property is known as \emph{generalization}.
+This property is known as \emph{generalization}, and it is the primary criterion
+ by which a learned model is evaluated in practice.
 %
 A model that performs well on the training data but poorly on new observations
 is said to overfit, while a model that is unable to capture the relevant structure
 of the training data underfits.
 
 To estimate generalization, the available samples are typically divided into
-three disjoint subsets.
+three disjoint subsets: the \emph{training set}, used to optimize the model parameters;
+ the \emph{validation set}, which guides choices that are not learned during training,
+ such as the model architecture, regularization strength, and learning rate;
+ and the \emph{test set}, held out until the final evaluation to provide an
+ independent estimate of performance on unseen data.
 %
-The \emph{training set} is used to optimize the model parameters.
-%
-The \emph{validation set} supports choices that are not directly learned during
-training, such as the model architecture, regularization strength, and learning
-rate.
-%
-The \emph{test set} is held out until the final evaluation and provides an
-independent estimate of performance on unseen data.
-%
-Maintaining this separation is essential to avoid adapting the model, either
-directly or indirectly, to the data used for reporting its performance.
+Maintaining this separation is essential: any signal from the test set that
+ reaches the model — even indirectly, through architecture or hyperparameter choices —
+ produces an optimistic estimate of generalization.
 
-For differentiable models, parameter optimization is usually performed through
- variants of gradient descent~\cite{DBLP:journals/siamrev/BottouCN18}.
+Minimizing the empirical risk is accomplished iteratively.
+%
+For differentiable models this is typically done through
+ variants of stochastic gradient descent~\cite{DBLP:journals/siamrev/BottouCN18}.
 %
 At training step $t$, a mini-batch $\mathcal{B}_t \subseteq \mathcal{D}$ is
 sampled and the parameters are updated according to
@@ -156,9 +159,12 @@ where $\eta > 0$ is the learning rate.
 Using mini-batches reduces the computational cost of each update and introduces
 stochasticity that can improve optimization.
 %
-Regularization techniques, such as weight penalties, dropout, data
-augmentation, and early stopping, are commonly employed to limit overfitting
-\cite{goodfellow2016deep}.
+Regularization techniques — including weight penalties, dropout, data
+ augmentation, and early stopping — are commonly employed to reduce the gap
+ between training and generalization error~\cite{DBLP:books/daglib/0040158}.
+%
+The tension between fitting the training data and generalizing to new inputs
+ runs through the design of every learning system described in this thesis.
 
 
 \section{Learning Paradigms and Settings}
@@ -193,8 +199,13 @@ The objective is instead to expose structure in the input distribution,
  learning compact representations, 
  or identifying samples that differ from previously observed data.
 %
-Clustering, dimensionality reduction,
- and novelty detection are representative examples.
+Clustering, dimensionality reduction, and novelty detection are
+ representative examples.
+%
+This thesis employs unsupervised principles in two ways:
+ to identify device groups with compatible data distributions in clustered federated learning,
+ and to detect novel states via prediction error in the Random Network Distillation mechanism
+ introduced in~\Cref{sec:selforgfl-future}.
 
 
 \subsection{Reinforcement Learning}
@@ -212,13 +223,13 @@ Its objective is to learn a policy that maximizes the cumulative reward obtained
 
 \gls{RL} therefore differs from supervised learning in two important respects.
 %
-First, 
- the appropriate action is not directly provided to the learner: 
- the reward only indicates the consequences of the selected behavior.
+The appropriate action is never directly provided to the learner:
+ the reward only indicates the consequences of the selected behavior,
+ leaving the agent to infer which actions led to favorable outcomes.
 %
-Second, 
- the data available for learning depend on the agent's own decisions,
- because its actions influence the states and rewards it will subsequently observe.
+Moreover, the data available for learning are not fixed in advance:
+ the agent's own decisions determine which states and rewards it will subsequently observe,
+ creating a feedback loop between behavior and experience.
 %
 The formal \gls{RL} framework, 
  its extension to multi-agent systems, 
@@ -230,10 +241,24 @@ The formal \gls{RL} framework,
 \subsection{Multilayer Neural Networks}
 \label{subsec:multilayer-neural-networks}
 
-Artificial neural networks represent a parameterized function as a composition
-of simpler transformations.
+The parameterized model $f_{\boldsymbol{\theta}}$ introduced in~\Cref{sec:learning-from-data}
+ can in principle take any differentiable form.
 %
-In a feedforward network, the representation produced by layer $l$ is
+Artificial neural networks provide a particularly expressive family of such models
+ by representing the learned mapping as a \emph{composition} of simpler transformations,
+ each governed by a small set of learnable parameters.
+%
+This design is not a mere implementation convenience:
+ a sufficiently wide network with at least one hidden layer can approximate
+ any continuous function on a compact domain to arbitrary accuracy~\cite{DBLP:books/daglib/0040158},
+ a result known as the universal approximation theorem.
+%
+Depth (i.e., stacking many layers rather than widening a single one) 
+ makes this approximation power practically attainable with far fewer parameters.
+
+In a feedforward network, the computation proceeds layer by layer from the input to the output.
+%
+The representation produced by layer $l$ is
 %
 \begin{equation}
     \mathbf{h}^{(l)}
@@ -249,30 +274,63 @@ In a feedforward network, the representation produced by layer $l$ is
 \end{equation}
 %
 where $\mathbf{h}^{(0)} = \mathbf{x}$ is the input,
-$\mathbf{W}^{(l)}$ and $\mathbf{b}^{(l)}$ are trainable parameters, and
-$\sigma^{(l)}$ is a nonlinear activation function.
+$\mathbf{W}^{(l)}$ and $\mathbf{b}^{(l)}$ are a trainable weight matrix and bias vector, and
+$\sigma^{(l)}$ is a pointwise nonlinear activation function.
 %
-The output of the final layer is interpreted according to the task, for example
-as class probabilities, a continuous prediction, or an estimate of the value of
-an action.
+The affine part $\mathbf{W}^{(l)} \mathbf{h}^{(l-1)} + \mathbf{b}^{(l)}$
+ performs a learned re-weighting and shift of the previous layer's representation.
+%
+The role of the nonlinearity $\sigma^{(l)}$ is indispensable:
+ without it, the composition of any number of affine transformations collapses
+ into a single affine transformation, and stacking additional layers provides no expressive gain.
+%
+The most common choice in modern architectures is the rectified linear unit,
+ $\mathrm{ReLU}(z) = \max(0, z)$,
+ which is computationally cheap and avoids the vanishing-gradient problem
+ that hampers learning in deeper networks with saturating activations.
+%
+The output of the final layer is adapted to the task: 
+ a softmax normalization yields a probability distribution over classes,
+ a linear projection produces a continuous prediction or value estimate.
 
-The composition of multiple layers allows the network to learn hierarchical
-representations.
+The principal motivation for depth is the ability to learn \emph{hierarchical representations}.
 %
-Earlier layers generally capture local or elementary patterns, while later
-layers combine them into increasingly task-specific features.
+Rather than mapping inputs to outputs directly, each layer builds on the structure extracted by the layer below it.
 %
-Networks containing several such transformations are commonly referred to as
-\emph{deep neural networks}~\cite{DBLP:books/daglib/0040158}.
+In practice, earlier layers tend to capture local or elementary patterns
+ (e.g., edges in visual data, short-range correlations in sequences)
+ while later layers recombine these into progressively more abstract, task-specific features.
+%
+This hierarchy makes deep networks empirically more parameter-efficient than their
+ shallow counterparts on complex tasks:
+ reusing learned sub-structures across the network reduces the total number of parameters
+ needed to represent a given mapping.
+%
+Networks organized in this way are referred to as \emph{deep neural networks}~\cite{DBLP:books/daglib/0040158}.
 
-The parameters of all layers are optimized jointly.
+Training a deep network requires computing the gradient of the loss $\mathcal{L}$
+ with respect to every parameter in every layer.
 %
-Backpropagation applies the chain rule to propagate the gradient of the loss
-from the output toward the input layers, after which an optimizer updates the
-parameters according to a rule such as \Cref{eq:gradient-descent}.
+Doing so naively 
+ (i.e., differentiating with respect to each weight independently)
+ would be computationally prohibitive.
 %
-The same basic procedure supports the different neural architectures used
-throughout this thesis.
+\emph{Backpropagation} solves this by applying the chain rule in a single backward pass through the network:
+ starting from the gradient of the loss at the output,
+ it propagates the error signal layer by layer toward the input,
+ computing at each step the contributions to the weights $\mathbf{W}^{(l)}, \mathbf{b}^{(l)}$
+ and the gradient to be passed to the layer below.
+%
+A single forward pass evaluates the prediction and the loss;
+ the subsequent backward pass yields the gradient with respect to all parameters simultaneously.
+%
+These gradients are consumed by an optimizer such as the one in~\Cref{eq:gradient-descent},
+ and the cycle repeats over many mini-batches and epochs until the loss on the
+ validation set no longer improves.
+%
+The same procedure underlies the different neural architectures used
+ throughout this thesis — from the feedforward networks employed in federated classification tasks
+ to the graph-based and distillation-based architectures introduced in the following section.
 
 
 \section{Advanced Learning Mechanisms}
