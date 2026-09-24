@@ -7,4 +7,532 @@
 \minitoc
 %----------------------------------------------------------------------------------------
 
-% qui discutere anche gnn, continual learning ecc 
+\glsentryfull{ML} provides computational systems with the ability 
+ to derive models and decision mechanisms from data or experience rather than 
+ relying exclusively on behavior specified in advance.
+%
+This capability is particularly relevant to \glspl{CAS},
+ where the conditions encountered during operation may be too numerous, dynamic,
+ or uncertain to be fully anticipated at design time.
+%
+Learning allows individual devices and collectives to adapt their behavior to observed conditions, 
+ but also introduces new engineering concerns related to data availability, 
+ model generalization, computational cost, and knowledge sharing.
+
+This chapter introduces the \gls{ML} concepts required by the remainder of the thesis.
+%
+It first describes how models are learned from data 
+ and how their ability to generalize is evaluated.
+%
+It then distinguishes the main learning paradigms.
+%
+Finally, 
+ it introduces neural networks, Graph Neural Networks (GNNs), 
+ Random Network Distillation (RND), and 
+ Continual Learning (CL), 
+ which form the methodological basis of several contributions 
+ presented in~\Cref{part:contribution}.
+
+\section{Learning from Data}
+\label{sec:learning-from-data}
+
+\subsection{From Explicit Rules to Learned Models}
+\label{subsec:rules-to-models}
+
+Traditional software systems implement an explicit mapping from inputs to
+outputs through rules written by a programmer.
+%
+This approach is effective when the relevant operating conditions can be
+identified in advance and expressed through a manageable set of instructions.
+%
+However, specifying such rules becomes difficult when the mapping depends on
+complex patterns, noisy observations, or conditions that change during
+operation.
+
+Machine learning replaces the direct specification of this mapping with a
+parameterized model whose behavior is determined from data.
+%
+Let
+%
+\begin{equation}
+    \mathcal{D}
+    =
+    \left\{
+        \left(\mathbf{x}_i, y_i\right)
+    \right\}_{i=1}^{n}
+\end{equation}
+%
+denote a dataset containing $n$ observations.
+%
+Each input $\mathbf{x}_i \in \mathcal{X}$ describes an observed instance, while
+$y_i \in \mathcal{Y}$ represents its associated target when one is available.
+%
+A model
+%
+\begin{equation}
+    f_{\boldsymbol{\theta}} \colon \mathcal{X} \rightarrow \mathcal{Y}
+\end{equation}
+%
+is characterized by a set of parameters $\boldsymbol{\theta}$ that determine
+the mapping from inputs to outputs.
+
+Learning consists of selecting parameters that minimize an objective function.
+%
+In the supervised setting, this objective is commonly expressed as the empirical
+risk
+%
+\begin{equation}
+    \mathcal{L}_{\mathcal{D}}(\boldsymbol{\theta})
+    =
+    \frac{1}{n}
+    \sum_{i=1}^{n}
+    \ell
+    \left(
+        f_{\boldsymbol{\theta}}(\mathbf{x}_i),
+        y_i
+    \right),
+    \label{eq:empirical-risk}
+\end{equation}
+%
+where $\ell$ is a loss function measuring the discrepancy between a prediction
+and its target.
+%
+The specific interpretation of the model output and loss depends on the task.
+%
+Classification associates an input with one of a finite set of classes, whereas
+regression predicts a continuous value.
+
+
+\subsection{Training and Generalization}
+\label{subsec:training-generalization}
+
+The purpose of training is not merely to reproduce the observations contained
+in $\mathcal{D}$, but to learn patterns that remain valid for previously unseen
+inputs.
+%
+This property is known as \emph{generalization}.
+%
+A model that performs well on the training data but poorly on new observations
+is said to overfit, while a model that is unable to capture the relevant structure
+of the training data underfits.
+
+To estimate generalization, the available samples are typically divided into
+three disjoint subsets.
+%
+The \emph{training set} is used to optimize the model parameters.
+%
+The \emph{validation set} supports choices that are not directly learned during
+training, such as the model architecture, regularization strength, and learning
+rate.
+%
+The \emph{test set} is held out until the final evaluation and provides an
+independent estimate of performance on unseen data.
+%
+Maintaining this separation is essential to avoid adapting the model, either
+directly or indirectly, to the data used for reporting its performance.
+
+For differentiable models, parameter optimization is usually performed through
+ variants of gradient descent~\cite{DBLP:journals/siamrev/BottouCN18}.
+%
+At training step $t$, a mini-batch $\mathcal{B}_t \subseteq \mathcal{D}$ is
+sampled and the parameters are updated according to
+%
+\begin{equation}
+    \boldsymbol{\theta}_{t+1}
+    =
+    \boldsymbol{\theta}_{t}
+    -
+    \eta
+    \nabla_{\boldsymbol{\theta}}
+    \mathcal{L}_{\mathcal{B}_t}
+    \left(
+        \boldsymbol{\theta}_{t}
+    \right),
+    \label{eq:gradient-descent}
+\end{equation}
+%
+where $\eta > 0$ is the learning rate.
+%
+Using mini-batches reduces the computational cost of each update and introduces
+stochasticity that can improve optimization.
+%
+Regularization techniques, such as weight penalties, dropout, data
+augmentation, and early stopping, are commonly employed to limit overfitting
+\cite{goodfellow2016deep}.
+
+
+\section{Learning Paradigms and Settings}
+\label{sec:learning-paradigms}
+
+Machine-learning problems differ primarily in the information available to the
+learner and in the objective that guides adaptation.
+%
+The following paradigms provide the context required to position the methods
+used throughout this thesis.
+
+
+\subsection{Supervised and Unsupervised Learning}
+\label{subsec:supervised-unsupervised}
+
+In \emph{supervised learning}, each training input is associated with a target,
+and the model learns to approximate the relationship between them by minimizing
+a loss such as the one in \Cref{eq:empirical-risk}.
+%
+Classification and regression are the two main supervised tasks.
+%
+The federated-learning methods studied in~\Cref{chap:federated-learning} and~\Cref{chap:selforg-fl}
+ primarily operate in this setting: 
+ each device trains a local model from labeled observations while cooperating with other
+ devices to improve its predictive performance.
+
+In \emph{unsupervised learning}, 
+ the observations are not accompanied by target values.
+%
+The objective is instead to expose structure in the input distribution, 
+ for example by discovering groups of similar observations, 
+ learning compact representations, 
+ or identifying samples that differ from previously observed data.
+%
+Clustering, dimensionality reduction,
+ and novelty detection are representative examples.
+
+
+\subsection{Reinforcement Learning}
+\label{subsec:rl-paradigm}
+
+In \gls{RL}, 
+ the learning process is driven by interaction rather than 
+ by a fixed collection of labeled examples.
+%
+An agent observes the state of an environment, selects actions, 
+ and receives feedback in the form of rewards.
+%
+Its objective is to learn a policy that maximizes the cumulative reward obtained
+ over time~\cite{DBLP:books/lib/SuttonB2018}.
+
+\gls{RL} therefore differs from supervised learning in two important respects.
+%
+First, 
+ the appropriate action is not directly provided to the learner: 
+ the reward only indicates the consequences of the selected behavior.
+%
+Second, 
+ the data available for learning depend on the agent's own decisions,
+ because its actions influence the states and rewards it will subsequently observe.
+%
+The formal \gls{RL} framework, 
+ its extension to multi-agent systems, 
+ and the algorithms adopted in this thesis are presented in~\Cref{chap:reinforcement-learning}.
+
+\section{Neural Networks and Deep Learning}
+\label{sec:neural-networks}
+
+\subsection{Multilayer Neural Networks}
+\label{subsec:multilayer-neural-networks}
+
+Artificial neural networks represent a parameterized function as a composition
+of simpler transformations.
+%
+In a feedforward network, the representation produced by layer $l$ is
+%
+\begin{equation}
+    \mathbf{h}^{(l)}
+    =
+    \sigma^{(l)}
+    \left(
+        \mathbf{W}^{(l)}
+        \mathbf{h}^{(l-1)}
+        +
+        \mathbf{b}^{(l)}
+    \right),
+    \label{eq:neural-network-layer}
+\end{equation}
+%
+where $\mathbf{h}^{(0)} = \mathbf{x}$ is the input,
+$\mathbf{W}^{(l)}$ and $\mathbf{b}^{(l)}$ are trainable parameters, and
+$\sigma^{(l)}$ is a nonlinear activation function.
+%
+The output of the final layer is interpreted according to the task, for example
+as class probabilities, a continuous prediction, or an estimate of the value of
+an action.
+
+The composition of multiple layers allows the network to learn hierarchical
+representations.
+%
+Earlier layers generally capture local or elementary patterns, while later
+layers combine them into increasingly task-specific features.
+%
+Networks containing several such transformations are commonly referred to as
+\emph{deep neural networks}~\cite{DBLP:books/daglib/0040158}.
+
+The parameters of all layers are optimized jointly.
+%
+Backpropagation applies the chain rule to propagate the gradient of the loss
+from the output toward the input layers, after which an optimizer updates the
+parameters according to a rule such as \Cref{eq:gradient-descent}.
+%
+The same basic procedure supports the different neural architectures used
+throughout this thesis.
+
+
+\section{Advanced Learning Mechanisms}
+\label{sec:advanced-learning-mechanisms}
+
+The learning paradigms introduced in the previous sections provide the general
+framework within which models and decision policies are acquired.
+%
+The contributions of this thesis additionally rely on mechanisms that address
+specific challenges arising in many-agent systems, including variable interaction
+structures, distributional novelty, knowledge transfer among agents, and
+adaptation to changing conditions.
+%
+This section introduces the corresponding foundations: Graph Neural Networks,
+Random Network Distillation, teacher--student knowledge transfer, and continual
+learning.
+
+
+\subsection{Graph Neural Networks}
+\label{subsec:graph-neural-networks}
+
+\glspl{GNN} represent 
+ a class of deep learning models specifically designed for processing 
+ data structured as graphs~\cite{DBLP:journals/tnn/WuPCLZY21}. 
+%
+They are particularly well-suited for \glspl{CAS} because 
+ the dynamic communication topology naturally forms a graph where devices are nodes 
+ and communication links are edges.
+% 
+Given a graph \(\mathcal{G}_t\), 
+ the primary objective of a GNN is to learn a vector representation,
+  or embedding, 
+  \(\mathbf{h}_v \in \mathbb{R}^d\) 
+  for each node \(v \in \mathcal{V}\). 
+%  
+This embedding aims to capture both the node's intrinsic features 
+ and the contextual information 
+ derived from its local neighborhood structure within the graph.
+
+\glspl{GNN} achieve this through a mechanism known as \emph{message passing}~\cite{DBLP:conf/icml/GilmerSRVD17}, 
+ often implemented across multiple layers. 
+%
+This process mimics communication patterns in \glspl{CAS} 
+ where devices exchange information with their neighbors.
+%
+Let \(K\) be the total number of message passing layers. 
+% 
+The process iteratively updates node embeddings 
+ by aggregating information from their neighbors. 
+% 
+Let \(\mathbf{h}_v^{(k)}\) denote the embedding of node \(v\) at layer \(k\), 
+ where \(k \in \{0, \dots, K\}\). 
+% 
+The initial embedding \(\mathbf{h}_v^{(0)}\) is typically initialized with the node's input features, 
+ \(\mathbf{f}_v\) (derived from the agent's observation \(o_v\)).
+
+For each subsequent layer \(k = 1, \dots, K\), 
+ the update process can be generally described in three steps as the following:
+
+\begin{enumerate}
+    \item \textbf{Message Computation:} 
+    For each edge \((u, v) \in \mathcal{E}_t\), 
+    a message \(\mathbf{m}_{uv}^{(k)}\) is computed. 
+    This message typically depends on the embeddings of the source node \(u\) and the target node \(v\) from the previous layer, 
+    \(\mathbf{h}_u^{(k-1)}\) and \(\mathbf{h}_v^{(k-1)}\), 
+    potentially incorporating edge features \(e_{uv}\) if available. 
+    This step is governed by a learnable message function \(\psi^{(k)}\) as the following:
+    \begin{equation}
+    \label{eq:message}
+    \mathbf{m}_{uv}^{(k)} = \psi^{(k)}\left(\mathbf{h}_u^{(k-1)}, \mathbf{h}_v^{(k-1)}, e_{uv}\right).
+    \end{equation}
+
+    \item \textbf{Message Aggregation:} Each node \(v\) aggregates the incoming messages from its neighbors. 
+    Let \(\mathcal{N}_{\mathcal{G}_t}(v) = \{ u \in \mathcal{V} \mid (u, v) \in \mathcal{E}_t \} \) 
+    denote the set of neighbors of node \(v\) in graph \(\mathcal{G}_t\). 
+    The aggregation function \(\bigoplus^{(k)}\) (e.g., sum, mean, and max) combines the messages into a single vector 
+    \(\mathbf{a}_v^{(k)}\) as the following:
+    \begin{equation}
+    \label{eq:aggregate}
+        \mathbf{a}_v^{(k)} = \bigoplus_{u \in \mathcal{N}_{\mathcal{G}_t}(v)} \left( \mathbf{m}_{uv}^{(k)} \right).
+    \end{equation}
+    Note that some formulations aggregate messages based on \(\mathbf{m}_{vu}^{(k)}\) (messages \emph{to} neighbors) 
+    or use slightly different definitions. 
+    The core idea remains aggregating neighborhood information.
+    \item \textbf{Embedding Update:} The embedding of node \(v\) for the current layer, 
+    \(\mathbf{h}_v^{(k)}\), 
+    is computed by combining its previous embedding \(\mathbf{h}_v^{(k-1)}\)
+    with the aggregated message \(\mathbf{a}_v^{(k)}\). 
+    This update is performed using a learnable update function \(\phi^{(k)}\) 
+    (often a neural network layer like an MLP, 
+    potentially combined with activation functions like ReLU) as the following:
+    \begin{equation}
+    \label{eq:update}
+    \mathbf{h}_v^{(k)} = \phi^{(k)}\left(\mathbf{h}_v^{(k-1)}, \mathbf{a}_v^{(k)}\right).
+    \end{equation}
+\end{enumerate}
+
+After \(K\) layers of message passing, 
+ the final node embeddings are \(\{\mathbf{h}_v^{(K)} \mid v \in \mathcal{V}\}\). 
+%
+With \(K\) layers, each agent's embedding contains information from agents up to \(K\) communication hops away, 
+ enabling coordination across extended neighborhoods without requiring direct long-range communication.
+ 
+The entire \gls{GNN} computation can be represented as a function that maps the initial node features 
+ \(\mathbf{f} = \{\mathbf{f}_v\}_{v \in \mathcal{V}}\) 
+ and the graph structure \(\mathcal{G}_t\) to the final embeddings,
+ parameterized by the learnable weights 
+ \(\theta\) encompassing all \(\psi^{(k)}, \bigoplus^{(k)}, \phi^{(k)}\) as the following:
+\begin{equation}
+\mathrm{GNN}(\mathbf{f},\, \mathcal{G}_t,\, \theta) = \left\{ \mathbf{h}_v^{(K)} : v \in \mathcal{V} \right\}.
+\end{equation}
+
+These final embeddings \(\mathbf{h}_v^{(K)}\) 
+ encapsulate multi-hop neighborhood information (up to \(K\) hops) 
+ and serve as rich feature representations for downstream tasks.
+
+\subsection{Random Network Distillation}
+\label{subsec:random-network-distillation}
+
+\gls{RND} is a lightweight method for estimating the novelty of an input 
+ with respect to a set of previously observed examples~\cite{DBLP:conf/iclr/BurdaESK19}. 
+%
+This method is based on the observation that neural networks tend to produce 
+ lower prediction errors on inputs similar to those seen during training, 
+ and higher errors on unfamiliar or distributionally different inputs. 
+% 
+Therefore, 
+ the prediction error of a network trained on past data 
+ can be used as a proxy for novelty, 
+ or equivalently as an estimate of uncertainty on previously unseen samples.
+
+Basically, 
+ \gls{RND} consists of two neural networks. 
+%
+A target network, 
+ randomly initialized and kept fixed, defines a mapping (or embedding):
+\begin{equation}
+    f: \mathcal{X} \rightarrow \mathbb{R}^{k},
+\end{equation}
+while a predictor network
+\begin{equation}
+    \hat{f}(\cdot;\theta): \mathcal{X} \rightarrow \mathbb{R}^{k}
+\end{equation}
+is trained to approximate the target network \emph{on the available data}.
+%
+Given a data distribution $\mathcal{B}$,
+ the predictor is optimized by minimizing the expected mean squared error
+\begin{equation}\label{eq:rnd}
+    \theta^{*}
+    =
+    \arg\min_{\theta}
+    \mathbb{E}_{x \sim \mathcal{B}}
+    \left[
+        \left\|
+            \hat{f}(x;\theta) - f(x)
+        \right\|_2^2
+    \right].
+\end{equation}
+%
+Once trained,
+ the \gls{RND} uncertainty score of a sample $x$ is computed as
+%
+\begin{equation}
+    u(x)
+    =
+    \left\|
+        \hat{f}(x;\theta^{*}) - f(x)
+    \right\|_2^2 .
+\end{equation}
+%
+Intuitively,
+the two network will produce similar outputs for inputs that are similar to the training data,
+while they will diverge on novel inputs.
+%
+Thus, low values of $u(x)$ indicate that $x$ is similar to the data used to train the predictor,
+ whereas high values suggest that $x$ is novel or comes from a different distribution.
+
+In this thesis, 
+ this property is used to estimate similarity between clients in \gls{FL}. 
+% 
+A predictor trained on the local data of one client is expected 
+ to yield low uncertainty on data drawn from clients with similar feature distributions,
+ and higher uncertainty on data from clients belonging to different clusters.
+%
+\gls{RND} therefore provides a compact and task-agnostic mechanism 
+ to compare local data distributions without exchanging raw data 
+ or evaluating the main federated model.
+
+
+\subsection{Continual Learning}
+\label{subsec:continual-learning}
+
+\glsentryfull{CL}, 
+ also referred to as \emph{lifelong learning}, 
+ studies learning systems that are exposed to a sequence of tasks or data distributions
+ rather than to a single stationary training set~\cite{DBLP:journals/nn/ParisiKPKW19}.
+%
+Its objective is to enable a model to acquire new knowledge 
+ while preserving previously learned capabilities.
+%
+This setting naturally arises in long-lived adaptive systems, 
+ where operating conditions may evolve because of environmental changes, 
+ user behavior, changing task requirements, or device mobility.
+
+Retraining a model from scratch whenever new data becomes available 
+ is often impractical.
+%
+Data from previous experiences may no longer be accessible, while computational,
+ time, memory, or energy constraints may make complete retraining infeasible.
+%
+The central challenge is therefore \emph{catastrophic forgetting}: 
+ the tendency of a neural model to rapidly lose performance on previously learned tasks 
+ or distributions when optimized on new data~\cite{french1999catastrophic}.
+
+Depending on how the data stream evolves, 
+ \gls{CL} problems are commonly divided into three settings~\cite{vandeven2022three}.
+%
+In \emph{task-incremental learning}, 
+ the model encounters a sequence of distinct tasks, 
+ typically with task identifiers available during training and inference.
+%
+In \emph{domain-incremental learning}, 
+ the input distribution changes while the prediction space remains fixed.
+%
+In \emph{class-incremental learning}, 
+ new classes are progressively introduced,
+ and the model must discriminate among all classes observed so far.
+%
+Extensions of this taxonomy account for less structured streams.
+%
+For example, 
+ class-incremental learning with repetitions allows previously observed classes to reappear, 
+ reflecting environments in which past concepts may recur rather than being encountered 
+ only once~\cite{hemati2023class}.
+
+Methods for mitigating catastrophic forgetting are generally grouped 
+ into three categories:
+%
+\begin{enumerate*}[label=(\roman*)]
+    \item \emph{regularization-based methods}, which constrain parameter updates
+    to preserve knowledge relevant to previous tasks;
+    \item \emph{replay-based methods}, which retain representative past examples
+    and interleave them with current observations during training
+    \cite{lopezpaz2017gradient,rebuffi2017icarl}; and
+    \item \emph{architecture-based methods}, which allocate model components to
+    different tasks through mechanisms such as dynamic expansion, parameter
+    masking, or task-specific modules.
+\end{enumerate*}
+
+Replay is particularly relevant to distributed edge systems 
+ because it can be performed locally without exchanging raw data.
+%
+In mobile spatial environments, 
+ it allows a device to adapt its model using observations from its current region 
+ while retaining representative experience from regions visited previously.
+%
+By contrast, 
+ architecture-based methods often rely on explicit task identifiers or clearly defined task 
+ boundaries~\cite{rusu2016progressive,yoon2018lifelong,mallya2018packnet,mallya2018piggyback}.
+%
+These assumptions may be unsuitable for decentralized systems 
+ in which distributional changes are gradual, task boundaries are blurred, 
+ and no global mechanism is available to identify transitions.
