@@ -23,6 +23,7 @@ These devices continuously generate data,
 %
 Rather than operating in isolation,
  they form distributed systems that support applications such as
+ \sidenote{refs with examples here}
  smart cities, pervasive sensing, autonomous mobility, robotic collectives,
  and the edge--cloud continuum.
 
@@ -47,7 +48,10 @@ Autonomy in these systems can be engineered through several approaches,
  macroprogramming abstractions that express collective behaviour from a global perspective,
  and learning-based methods that derive models or decision policies from data and experience.
 %
-This thesis focuses on the latter.
+This thesis focuses on the latter two, 
+ with learning-based methods providing the primary mechanisms for adaptation and autonomy,
+ and macroprogramming abstractions serving as a coordination layer 
+ for organizing learning across the collective.
 %
 Learning-based approaches are particularly suited to \glspl{CAS}
  because the environment is often too dynamic, large, or uncertain
@@ -61,7 +65,7 @@ Two paradigms are especially relevant here:
  and \gls{FL}, which allows distributed devices to construct shared models
  without centralizing their raw data.
 
-Yet learning in isolation is not sufficient.
+Yet learning independently at each device is not sufficient.
 %
 Because each device observes only a partial view of the environment,
  no single device can acquire the breadth of experience
@@ -81,23 +85,24 @@ Designing such cooperation, however, is itself a non-trivial engineering problem
  in a setting where there is no fixed central coordinator
  and devices can communicate only with a local neighbourhood.
 
-Engineering these systems is further complicated by both scale and dynamism.
-%
-A collective may comprise hundreds or thousands of devices,
- motivating the term \emph{many-agent} for settings whose scale is substantially larger
- than that usually associated with small multi-agent systems (i.e., two to ten devices).
-%
-At this scale,
- learning mechanisms cannot assume a fixed number of participants
- or rely on stable global aggregation structures:
- coordination, role assignment, and knowledge accumulation
- must instead remain effective as devices join, leave, or change roles.
-%
-Moreover,
- the collective is rarely static:
- devices may move, fail, join, or leave during operation,
- causing both the communication topology and the information available
- within the system to evolve continuously.
+Engineering these systems is further complicated 
+ by both scale and dynamism. 
+% 
+A collective may comprise hundreds or thousands of devices, 
+ motivating the term \emph{many-agent} for settings whose scale is substantially larger 
+ than that usually associated with small multi-agent systems (i.e., two to ten devices). 
+% 
+At this scale, 
+ learning mechanisms cannot rely on a global view of the population 
+ or on stable global aggregation structures; 
+ coordination, role assignment, and knowledge accumulation must instead be achieved 
+ through local interactions. 
+% 
+Moreover, 
+ the collective is rarely static: 
+ devices may move, fail, join, leave, or change roles during operation, 
+ continuously reshaping both the communication topology 
+ and the information available within the system.
 
 These challenges are compounded by how data are generated and collected
  in physically situated systems.
@@ -326,11 +331,14 @@ Accordingly,
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/mapping.drawio.pdf}
-    \caption{Relationship between the engineering dimensions and the contribution chapters of this thesis.}
+    \includegraphics[width=0.8\textwidth]{figures/mapping.drawio.pdf}
+    \caption{
+        Relationship between the engineering dimensions and the contribution chapters of this thesis.
+        }
     \label{fig:mapping}
 \end{figure}
 
+\sidenote{double-check chapters names}
 This thesis investigates how cooperative learning can be engineered as an
 integral part of a CAS, with particular attention to the role of macroprogramming
 in expressing self-organizing structures around a learning process and to
