@@ -2,12 +2,353 @@
 %! Author = davidedomini
 
 %----------------------------------------------------------------------------------------
-\chapter{Context and Motivation}
+\chapter{Context}
 \label{chap:context}
 \minitoc
 %----------------------------------------------------------------------------------------
 
-\note{ci sta chiamarlo cosi o meglio un piu generale capitolo sui CAS?}
 \section{Collective Adaptive Systems}
-\section{Self-* Systems}
+
+A \glsentryfull{CAS} is a system whose behavior results
+ from the interactions among multiple autonomous or semi-autonomous entities 
+ and that changes during operation in response to variations in either the system itself 
+ or its environment~\cite{DBLP:conf/huc/Ferscha15}. 
+% 
+The term identifies two complementary properties. 
+%
+A system is \emph{collective} when its function cannot be attributed to any component in isolation, 
+ but depends on how multiple components interact and coordinate. 
+% 
+It is \emph{adaptive} when it can modify the mechanisms that govern its behavior, 
+ rather than merely produce different outputs according to a fixed set of rules. 
+% 
+Adaptation may affect parameters, decision policies, interaction patterns, role assignments, 
+ or the organization of the collective itself.
+
+This definition describes a broad class of systems. 
+%
+Their components may be software agents, sensors, mobile devices, robots, vehicles, users, or services;
+ they may be homogeneous or differ in capabilities and responsibilities; 
+ and their interactions may take place in a physical environment, a communication network, or both. 
+%
+What makes them a collective is not their mere coexistence,
+ but the presence of a system-level function or behavior sustained by their interdependence. 
+% 
+A collection of unrelated devices is therefore not a CAS,
+ whereas a population whose members exchange information, divide work, 
+ or jointly affect a shared environment can be considered one even when 
+ no member has a complete representation of the system.
+
+\glspl{CAS} can be viewed as a manifestation of the transition from computing 
+ with individual machines to computing through ensembles of networked entities. 
+ 
+In the collective-computing perspective, 
+ computation is no longer confined to a single device or delivered independently by many devices; 
+ it is produced by their many-to-many interactions~\cite{DBLP:journals/computer/Abowd}. 
+% 
+This shift changes the primary object of engineering. 
+%
+The behavior of each component remains relevant, but it must be understood in relation
+ to the organization and dynamics of the ensemble to which it belongs.
+
+\subsection{The Micro--Macro Relationship}
+\label{subsec:cas-micro-macro}
+
+The distinction between the \emph{micro} and \emph{macro} levels 
+ is central to the characterization of a CAS. 
+% 
+The micro level comprises the state, observations, decisions, 
+ and direct interactions of the individual entities.
+%
+The macro level concerns properties attributed to the collective as a whole,
+ such as spatial coverage, consensus, a partition into functional regions, 
+ the motion of a swarm, or the quality of a model learned from distributed data.
+%
+These properties are not stored or controlled by a single component in the general case. 
+%
+Instead, 
+ they are induced by many local computations 
+ and by the information that propagates through the interaction network.
+
+The relationship between the two levels is bidirectional. 
+%
+Local decisions produce and continuously reshape macroscopic structures, 
+ while those structures alter the context in which subsequent local decisions are made.
+%
+For instance,
+ the selection of a coordinator by nearby devices creates a region at the macro level; 
+ membership in that region then determines the information available to each device 
+ and the agents with which it cooperates. 
+% 
+Similarly, 
+ local placement or routing decisions can create congestion, 
+ which in turn changes the cost of future decisions. 
+% 
+A \gls{CAS} is therefore better understood as a coupled feedback process 
+ than as a static collection of components.
+
+System boundaries are also dependent on the level 
+ and purpose of the analysis.
+%
+A collective may contain transient sub-collectives, 
+ and the same entity may participate in several groups associated with different functions. 
+% 
+Conversely,
+ an entire collective may act as one component of a larger system. 
+% 
+This nesting is particularly common in edge--cloud environments, 
+ where devices may form local coordination groups while simultaneously interacting with shared edge 
+ and cloud infrastructure. 
+% 
+Consequently, membership, neighborhood, and role should generally be treated 
+ as dynamic properties rather than fixed design-time facts.
+
+\subsection{Adaptation, Self-Organization, and Emergence}
+\label{subsec:cas-adaptation}
+
+Adaptation in a \gls{CAS} may occur at both the individual and collective levels. 
+%
+An individual entity may update a model, revise a decision policy, 
+ change its operating parameters, or migrate a computation. 
+% 
+At the collective level, 
+ the system may modify its communication topology, redistribute responsibilities,
+ form or dissolve groups, elect coordinators, or relocate services. 
+% 
+These forms of adaptation are often interdependent: 
+ a change in an individual model can alter which entities should cooperate, 
+ while a change in collective organization determines the observations 
+ and resources available to each learning process.
+
+The ability to adapt is commonly expressed through \emph{self-*} properties.
+%
+Self-configuration concerns the autonomous selection of a suitable configuration; 
+ self-optimization aims to improve performance during operation;
+ self-healing enables recovery from failures or degraded conditions; and
+ self-protection concerns the detection and mitigation of threats. 
+% 
+At the level of a collective, 
+ these properties cannot generally be reduced to independent actions performed by its members. 
+% 
+Recovery, for example, 
+ may require the redistribution of a failed component's responsibilities, 
+ while optimization may require balancing competing local improvements 
+ against their system-wide effects.
+
+\emph{Self-organization} 
+ denotes the process through which a system creates 
+ and maintains an ordered structure without relying on an external controller. 
+% 
+In a \gls{CAS}, 
+ this structure may consist of neighborhoods, hierarchies, spatial regions, coalitions, 
+ or other patterns of interaction. 
+% 
+Self-organization is especially valuable when the population 
+ and its environment change too frequently for a fixed organization to remain appropriate. 
+% 
+It is nevertheless a means rather than an objective: 
+ the resulting structure is useful only insofar as it supports the intended collective behavior.
+
+Self-organization is closely related to, but distinct from, \emph{emergence}.
+%
+Emergence describes the appearance of coherent macro-level properties 
+ from interactions at the micro level, 
+ where those properties cannot be directly assigned to any individual component. 
+% 
+The emergent outcome need not be beneficial or intended. 
+%
+The same feedback mechanisms that yield coordination may also produce 
+oscillations, congestion, fragmentation, or other undesirable effects. 
+%
+Engineering a \gls{CAS} therefore requires both enabling desired emergent
+ behavior and constraining the conditions under which harmful behavior can develop.
+
+Adaptation also raises the question of stability. 
+%
+A system that reacts to every local variation 
+ may continually reorganize  without converging to a useful state,
+ while one that adapts too slowly may remain ineffective after 
+ its operating conditions have changed. 
+%
+One relevant objective is \emph{self-stabilization}:
+ after a transient perturbation, the collective should recover a state that satisfies 
+ its intended properties without requiring global reinitialization.
+%
+Self-stabilizing coordination mechanisms provide a foundation for resilient \glspl{CAS}
+ because they tolerate changes in local state, failures, and network topology
+ while preserving system-level behavior~\cite{DBLP:journals/tomacs/ViroliABDP18}.
+
+\subsection{Characteristic Properties and Engineering Implications}
+\label{subsec:cas-properties}
+
+Although \glspl{CAS} encompass different application domains, 
+ several recurring properties shape how they can be engineered.
+
+\paragraph{Situatedness and locality.}
+The entities of a \gls{CAS} operate within a logical or physical environment 
+ from which they obtain observations and on which their actions have effects. 
+%
+Access to this environment is normally local: 
+ an entity observes only part of the relevant state and communicates with a limited neighborhood. 
+% 
+Locality improves scalability and permits timely decisions, 
+ but prevents any component from assuming a continuously available global view. 
+% 
+Information about collective conditions must instead be estimated, propagated, 
+ or aggregated through the system.
+
+\paragraph{Scale and openness.}
+\glspl{CAS} may contain hundreds or thousands of entities, 
+ and their population is often open. 
+% 
+Components can join, leave, move, fail, or become temporarily unreachable, 
+ changing both the system size and its interaction topology.
+%
+Algorithms that depend on a fixed membership, 
+ a stable ordering of entities, or global synchronization become increasingly fragile under these conditions.
+%
+Collective mechanisms should instead operate incrementally 
+ and tolerate asynchrony and partial participation.
+
+\paragraph{Autonomy and decentralized control.}
+Individual entities retain control over at least part of their state 
+ and behavior. 
+% 
+Their decisions are based on local knowledge 
+ and may be made without authorization from a permanent central coordinator. 
+% 
+Decentralization removes single points of control, distributes computational load, 
+ and can improve responsiveness and fault tolerance. 
+% 
+At the same time, 
+ it makes global correctness harder to establish: 
+ locally reasonable decisions can conflict, and delayed or inconsistent information 
+ can prevent coordination or slow convergence.
+
+\paragraph{Heterogeneity.}
+The members of a CAS may differ in hardware, energy availability,
+ communication capacity, data, mobility, and assigned role. 
+% 
+Heterogeneity can expand the capabilities of the collective, 
+ since different components contribute complementary resources and observations. 
+% 
+It also prevents uniform assumptions about what each component can compute, communicate, or learn. 
+%
+Coordination mechanisms must therefore distinguish differences 
+ that are operationally relevant while avoiding dependencies on the identity 
+ or ordering of individual entities.
+
+\paragraph{Resilience.}
+Failures and environmental changes are part of the expected operating conditions of a \gls{CAS} 
+ rather than exceptional events. 
+% 
+Resilience consequently does not mean preventing every disruption, 
+ but maintaining acceptable system-level behavior and recovering when the collective is perturbed.
+%
+Redundant components and decentralized control can support graceful degradation, 
+ although redundancy alone is insufficient: 
+ the collective must also detect changes and
+ reorganize its activity around the resources that remain available.
+
+These properties create an important engineering trade-off. 
+%
+Local interaction, decentralization, and openness enable scale and robustness, 
+ but also make the system difficult to predict, verify, and control. 
+%
+Evaluation must consequently consider both levels of the system. 
+%
+Component-level measures such as latency, energy consumption, 
+ or individual accuracy remain necessary, 
+ but they do not by themselves establish that the collective satisfies its intended function.
+%
+Macro-level properties such as coverage, convergence, fairness, stability, 
+ and resource utilization must be assessed as outcomes of the interactions among components.
+
+\subsection{Relationship with Adjacent Paradigms}
+\label{subsec:cas-related-paradigms}
+
+\glspl{CAS} overlap with several established classes of systems,
+ but are not interchangeable with them. 
+%
+\gls{MAS} provide models and mechanisms
+ for autonomy, interaction, coordination, and organization. 
+% 
+A \gls{CAS} can therefore ften be modeled as a\gls{MAS}. 
+%
+The \gls{CAS} perspective, however, 
+ places particular emphasis on how macroscopic behavior 
+ and adaptation arise in potentially large, open, and dynamically structured populations.
+
+Swarm systems represent a more specialized case. 
+%
+They typically comprise many relatively simple 
+ and homogeneous agents that follow decentralized rules,
+ producing robust and scalable behavior through redundancy 
+ and local interaction~\cite{DBLP:journals/swarm/BrambillaFBD13}. 
+% 
+\glspl{CAS} retain these principles but also include heterogeneous entities, 
+ explicit organizational roles, virtual services, and combinations of centralized 
+ and decentralized mechanisms. 
+% 
+Accordingly, 
+ an adaptive robotic swarm can be regarded as a specialized \gls{CAS}, 
+ but a \gls{CAS} need not exhibit the uniformity 
+ or bio-inspired organization commonly associated with swarms.
+
+The distinction from self-adaptive systems concerns the locus of adaptation. 
+%
+A self-adaptive system may be a single software system 
+ whose behavior is changed by a centralized adaptation manager. 
+% 
+In a \gls{CAS}, 
+ adaptation is distributed across multiple interacting entities 
+ and may also modify the relationships among them.
+%
+Likewise, 
+ the Internet of Things and cyber-physical systems describe how computational entities are connected 
+ to one another and to the physical world, but connectivity and physical embodiment do not alone imply 
+ collective adaptation. 
+%
+They provide common substrates on which \glspl{CAS} can be realized.
+
+\subsection{Engineering Perspective Adopted in This Thesis}
+\label{subsec:cas-thesis-perspective}
+
+The systems considered in this thesis are cooperative many-agent \glspl{CAS}. 
+%
+Their members operate with partial observations, 
+ communicate primarily with a time-varying local neighborhood, 
+ and contribute to system-level objectives while retaining local state, data, and resource constraints. 
+% 
+Cooperation does not require every entity to perform the same action or maintain the same model.
+%
+Rather, 
+ it requires mechanisms through which locally available information 
+ and capabilities can be organized into behavior that benefits the collective.
+
+Within this scope, 
+ learning is one mechanism of adaptation, 
+ while organization and deployment constitute two others. 
+% 
+Models and policies adapt from data and experience; 
+ cooperation structures adapt to determine which entities exchange knowledge; 
+ and deployment decisions adapt the placement of computation to the available edge--cloud resources. 
+% 
+These processes cannot be designed in isolation, 
+ because each changes the context observed by the others. 
+% 
+The central engineering problem is therefore to express and control their interaction 
+ at the level of the collective while preserving decentralized execution.
+
+This perspective motivates the two complementary foundations developed in the following chapters. 
+%
+Macroprogramming provides abstractions for specifying collective behavior 
+ without prescribing every local interaction individually~\cite{DBLP:journals/csur/Casadei23}, 
+ whereas machine learning provides mechanisms for deriving models 
+ and decisions when the relevant conditions cannot be exhaustively specified at design time. 
+% 
+Their integration supports \glspl{CAS} in which learning is not an isolated function executed 
+ by independent devices, but a coordinated and adaptive part of the collective behavior.
+
+
 \section{Edge-Cloud Continuum}
