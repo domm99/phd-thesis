@@ -352,3 +352,187 @@ Their integration supports \glspl{CAS} in which learning is not an isolated func
 
 
 \section{Edge-Cloud Continuum}
+
+The \glsentryfull{ECC} is a distributed computing environment 
+ in which computation, data, and services can be placed across resources 
+ ranging from end devices, through intermediate edge infrastructure, to remote cloud 
+ data centers~\cite{DBLP:journals/jpdc/RosendoCVA22}. 
+% 
+The term \emph{continuum} emphasizes that these resources form a common deployment space 
+ rather than a collection of isolated platforms. 
+% 
+An application function may execute where its data are produced, on a nearby server, in the cloud, 
+ or across several of these locations. 
+% 
+Its placement may also change during operation as resource availability, 
+ connectivity, workload, and application requirements evolve.
+
+The continuum therefore concerns more than the coexistence of edge and cloud resources. 
+%
+It introduces the possibility of selecting where each part of an application should execute 
+ and of revising that selection over time. 
+% 
+Different locations provide different combinations of computational capacity, response time, 
+ energy consumption, data locality, availability, and monetary cost. 
+% 
+The central engineering problem is to exploit this diversity without exposing 
+ the application to every infrastructural detail or assuming 
+ that one location is always preferable.
+
+This perspective emerged in response to the limitations 
+ of exclusively cloud-centered architectures. 
+% 
+Large cloud data centers offer elastic computation, storage, and global availability, 
+ but reaching them requires communication across the wide-area network.
+% 
+For applications coupled to physical processes, the resulting latency, bandwidth consumption, 
+intermittent connectivity, and transfer of potentially sensitive data may be unacceptable. 
+%
+Edge computing complements the cloud by moving selected computations closer to their data sources 
+ and actuators~\cite{DBLP:journals/computer/Satyanarayanan17}. 
+% 
+It does not eliminate the cloud; instead, 
+ the continuum combines the responsiveness and contextual proximity of the edge with the capacity 
+ and global reach of centralized infrastructure.
+
+\subsection{From a Tiered Architecture to a Continuum}
+\label{subsec:ecc-architecture}
+
+The \gls{ECC} is commonly introduced through three regions: 
+ end devices, edge servers, and cloud servers (\Cref{fig:???}). 
+% 
+This organization is useful for reasoning about their typical roles, 
+ but the boundaries between the regions are not absolute. 
+% 
+Devices at the same nominal tier may differ by several orders of magnitude in capacity, 
+ and intermediate resources may combine properties of both the edge and the cloud. 
+% 
+The continuum is consequently better understood in terms of relative proximity, capabilities, 
+ and responsibilities than as a rigid three-level hierarchy~\cite{DBLP:journals/jpdc/RosendoCVA22}.
+
+\paragraph{End devices.}
+End devices are the resources closest to the physical or digital phenomena of interest. 
+%
+They include sensors, smartphones, embedded computers, vehicles, robots, 
+ and other devices that generate data or produce effects in an environment. 
+% 
+Their proximity provides immediate access to local context 
+ and can support low-latency operation even when external connectivity is unavailable.
+%
+However, 
+ these devices often have limited processors, memory, energy, and thermal capacity. 
+% 
+Application computation must also share those resources 
+ with sensing, communication, and control responsibilities.
+
+\paragraph{Edge infrastructure.}
+The edge comprises resources located between end devices 
+ and remote data centers, such as gateways, access points, base stations, on-premises servers, 
+ and small regional clusters. 
+% 
+Edge nodes aggregate demand from nearby devices 
+ and offer greater capacity without incurring the full latency of cloud access. 
+% 
+Their location also allows them to retain data within a geographic or administrative domain. 
+%
+Nevertheless, 
+ edge capacity is finite and shared: an edge server that is well suited to one device 
+ may become overloaded when many nearby devices make the same placement decision.
+
+\paragraph{Cloud infrastructure.}
+Cloud data centers provide comparatively abundant computation and storage,
+ elastic provisioning, and a global view that is valuable for expensive analysis,
+ long-term persistence, and the coordination of geographically dispersed applications. 
+% 
+These benefits come at the cost of physical distance and dependence on the intervening network. 
+%
+Cloud execution is therefore attractive for resource-intensive or delay-tolerant functions, 
+ but less suitable when decisions must be made with tight latency bounds or during disruptions in connectivity.
+
+Several related terms emphasize particular portions of this environment.
+%
+\emph{Mobile} or \emph{multi-access edge computing} places resources 
+ within the access network, especially to support mobile clients, 
+ whereas \emph{fog computing} typically stresses a geographically distributed hierarchy of intermediate 
+ nodes~\cite{DBLP:journals/comsur/MachB17,DBLP:journals/jpdc/RosendoCVA22}.
+%
+In this thesis, 
+ \emph{edge} is used in the broader sense of computation made available near data sources, 
+ while \gls{ECC} denotes the entire heterogeneous execution environment. 
+% 
+The distinction that matters is not the label assigned to a particular machine, 
+ but the set of trade-offs associated with executing a given computation there.
+
+\subsection{Application Placement and Computation Offloading}
+\label{subsec:ecc-offloading}
+
+Using the continuum requires separating the logical organization 
+ of an application from its physical deployment. 
+% 
+Application components have functional responsibilities and data dependencies, 
+ whereas infrastructure nodes provide the resources on which component instances execute. 
+% 
+A \emph{placement} associates the two. 
+%
+The device to which a computation logically belongs need not be the device that executes it: 
+ when execution is transferred to another resource, the computation is said to be \emph{offloaded}.
+
+An offloading decision must determine what to move, where to execute it,
+ and when the placement should change. 
+%
+Existing approaches can be characterized along several dimensions: 
+ tasks may be independent or connected into workflows; 
+ offloading may move an entire application or only some of its components;
+ decisions may be static or revised at runtime; 
+ control may be centralized or distributed; 
+ and communication may occur through direct or multi-hop connections~\cite{DBLP:journals/access/WangWHSQ20}. 
+% 
+These dimensions are not independent. 
+%
+A distributed strategy for partial offloading over a multi-hop network, for example, 
+ must account for both component dependencies and the limited information available to each decision maker.
+
+\emph{Full offloading} treats an application or task as one indivisible unit. 
+%
+It simplifies placement, 
+ but offers only a coarse choice between local and remote execution. 
+%
+\emph{Partial offloading} instead decomposes an application 
+ and places its components separately. 
+% 
+This permits resource-intensive functions to use edge or cloud resources 
+ while latency-sensitive functions remain close to their inputs and actuators. 
+% 
+It also increases the decision space and makes the application structure relevant: 
+ placing dependent components far apart can introduce more communication overhead 
+ than remote execution saves in computation. 
+% 
+Component boundaries, data volumes, execution order, and state-management requirements 
+ must therefore be considered together with resource availability~\cite{DBLP:journals/access/WangWHSQ20}.
+
+Application decomposition can also make deployment an explicit runtime concern.
+%
+For example, 
+ pulverization separates application logic into independently deployable components 
+ so that their allocation can be changed without redefining the behavior of the application itself~\cite{DBLP:journals/fgcs/FarabegoliPCV24}.
+%
+This separation is particularly relevant to adaptive systems: 
+ the logical computation expresses \emph{what} the system should perform, 
+ while the deployment mechanism determines \emph{where} each part should run under current conditions.
+
+Offloading is beneficial only when its end-to-end consequences justify the transfer. 
+%
+Remote execution may reduce local processor use while adding serialization, transmission, queueing, 
+ and result-delivery delays. 
+% 
+It may preserve the battery of an end device but increase radio use, infrastructure cost, 
+ or exposure of data. 
+% 
+Similarly, 
+ a powerful server may complete one task quickly 
+ but provide poor response times once contention from other devices is considered.
+%
+Accordingly, 
+ placement cannot be decided solely by comparing processor speeds;
+ it is a multi-objective decision involving computation, communication, 
+ and the state of shared resources~\cite{DBLP:journals/cn/SaeikASSDVLAMP21}.
