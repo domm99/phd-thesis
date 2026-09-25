@@ -727,14 +727,6 @@ More details on the \gls{HGNN} architecture and message-passing formulation foll
 We now formally describe how the heterogeneous graph structure 
  is processed to compute Q-values for offloading decisions.
 
-\begin{figure}
-  \centering
-  \includegraphics[width=0.5\linewidth]{figures/ch09/heterognn.pdf}
-  \caption{Conceptual HeteroGNN architecture for Q-function approximation in our offloading problem.
-}
-\label{fig:heterognn-architecture}
-\end{figure}
-
 \paragraph{Handling Heterogeneous Feature Spaces.}
 Application devices and infrastructural devices have different feature spaces 
  (e.g., $\mathbf{x}^{\mathbf{D}}_v \in \mathbb{R}^{d_{\mathbf{D}}}$ including battery level, local CPU usage, and collective density; 
