@@ -4,453 +4,492 @@
 \label{chap:reinforcement-learning}
 \minitoc
 
-\glsentryfull{RL} is a learning paradigm in which an agent discovers
- a behavioral policy through direct interaction with an environment,
- guided only by a scalar reward signal.
-%
-This chapter introduces the theoretical foundations needed to follow the contributions
- developed in subsequent chapters.
-%
-\Cref{sec:rl-framework} describes the general \gls{RL} framework at a conceptual level,
- introducing the key actors and the feedback loop that drives learning.
-%
-\Cref{sec:rl-single-agent} then formalises the single-agent setting through the \gls{MDP}
- and presents \gls{DQL} as the function-approximation algorithm used throughout this work.
-%
-\Cref{sec:rl-multi-agent} extends the treatment to cooperative multi-agent systems,
- introducing the \gls{MARL} formalism, the SwarMDP abstraction for homogeneous swarms,
- and the \gls{CTDE}/\gls{DTDE} paradigms.
-%
-\Cref{sec:rl-scalability} addresses the scalability bottleneck that arises
- when the population grows large,
- presenting \glspl{GNN} as a principled mechanism for size-agnostic,
- permutation-invariant policies and zero-shot transfer.
-%
-Finally, \Cref{sec:rl-decentralized} examines fully decentralized training strategies
- in which agents improve their policies through peer-to-peer exchanges
- rather than through a central coordinator.
+\sidenote{
+  double check
+}
 
+\glsentryfull{RL} addresses sequential decision-making problems in
+which the consequences of an action may become apparent only through subsequent
+interaction with an environment.
+%
+Unlike supervised learning, it does not provide the learner with the correct
+action for each input. Instead, an agent must discover which behavior is useful
+from a scalar reward signal and from the state transitions induced by its own
+decisions.
+%
+This interaction-based formulation is particularly relevant to autonomous
+systems, whose behavior must account for the long-term effects of actions rather
+than only for immediate predictions.
 
-%=============================================================================
-\section{The Reinforcement Learning Framework}
-\label{sec:rl-framework}
-%=============================================================================
+This chapter introduces the RL foundations required by the contributions in
+Chapter~8.
+%
+\Cref{sec:rl-single-agent} presents the single-agent learning cycle, its
+formalization as a \gls{MDP}, and deep Q-learning.
+%
+\Cref{sec:rl-multi-agent} extends this formulation to cooperative systems in
+which several agents jointly influence the environment.
+%
+\Cref{sec:rl-scalability} then discusses why the resulting learning problem
+becomes increasingly difficult as the population grows and reviews the main
+families of techniques used to control this growth.
+%
+Finally, \Cref{sec:rl-decentralized} distinguishes decentralized execution from
+decentralized training and examines approaches that reduce or remove dependence
+on a central learner.
 
-The defining characteristic of \gls{RL} is that the learning signal comes not from
- labelled examples but from the consequences of the agent's own actions~\cite{Sutton1998}.
-%
-Two entities interact: an \emph{agent} and an \emph{environment}.
-%
-At each discrete time step the agent perceives a representation of the environment's
- current \emph{state}, chooses an \emph{action} from the set of available alternatives,
- and in response the environment transitions to a new state and emits a scalar \emph{reward}.
-%
-This loop repeats indefinitely, or until a terminal condition is reached,
- producing a trajectory of states, actions, and rewards.
-
-The agent's goal is to find a \emph{policy} (i.e., a mapping from states to actions) 
- that maximizes the cumulative reward collected over time.
-%
-What makes the problem non-trivial is that reward is often delayed:
- an action taken now may not produce observable benefit until many steps later,
- forcing the agent to reason about long-horizon consequences rather than greedy immediate gains.
-%
-This is the \emph{credit assignment} problem, i.e., attributing future outcomes
- to the earlier decisions responsible for them.
-
-A further challenge is the \emph{exploration--exploitation trade-off}.
-%
-To collect reward the agent must act on its current knowledge of the environment
- (\emph{exploit}), but to improve that knowledge it must occasionally try actions
- it has not taken before (\emph{explore}).
-%
-Resolving this tension efficiently is a central concern in \gls{RL} algorithm design.
-
-\begin{figure}[htbp]
-  \centering
-  \fbox{\parbox[c][4.0cm][c]{0.88\linewidth}{\centering
-    \textbf{Image placeholder}\\[4pt]
-    The agent--environment interaction loop:
-    at each step the agent observes state $s_t$, selects action $a_t$,
-    and receives reward $r_{t+1}$ together with the next state $s_{t+1}$.
-    Arrows show the cyclic flow of perception, decision, and feedback.
-  }}
-  \caption{The agent--environment interaction loop in \gls{RL}.}
-  \label{fig:rl-loop}
-\end{figure}
-
-Unlike supervised learning, which assumes a fixed labelled dataset
- independent of the learner's behavior,
- \gls{RL} faces a \emph{non-stationary data distribution}:
- the states the agent encounters depend on the policy it follows,
- which in turn changes as learning progresses.
-%
-This coupling between behavior and data collection is what makes \gls{RL} both
- more general than supervised approaches and more challenging to optimize.
-%
-The following sections introduce the mathematical framework
- that makes these intuitions precise.
 
 %=============================================================================
 \section{Single-Agent Reinforcement Learning}
 \label{sec:rl-single-agent}
+\label{sec:rl-framework}
 %=============================================================================
 
-The standard formalization of a sequential decision-making problem is 
- the \glsfull{MDP}~\cite{Sutton1998},
- defined as a tuple $(\mathcal{S}, \mathcal{A}, P, R, \gamma)$.
+In the single-agent setting, learning proceeds through a closed feedback loop
+between an \emph{agent} and an \emph{environment}~\cite{Sutton1998}.
 %
-$\mathcal{S}$ is the state space and $\mathcal{A}$ is the action space.
+At discrete time step $t$, the agent observes the current state $s_t$, selects an
+action $a_t$, and receives a scalar reward $r_{t+1}$ after the environment moves
+to state $s_{t+1}$.
 %
-$P : \mathcal{S} \times \mathcal{A} \times \mathcal{S} \to [0,1]$ is the transition
- probability kernel, encoding how the environment evolves in response to the agent's actions.
+The new state becomes the input to the next decision, and the cycle continues
+until a terminal condition is reached or for an indefinite horizon.
 %
-$R : \mathcal{S} \times \mathcal{A} \to \mathbb{R}$ is the reward function,
- and $\gamma \in [0,1)$ is the discount factor that controls the relative importance
- of immediate versus future rewards.
-%
-At each discrete time step $t$ the agent observes the current state $s_t \in \mathcal{S}$,
- selects an action $a_t \in \mathcal{A}$ according to a policy
- $\pi : \mathcal{S} \to \Delta(\mathcal{A})$, receives a scalar reward
- $r_{t+1} = R(s_t, a_t)$, and transitions to $s_{t+1} \sim P(\cdot \mid s_t, a_t)$.
-
-The goal of the agent is to find a policy $\pi^*$ that maximizes the expected discounted return.
-%
-The central object for this purpose is the action-value function $Q^\pi(s, a)$,
- which quantifies the expected return obtained by taking action $a$ in state $s$
- and following $\pi$ thereafter:
+The sequence
 
 \begin{equation}
-  Q^\pi(s, a) = \mathbb{E}_\pi\!\left[\sum_{t=0}^{\infty} \gamma^t r_{t+1}
-    \;\middle|\; s_0 = s,\, a_0 = a\right].
-  \label{eq:q-value}
+  \tau = (s_0,a_0,r_1,s_1,a_1,r_2,\ldots)
+  \label{eq:rl-trajectory}
 \end{equation}
 
-The optimal action-value function $Q^*(s,a) = \max_\pi Q^\pi(s,a)$ satisfies
- the Bellman optimality equation:
-
-\begin{equation}
-  Q^*(s, a) = \mathbb{E}_{s' \sim P}\!\left[r + \gamma \max_{a' \in \mathcal{A}}
-    Q^*(s', a') \;\middle|\; s, a\right],
-  \label{eq:bellman}
-\end{equation}
-
-from which the optimal policy is recovered greedily as $\pi^*(s) = \arg\max_{a} Q^*(s,a)$.
-
-For large or continuous state spaces, tabular representations of $Q^*$ are infeasible.
+is referred to as a trajectory.
 %
-\glsfull{DQL}~\cite{mnih2015humanlevel} approximates the action-value function with
- a neural network $Q(s, a; \theta)$ parameterized by weights $\theta$, 
- trained by minimising a temporal-difference loss with respect to a periodically frozen
- \emph{target network} $Q^- = Q(\cdot;\theta^-)$:
-
-\begin{equation}
-  \mathcal{L}(\theta) = \mathbb{E}_{\langle s,a,r,s'\rangle \sim \mathcal{D}}\!\left[
-    \!\left(r + \gamma \max_{a'} Q(s', a';\theta^-) - Q(s, a;\theta)\right)^{\!2}\right],
-  \label{eq:dql-loss}
-\end{equation}
-
-where $\mathcal{D}$ is a \emph{replay buffer} of past transitions.
+Because the trajectory depends on the actions selected by the agent, the data
+used for learning are not independent of the learner's behavior.
 %
-Two mechanisms are responsible for stabilising the optimization.
-%
-The target network, whose weights $\theta^-$ are copied from $\theta$ only periodically,
- provides a fixed regression target and prevents the gradient from chasing a moving signal.
-%
-Experience replay breaks the temporal correlation of online data by sampling mini-batches
- uniformly from $\mathcal{D}$, making the training distribution closer to i.i.d.
+This property distinguishes RL from supervised learning, where the training set
+is normally collected before optimization and provides an explicit target for
+each input. It also distinguishes RL from unsupervised learning: although neither
+setting supplies action labels, RL includes an evaluative signal that assigns
+value to the consequences of behavior.
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][4.2cm][c]{0.88\linewidth}{\centering
-    \textbf{Image placeholder}\\[4pt]
-    Architecture of a Deep Q-Network: input state $s$,
-    hidden layers, output layer emitting $Q(s,a;\theta)$ for each action $a \in \mathcal{A}$;
-    arrows showing TD-loss gradient flow and the periodic copy $\theta \to \theta^-$
-    to the target network.
-  }}
-  \caption{Deep Q-Network architecture.}
-  \label{fig:dqn-architecture}
+  \includegraphics[width=0.7\textwidth]{figures/ch06/rl-cycle.drawio.pdf}
+  \caption{The agent--environment interaction cycle in reinforcement learning.}
+  \label{fig:rl-loop}
 \end{figure}
+
+The standard mathematical model for this interaction is a \glsfull{MDP},
+defined by the tuple
+
+\begin{equation}
+  \mathcal{M} = (\mathcal{S},\mathcal{A},P,R,\gamma),
+  \label{eq:mdp-tuple}
+\end{equation}
+
+where $\mathcal{S}$ and $\mathcal{A}$ are the state and action spaces,
+$P(s'\mid s,a)$ is the probability of reaching state $s'$ after action $a$ is
+performed in state $s$, $R(s,a,s')$ specifies the corresponding reward, and
+$\gamma \in [0,1)$ is a discount factor.
+%
+The Markov property requires the current state to contain all information needed
+to determine the distribution of the next state and reward: conditioned on
+$s_t$ and $a_t$, earlier elements of the trajectory provide no additional
+information about $s_{t+1}$.
+
+The agent selects actions according to a policy
+$\pi(a\mid s)$, which assigns a probability to each action available in a given
+state.
+%
+Its objective is to maximize the expected discounted return
+
+\begin{equation}
+  G_t = \sum_{k=0}^{\infty}\gamma^k r_{t+k+1}.
+  \label{eq:discounted-return}
+\end{equation}
+
+Discounting gives greater weight to rewards obtained in the near future and
+ensures that the return remains bounded in continuing tasks with bounded rewards.
+%
+The state--action value function associated with policy $\pi$ is
+
+\begin{equation}
+  Q^\pi(s,a) = \mathbb{E}_\pi\!\left[G_t
+    \mid s_t=s,\,a_t=a\right].
+  \label{eq:q-value}
+\end{equation}
+
+It measures the expected return after selecting $a$ in $s$ and following $\pi$
+thereafter. The optimal action-value function $Q^*(s,a)=\max_\pi Q^\pi(s,a)$
+satisfies the Bellman optimality equation
+
+\begin{equation}
+  Q^*(s,a) =
+  \mathbb{E}\!\left[
+    r_{t+1} + \gamma\max_{a'\in\mathcal{A}}Q^*(s_{t+1},a')
+    \mid s_t=s,\,a_t=a
+  \right].
+  \label{eq:bellman}
+\end{equation}
+
+An optimal deterministic policy can therefore be obtained by selecting an action
+that maximizes $Q^*(s,a)$ in each state.
+
+Q-learning estimates this function directly from sampled transitions, without
+requiring an explicit model of $P$ or $R$.
+%
+In its tabular form, the estimate is updated as
+
+\begin{equation}
+  Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha
+  \left[
+    r_{t+1} + \gamma\max_{a'}Q(s_{t+1},a') - Q(s_t,a_t)
+  \right],
+  \label{eq:q-learning-update}
+\end{equation}
+
+where $\alpha$ is the learning rate and the expression in brackets is the
+temporal-difference error.
+%
+Tabular storage becomes impractical when $\mathcal{S}$ is large or continuous.
+Deep Q-learning addresses this limitation by replacing the table with a neural
+network $Q(s,a;\theta)$ parameterized by $\theta$~\cite{mnih2015humanlevel}.
+%
+The network is trained from transitions sampled from a replay buffer
+$\mathcal{D}$ by minimizing
+
+\begin{equation}
+  \mathcal{L}(\theta) =
+  \mathbb{E}_{(s,a,r,s')\sim\mathcal{D}}
+  \left[
+    \left(y-Q(s,a;\theta)\right)^2
+  \right],
+  \qquad
+  y = r + \gamma\max_{a'}Q(s',a';\theta^-),
+  \label{eq:dql-loss}
+\end{equation}
+
+where $Q(s,a;\theta)$ is the online estimate and $Q(s',a';\theta^-)$ is a
+target network whose parameters are updated less frequently.
+%
+Experience replay reduces the temporal correlation among consecutive samples,
+while the target network prevents both sides of the update from changing at
+every optimization step. Together, these mechanisms improve the stability of
+neural value estimation.
+
+Two difficulties remain even in this basic setting.
+%
+First, rewards may be delayed, so the learner must attribute later outcomes to
+the earlier actions that contributed to them. This is the temporal credit
+assignment problem.
+%
+Second, the agent must balance \emph{exploitation} of actions currently believed
+to be effective with \emph{exploration} of alternatives whose consequences are
+still uncertain.
+%
+Both difficulties carry over to the multi-agent case, where they are compounded
+by interaction among several simultaneously acting learners.
+
 
 %=============================================================================
 \section{Multi-Agent Reinforcement Learning}
 \label{sec:rl-multi-agent}
 %=============================================================================
 
-When several agents interact within a shared environment their joint decisions determine
- the trajectory of the system, and a single \gls{MDP} is no longer sufficient to model it.
+\gls{MARL} extends the interaction cycle to environments whose evolution depends
+on the simultaneous decisions of multiple agents~\cite{DBLP:journals/smca/BusonuiBDS08}.
 %
-\gls{MARL}~\cite{DBLP:journals/smca/BusonuiBDS08,DBLP:journals/corr/abs-1911-10635}
- is the extension of \gls{RL} to this multi-agent setting,
- and the nature of the agents' objectives gives rise to three broad classes of problems.
+Depending on how rewards are related, these interactions may be competitive,
+cooperative, or mixed.
 %
-In \emph{competitive} settings (the paradigmatic case being two-player zero-sum games),
- the gain of one agent is the loss of another, so agents must learn to act adversarially.
+In competitive problems, agents pursue opposing objectives; in mixed settings,
+their incentives overlap only partially; and in fully cooperative problems, all
+agents optimize a common objective.
 %
-\emph{Mixed} or general-sum settings allow both competitive and cooperative incentives
- to coexist simultaneously, as in market simulations or mixed-motive social dilemmas.
-%
-\emph{Cooperative} settings, finally, require all agents to maximize a shared objective:
- every agent receives the same team reward, and the goal is to find a joint policy that
- maximizes the expected collective return.
-%
-This thesis focuses exclusively on cooperative \gls{MARL},
- which is the natural formulation for collective systems where agents must coordinate
- to accomplish tasks that no single agent could achieve alone.
-%
-In this setting the standard formalism augments the \gls{MDP} with a communication structure.
-%
-The setting is described by the tuple $(\mathcal{G}, \mathcal{S}, \mathcal{A},
- \mathcal{O}, P, R, \gamma)$, where $\mathcal{G} = (\mathcal{N}, \mathcal{E})$
- is a graph whose nodes are agents and whose edges represent communication links,
- $\mathcal{O}$ is the per-agent observation space,
- and the remaining components generalize those of the single-agent \gls{MDP}.
-%
-Because agents typically cannot observe the full global state,
- each agent $i \in \mathcal{N}$ receives only a local observation $o_i^t \in \mathcal{O}$,
- a setting formally captured by the Dec-POMDP model~\cite{Oliehoek2016}.
+The remainder of this chapter focuses on the cooperative case, which most closely
+matches collective systems whose components must coordinate toward a shared goal.
 
-For large \emph{homogeneous} swarms, where every agent runs the same policy prototype,
- the SwarMDP model~\cite{DBLP:conf/atal/SosicKZK17} provides a specialized formalism,
- adopted and extended in subsequent work~\cite{DBLP:journals/ai/AguzziDVV26,DBLP:journals/fgcs/FarabegoliDAV26}.
-%
-An agent prototype is a tuple $\mathbf{a} = (\mathcal{S}, \mathcal{O}, \mathcal{A}, \rho, \pi)$
- comprising local state, observation, and action spaces,
- an internal update function $\rho$, and a policy $\pi$.
-%
-The environment is characterized by the population size $N$,
- a global transition function $T$, and an observation function $Y$.
-%
-The collective dynamics unfold as a functional sequence applied element-wise
- across all $N$ agents:
+A cooperative, partially observable multi-agent problem can be represented as a
+decentralized partially observable Markov decision process~\cite{mnih2015humanlevel}:
 
 \begin{equation}
-  \mathcal{S}^N \xrightarrow{Y} \mathcal{O}^N \xrightarrow{\pi} \mathcal{A}^N \xrightarrow{T} \mathcal{S}^N.
-  \label{eq:swarmdp-cycle}
+  \mathcal{M}_{\mathrm{dec}} =
+  (\mathcal{I},\mathcal{S},\{\mathcal{A}_i\}_{i\in\mathcal{I}},P,R,
+   \{\mathcal{O}_i\}_{i\in\mathcal{I}},O,\gamma),
+  \label{eq:decpomdp-tuple}
 \end{equation}
 
-Stacking individual observations, rewards, and actions into global vectors
- $\mathbf{o}^t = (o_1^t, \ldots, o_N^t)$, $\mathbf{r}^t$, $\mathbf{a}^t$,
- the time-varying neighborhood of agent $i$ is $\mathcal{N}_t(i) \subseteq \{1, \ldots, N\}$,
- inducing the communication graph:
+where $\mathcal{I}=\{1,\ldots,N\}$ is the set of agents,
+$\mathcal{A}_i$ and $\mathcal{O}_i$ are the action and observation spaces of
+agent $i$, and $O$ is the observation model.
+%
+At time $t$, each agent receives a local observation $o_i^t$, chooses an action
+$a_i^t$ according to its policy $\pi_i$, and contributes to the joint action
+$\mathbf{a}_t=(a_1^t,\ldots,a_N^t)$.
+%
+The transition model $P(s_{t+1}\mid s_t,\mathbf{a}_t)$ depends on this joint
+action, while the team reward $R(s_t,\mathbf{a}_t,s_{t+1})$ evaluates its
+collective consequence.
+%
+Because an observation need not uniquely identify the global state, a policy may
+condition its decision on an action--observation history rather than only on the
+current observation.
+
+When interactions are local, the communication or sensing relations at time $t$
+can be represented by a graph
 
 \begin{equation}
-  G_t = (\mathcal{V},\, \mathcal{E}_t), \qquad
-  \mathcal{V} = \{1,\ldots,N\}, \qquad
-  \mathcal{E}_t = \{(i,j) \mid i \in \mathcal{V},\, j \in \mathcal{N}_t(i)\}.
+  G_t=(\mathcal{I},\mathcal{E}_t), \qquad
+  \mathcal{E}_t=\{(i,j)\mid j\in\mathcal{N}_t(i)\},
   \label{eq:swarmdp-graph}
 \end{equation}
 
-The collective objective is to maximize the expected cumulative team reward:
+where $\mathcal{N}_t(i)$ is the neighborhood of agent $i$.
+%
+The local observations, policies, and environment transition jointly define the
+collective evolution
 
 \begin{equation}
-  G = \sum_{t=0}^{H-1} \sum_{i=1}^{N} r_i^{t+1}, \qquad
-  \pi^* = \arg\max_\pi\, \mathbb{E}_\pi[G].
+  \mathcal{S}
+  \xrightarrow{O}
+  \mathcal{O}_1\times\cdots\times\mathcal{O}_N
+  \xrightarrow{\boldsymbol{\pi}}
+  \mathcal{A}_1\times\cdots\times\mathcal{A}_N
+  \xrightarrow{P}
+  \mathcal{S},
+  \label{eq:swarmdp-cycle}
+\end{equation}
+
+with joint policy $\boldsymbol{\pi}=(\pi_1,\ldots,\pi_N)$.
+%
+For a finite horizon $H$, the cooperative objective is
+
+\begin{equation}
+  \boldsymbol{\pi}^* =
+  \arg\max_{\boldsymbol{\pi}}
+  \mathbb{E}_{\boldsymbol{\pi}}
+  \left[\sum_{t=0}^{H-1}\gamma^t r_{t+1}\right].
   \label{eq:swarmdp-objective}
 \end{equation}
 
-Each agent $i$ maintains its own action-value estimate conditioned on its local observation:
+This objective resembles its single-agent counterpart, but the learning problem
+is qualitatively different.
+%
+From the viewpoint of agent $i$, the transition dynamics observed during training
+change whenever another agent changes its policy. Consequently, treating other
+learners as part of the environment violates the stationarity assumption on which
+standard single-agent methods rely.
+%
+Partial observability further prevents an agent from directly determining why a
+joint action succeeded or failed.
+%
+Finally, a shared team reward does not identify the contribution of each agent,
+creating a multi-agent credit assignment problem in addition to the temporal one.
+
+Independent Q-learning applies a separate Q-learning process to each agent and
+treats all other agents as part of the environment~\cite{tan1993multiagent}.
+For agent $i$, the corresponding local estimate can be written as
 
 \begin{equation}
-  Q_i^{\pi,t}(o_i^t, a_i^t) = \mathbb{E}_\pi\!\left[
-    \sum_{k=t}^{T} \gamma^{k-t} r_i^k \;\middle|\; o_i^t, a_i^t\right].
+  Q_i^{\boldsymbol{\pi}}(h_i^t,a_i^t) =
+  \mathbb{E}_{\boldsymbol{\pi}}\!\left[
+    \sum_{k=t}^{H-1}\gamma^{k-t}r_{k+1}
+    \mid h_i^t,a_i^t
+  \right],
   \label{eq:per-agent-q}
 \end{equation}
 
-Training follows the same \gls{DQL} paradigm as in the single-agent case,
- substituting the per-agent quantities into the loss of \Cref{eq:dql-loss}.
+where $h_i^t$ is the local action--observation history.
+%
+This formulation is simple and requires neither a joint value function nor global
+information. However, it does not explicitly account for changes in the other
+policies and offers no direct mechanism for assigning a team reward to individual
+decisions.
+%
+More structured approaches address these limitations, but their computational
+and communication requirements become increasingly important as $N$ grows.
 
-The literature distinguishes two orthogonal paradigms for cooperative \gls{MARL}~\cite{DBLP:conf/nips/LoweWTHAM17,DBLP:conf/icml/RashidSWFFW18}.
-%
-\glsfull{CTDE} grants a central learner access to the global state and all agents' observations
- during training, while at execution time each agent acts using only local information.
-%
-\glsfull{DTDE}, conversely, requires both training and execution to be carried out
- with local information only, without any central coordinator at any stage.
-%
-\gls{CTDE} typically yields higher-quality policies because the learner can observe
- the full joint state, but it requires a central coordinator and is therefore unsuitable
- for settings where agents must remain autonomous throughout.
-%
-\gls{DTDE} is more resilient to communication failures and easier to deploy on
- resource-constrained hardware, at the cost of a harder optimization problem.
-
-\begin{figure}[htbp]
-  \centering
-  \fbox{\parbox[c][4.5cm][c]{0.88\linewidth}{\centering
-    \textbf{Image placeholder}\\[4pt]
-    Side-by-side comparison of \gls{CTDE} (left) and \gls{DTDE} (right).
-    Left: a central critic receives global observations $\mathbf{o}^t$ and $G_t$ during training;
-    individual actors use only $o_i^t$ at execution.
-    Right: each agent trains and executes locally,
-    exchanging only lightweight messages with direct neighbors.
-  }}
-  \caption{\gls{CTDE} vs.\ \gls{DTDE} paradigms in cooperative \gls{MARL}.}
-  \label{fig:ctde-dtde}
-\end{figure}
 
 %=============================================================================
 \section{Scalability in Multi-Agent Reinforcement Learning}
 \label{sec:rl-scalability}
 %=============================================================================
 
-As the number of agents grows, cooperative \gls{MARL} faces two intertwined challenges.
+Scaling MARL is not a single problem, but the combination of several forms of
+growth.
 %
-The first is combinatorial: the joint action space $\mathcal{A}^N$ grows exponentially
- with $N$ (i.e., the number of agents), making centralized Q-value estimation impractical for large populations.
+If every agent has $|\mathcal{A}|$ actions, the joint action space contains
+$|\mathcal{A}|^N$ alternatives. A centralized action-value function must therefore
+represent and compare a number of joint decisions that grows exponentially with
+the population.
 %
-The second is architectural: a policy network whose input concatenates all agents'
- observations has a fixed input dimension, so it cannot be deployed on a population
- of different size from the one it was trained on.
+Concatenating all observations also produces inputs whose size grows with $N$ and
+ties the learned network to a fixed ordering and population size.
+%
+At the same time, the number of interactions that may need to be represented,
+the variance of policy-gradient estimates, and the amount of experience required
+to encounter coordinated behavior can all increase with the number of agents~\cite{DBLP:conf/nips/LoweWTHAM17}.
 
-One family of methods addresses the first challenge through \emph{value decomposition}.
+Several complementary design strategies address different parts of this problem.
 %
-Value Decomposition Networks~\cite{DBLP:conf/aaai/SunehagLGCZJLSL18} represent the
- joint action-value function as a sum of per-agent utility functions,
- factoring a complex joint optimization into $N$ independent local ones.
+\emph{Parameter sharing} uses the same policy parameters for homogeneous agents.
+This reduces the number of learned parameters from one model per agent to a
+single shared model and allows experience collected by different agents to update
+the same policy.
 %
-QMIX~\cite{DBLP:conf/icml/RashidSWFFW18} relaxes the additivity constraint to a
- monotonicity condition, allowing a mixing network to combine individual utilities
- in a more expressive way while still permitting a greedy joint action selection.
-%
-These approaches reduce the optimization complexity but still require centralized
- training and do not in themselves address the fixed-population limitation.
+It does not, by itself, solve the coordination problem: agents may still require
+different actions because their observations, histories, or positions differ.
 
-A complementary perspective comes from \emph{mean field approximation}~\cite{DBLP:conf/icml/YangLLZZWY18}.
+\emph{Value decomposition} avoids representing an unconstrained joint
+action-value function.
 %
-Rather than modelling the interaction of agent $i$ with every other agent individually,
- mean field theory approximates the joint effect of the neighbors as a single
- mean action, reducing an $N$-body problem to a two-body problem between agent $i$
- and the aggregate of its neighborhood.
+Value-Decomposition Networks express the team value as the sum of individual
+utilities~\cite{DBLP:conf/aaai/SunehagLGCZJLSL18}, while QMIX replaces additivity with a monotonic
+mixing function conditioned on global information~\cite{DBLP:conf/icml/RashidSWFFW18}.
 %
-This allows the value function to be parameterized independently of $N$,
- but the approximation quality degrades when interactions are highly heterogeneous
- or the neighborhood distribution changes abruptly.
+The monotonicity constraint ensures that maximizing each local utility also
+maximizes the joint value, thereby permitting decentralized action selection.
+%
+These methods improve tractability and multi-agent credit assignment, but the
+mixing model is trained centrally and the factorization constrains which joint
+value functions can be represented.
 
-The most principled solution to the second challenge of architectural generality across
- population sizes comes from \glspl{GNN}~\cite{Scarselli2009,kipf2017semisupervised}.
+\emph{Mean-field methods} replace the explicit influence of many agents with a
+summary of their aggregate behavior~\cite{DBLP:conf/icml/YangLLZZWY18}.
 %
-A \gls{GNN} processes the communication graph $G_t$ through iterative message passing
- (\Cref{eq:gnn-message,eq:gnn-aggregation,eq:gnn-update}):
- each node aggregates information from its neighbors, updates its own embedding,
- and the operation is independent of the total number of nodes.
+For example, an agent may condition its value estimate on the empirical
+distribution or mean action of its neighbors rather than on every neighboring
+action separately.
 %
-Graph Convolutional Reinforcement Learning~\cite{DBLP:conf/iclr/JiangDLSZ20}
- was an early demonstration of this idea, using graph convolutions to encode
- the local neighborhood of each agent into a relational representation
- before the Q-head.
-%
-Because the message-passing weights are shared across all nodes,
- the same network can process graphs of any size at test time,
- enabling \emph{zero-shot transfer}: a policy trained on $N$ agents
- generalizes directly to unseen population sizes without any fine-tuning,
- simply by running the same computation on a graph with more nodes.
+This changes an interaction with a growing collection of agents into one between
+an individual and an aggregate. The approximation is most appropriate when the
+population is sufficiently large and individual interactions are exchangeable;
+it can lose relevant structure when a small number of heterogeneous neighbors has
+a disproportionate effect.
 
-\emph{Parameter sharing} is a further scalability lever orthogonal to the above~\cite{DBLP:conf/nips/LoweWTHAM17}.
+\emph{Locality-aware representations} exploit the fact that many collective
+systems are governed primarily by nearby interactions.
 %
-When all agents are homogeneous, giving them identical network weights forces them
- to share representations and symmetrises the learning problem,
- effectively reducing the number of free parameters from $O(N \cdot |\theta|)$ to $O(|\theta|)$.
+When the interaction graph $G_t$ is available, a \gls{GNN} can construct each
+agent's representation by aggregating messages from its neighborhood, using the
+mechanism introduced in~\Cref{eq:gnn-message,eq:gnn-aggregation,eq:gnn-update}.
 %
-Combined with a \gls{GNN} backbone, parameter sharing and zero-shot transfer
- together make it possible to train on a small population and deploy on a much larger one,
- which is the key property required by swarm applications where
- $N$ may vary across deployments.
+Because the same message and update functions are applied to every node, the
+number of policy parameters does not depend directly on $N$, and permutation-
+invariant aggregation avoids dependence on an arbitrary ordering of neighbors.
+Graph Convolutional Reinforcement Learning provides an example of this approach
+in MARL~\cite{DBLP:conf/iclr/JiangDHL20}.
+%
+A graph-based policy can therefore be evaluated on populations and topologies of
+different sizes without changing its architecture. This property makes zero-shot
+transfer across population sizes possible, although it does not guarantee that a
+policy trained at one scale will remain effective at another: changes in density,
+connectivity, or collective dynamics may still induce a substantial distribution
+shift.
 
-\begin{figure}[htbp]
-  \centering
-  \fbox{\parbox[c][5.0cm][c]{0.88\linewidth}{\centering
-    \textbf{Image placeholder}\\[4pt]
-    Comparison of scalability approaches in cooperative \gls{MARL}.
-    Left: value decomposition (QMIX) --- centralized mixing network at training time.
-    Centre: mean field --- each agent interacts with the mean action of its neighborhood.
-    Right: GNN-based policy --- message passing over $G_t$, same weights for any $N$,
-    zero-shot transfer to larger populations.
-  }}
-  \caption{Overview of scalability strategies in cooperative \gls{MARL}.}
-  \label{fig:rl-scalability}
-\end{figure}
+These strategies act on different bottlenecks and can be combined.
+%
+Parameter sharing controls model growth, value decomposition structures the team
+objective, mean-field approximations summarize large populations, and graph-based
+models preserve local relational information under variable topology.
+%
+None of them, however, determines where learning takes place or which information
+must be globally available during training. Those architectural choices define
+the degree of decentralization considered next.
+
 
 %=============================================================================
-\section{Decentralized Training in Multi-Agent Reinforcement Learning}
+\section{Decentralized Multi-Agent Reinforcement Learning}
 \label{sec:rl-decentralized}
 %=============================================================================
 
-A distinctive difficulty of \gls{MARL} that does not arise in the single-agent case
- is \emph{non-stationarity}: from the perspective of any single agent,
- the environment is non-stationary because the other agents are simultaneously
- updating their policies.
+Decentralization in MARL has two distinct meanings.
 %
-The simplest response is \emph{Independent Q-Learning}~\cite{tan1993multi},
- in which each agent trains its own Q-network while treating the other agents
- as part of a stationary environment.
+\emph{Decentralized execution} requires each agent to select actions from locally
+available information after training. \emph{Decentralized training} additionally
+requires policy optimization to proceed without a central learner that collects
+the global state, trajectories, or model updates.
 %
-Although this approach is easy to implement and scales trivially,
- it provides no convergence guarantees and performs poorly in strongly cooperative
- tasks where coordinated behavior is essential.
+Conflating these requirements obscures an important distinction: a policy may be
+decentralized at deployment while having been learned through a fully centralized
+procedure.
 
-The standard alternative is \gls{CTDE}~\cite{DBLP:conf/nips/LoweWTHAM17,DBLP:conf/icml/RashidSWFFW18}
- (introduced in \Cref{sec:rl-multi-agent}): a central learner observes the global state
- during training and stabilizes the Q-estimates by conditioning them on information
- unavailable at execution.
+The dominant compromise is \glsfull{CTDE}.
 %
-While effective, this approach requires a central coordinator,
- a communication channel to aggregate all agents' data,
- and the ability to observe the full joint state: requirements that are difficult
- to satisfy in open, large-scale, or privacy-sensitive deployments.
+During training, a centralized critic or value-mixing network may use the global
+state and the actions or observations of all agents. At execution time, each
+agent acts from its local observation or history.
+%
+Multi-Agent Deep Deterministic Policy Gradient exemplifies centralized critics,
+while QMIX exemplifies centralized value factorization~\cite{DBLP:conf/nips/LoweWTHAM17,DBLP:conf/icml/RashidSWFFW18}.
+%
+Access to joint information during training reduces the apparent non-stationarity
+of the learning target and can support more informative credit assignment.
+However, it assumes that experience can be collected centrally and that the
+training infrastructure can process joint information, assumptions that become
+difficult to satisfy in large, open, or geographically distributed systems.
 
-Fully decentralized training removes the central coordinator entirely.
+At the opposite extreme, independent learners optimize their policies using only
+local trajectories and rewards. This is decentralized in both training and
+execution and requires no inter-agent communication for learning.
 %
-\citeauthor{DBLP:conf/icml/ZhangYBH18} formalise this setting through networked
- agents~\cite{DBLP:conf/icml/ZhangYBH18}:
- each agent communicates only with its direct neighbors on a fixed graph,
- performs local stochastic gradient steps on its own reward signal,
- and periodically averages its parameters with those neighbors via a
- consensus step borrowed from distributed optimization.
-%
-Under standard connectivity and stepsize conditions, this procedure converges
- to a neighborhood of the globally optimal cooperative policy,
- with a rate that depends on the spectral gap of the communication graph.
+Its simplicity and weak infrastructure assumptions come at the cost of treating
+the changing behavior of other agents as unmodeled environment dynamics.
+Consequently, independently learned policies may be unstable or fail to discover
+behaviors that require coordinated exploration.
 
-Communication of learned representations (rather than raw parameters or gradients) is
- explored by approaches such as CommNet~\cite{DBLP:conf/nips/SukhbaatarSF16} and
- DIAL~\cite{DBLP:conf/icml/FoersterAFW16}.
+Between these extremes, networked approaches retain decentralized training while
+allowing neighboring agents to exchange learning information.
 %
-In these frameworks agents exchange continuous-valued messages differentiably,
- so the communication protocol is itself learned end-to-end alongside the policy.
+In fully decentralized MARL with networked agents, each agent performs local
+actor--critic updates and combines selected parameters or value estimates with
+those received from its neighbors through consensus~\cite{zhang2018fully}.
 %
-CommNet uses a mean aggregation of hidden states to produce the message,
- whereas DIAL allows gradient flow through the communication channel during centralized
- training and then discretises the messages at execution.
+Repeated local exchanges allow information to propagate without a parameter
+server. Their effectiveness depends on the communication graph: sparse,
+intermittent, or poorly connected topologies slow consensus and may leave
+different portions of the collective with inconsistent estimates.
 %
-Both methods demonstrate that allowing agents to learn \emph{what} to communicate,
- rather than prescribing the message content, yields qualitatively better coordination
- in tasks where the relevant information is task-specific and not known a priori.
+They also introduce a systems-level trade-off between the frequency and volume of
+communication and the speed at which learning information diffuses.
 
-The general principle underlying all decentralized training approaches is a
- trade-off between the quality of the learned policy and the independence
- of the learning process.
+Communication can concern either the learning process or the execution policy.
+Parameter and gradient exchanges belong to the former category. In the latter,
+agents exchange messages that become inputs to their action-selection process.
+Architectures such as CommNet and Differentiable Inter-Agent Learning train the
+content of these messages jointly with the policy
+~\cite{DBLP:conf/nips/SukhbaatarSF16,DBLP:conf/icml/FoersterAFW16}.
 %
-Methods that share more information (full states, all parameters, or learned messages) tend
- to converge faster and to higher-quality policies, but require stronger infrastructure
- and coordination assumptions.
-%
-Methods that restrict sharing to local neighborhoods sacrifice some performance
- for resilience, deployability, and privacy,
- making them the natural choice for large or resource-constrained systems.
+Learned communication can improve coordination when local observations omit
+information held by other agents, but it does not automatically imply
+decentralized training: differentiable communication channels are commonly
+optimized with joint trajectories and centralized backpropagation.
 
 \begin{figure}[htbp]
   \centering
-  \fbox{\parbox[c][4.2cm][c]{0.88\linewidth}{\centering
+  \fbox{\parbox[c][4.7cm][c]{0.88\linewidth}{\centering
     \textbf{Image placeholder}\\[4pt]
-    Spectrum of training paradigms from fully centralized (left) to fully decentralized (right).
-    Left: single central learner with full joint state.
-    Centre-left: CTDE --- centralized critic, decentralized actors.
-    Centre-right: networked agents --- local gradients + neighborhood consensus.
-    Right: independent Q-learning --- no communication during training.
-    Arrows indicate the direction of increasing deployability vs.\ policy quality.
+    Comparison of three training architectures.\\
+    Left: centralized training with decentralized execution, where a central
+    learner uses joint information.\\
+    Center: networked decentralized training, where agents exchange learning
+    information only with neighbors.\\
+    Right: independent training, where each agent learns exclusively from its
+    local trajectory.
   }}
-  \caption{Spectrum of training paradigms in cooperative \gls{MARL}.}
+  \caption{Degrees of decentralization in multi-agent reinforcement learning.}
   \label{fig:decentralized-spectrum}
 \end{figure}
+
+The relevant choice is therefore not whether a method is simply centralized or
+decentralized, but which information is shared, with whom, and at what stage.
+%
+Centralized training can exploit joint information but creates a coordination
+and infrastructure bottleneck. Independent learning removes that bottleneck but
+weakens the learning signal available to each agent. Networked training occupies
+the middle ground, using local communication to improve collective learning while
+preserving the absence of a central coordinator.
+%
+This last setting provides the conceptual basis for the decentralized and
+scalable reinforcement-learning methods developed in Chapter~8.
