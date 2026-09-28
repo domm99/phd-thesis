@@ -41,7 +41,7 @@ A collection of unrelated devices is therefore not a CAS,
 
 \glspl{CAS} can be viewed as a manifestation of the transition from computing 
  with individual machines to computing through ensembles of networked entities. 
- 
+%
 In the collective-computing perspective, 
  computation is no longer confined to a single device or delivered independently by many devices; 
  it is produced by their many-to-many interactions~\cite{DBLP:journals/computer/Abowd}. 
@@ -305,7 +305,7 @@ In a \gls{CAS},
  and may also modify the relationships among them.
 %
 Likewise, 
- the Internet of Things and cyber-physical systems describe how computational entities are connected 
+ the \glsentryfull{IoT} and \glsentryfull{CPS} describe how computational entities are connected 
  to one another and to the physical world, but connectivity and physical embodiment do not alone imply 
  collective adaptation. 
 %
@@ -398,8 +398,15 @@ It does not eliminate the cloud; instead,
 \subsection{From a Tiered Architecture to a Continuum}
 \label{subsec:ecc-architecture}
 
+\begin{figure}
+  \centering
+  \def\svgwidth{0.8\linewidth}\footnotesize
+  \input{figures/ch02/edge-cloud-system.pdf_tex}
+  \caption{Overview of edge-cloud computing system.}\label{fig:edge-cloud-system}
+\end{figure}
+
 The \gls{ECC} is commonly introduced through three regions: 
- end devices, edge servers, and cloud servers (\Cref{fig:???}). 
+ end devices, edge servers, and cloud servers (\Cref{fig:edge-cloud-system}). 
 % 
 This organization is useful for reasoning about their typical roles, 
  but the boundaries between the regions are not absolute. 
