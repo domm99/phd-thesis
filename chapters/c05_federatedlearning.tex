@@ -78,19 +78,43 @@ Because raw data never leaves the client,
  especially when combined with privacy-enhancing mechanisms
  such as differential privacy or secure aggregation~\cite{DBLP:journals/ftml/KairouzMABBBBCC21}.
 
-\begin{figure}[t]
+% \begin{figure}[t]
+%   \centering
+%   \includegraphics[width=\textwidth]{}
+%   \caption{One communication round of standard (centralized) \gls{FL}.
+%     Each client trains locally and returns only its updated model weights;
+%     the server produces the new global model through weighted averaging.}
+%   \label{fig:fl-centralized}
+% \end{figure}
+
+\begin{figure*}
   \centering
-  \fbox{%
-    \parbox[c][4.8cm][c]{0.88\linewidth}{\centering
-      \textbf{Image placeholder: centralized FL protocol}\\[0.4em]
-      Server at top; clients at bottom.\\
-      Round steps numbered: broadcast $\rightarrow$ local train $\rightarrow$
-      upload $\rightarrow$ aggregate.}}
-  \caption{One communication round of standard (centralized) \gls{FL}.
-    Each client trains locally and returns only its updated model weights;
-    the server produces the new global model through weighted averaging.}
+  \begin{subfigure}{0.4\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{figures/ch05/federated-learning-schema.pdf}
+      \caption{Centralized federated learning schema.}
+      \label{fig:cfl}
+  \end{subfigure}
+  \begin{subfigure}{0.4\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/ch05/federated-learning-schema-p2p.pdf}
+    \caption{Peer-to-peer federated learning schema.}
+    \label{fig:p2pfl}
+  \end{subfigure}
+  \caption{ On the left, a visual representation of centralized federated learning. 
+  In the first phase, the server
+  shares the centralized model with the clients. In the second
+  phase, the clients perform a local learning phase using data that
+  is not accessible to the server. In the third phase, these models
+  are communicated back to the central server, and finally, in the
+  last phase, there is an aggregation algorithm. 
+  On the right, the P2P federated learning schema.
+  Differently from the centralized version, there is no central server. 
+  Each client sends its local model to all the other clients, then the aggregation
+  is performed locally. 
+  }
   \label{fig:fl-centralized}
-\end{figure}
+\end{figure*}
 
 \section{Limitations in the CAS Setting}
 \label{sec:fl-limits}
@@ -191,13 +215,7 @@ This structure has direct consequences for which collaborations are beneficial
 
 \begin{figure}[t]
   \centering
-  \fbox{%
-    \parbox[c][5.0cm][c]{0.88\linewidth}{\centering
-      \textbf{Image placeholder: spatial data distribution}\\[0.4em]
-      A network of devices overlaid on a spatial area partitioned into
-      colored regions. Within each region, devices observe IID samples;
-      across regions, distributions differ.
-      Label ``IID'' inside a region and ``non-IID'' across region boundaries.}}
+  \includegraphics[width=0.5\textwidth]{figures/ch05/subregions.pdf}
   \caption{Spatially structured data heterogeneity in a device network.
     Devices in the same region share a common data distribution;
     devices in different regions observe statistically distinct data.}

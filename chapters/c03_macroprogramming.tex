@@ -84,15 +84,12 @@ In each case,
 
 \begin{figure}[t]
   \centering
-  \fbox{%
-    \parbox[c][4.2cm][c]{0.88\linewidth}{\centering
-      \textbf{Image placeholder}\\[0.4em]
-      Macro level: collective goals, abstractions, and observables\\
-      $\Updownarrow$ macro-to-micro mapping $\Updownarrow$\\
-      Micro level: local programs, interactions, and device state}}
-  \caption{Conceptual view of macroprogramming. Macro-abstractions express
+  \includegraphics[width=0.9\textwidth]{figures/ch03/macro-micro-mapping.pdf}
+  \caption{Conceptual view of macroprogramming~\cite{DBLP:journals/csur/Casadei23}. 
+  Macro-abstractions express
   system-level behavior and are mapped to local computations; the effects of
-  those computations produce macro-observables at the collective level.}
+  those computations produce macro-observables at the collective level.
+  }
   \label{fig:macro-micro-mapping}
 \end{figure}
 
@@ -397,18 +394,7 @@ The result is a layered stack in which application developers work with collecti
 
 \begin{figure}[t]
   \centering
-  \fbox{%
-    \parbox[c][5.3cm][c]{0.78\linewidth}{\centering
-      \textbf{Image placeholder: layered Aggregate Computing stack}\\[0.5em]
-      Applications and domain-specific patterns\\
-      $\downarrow$\\
-      Reusable coordination libraries\\
-      $\downarrow$\\
-      Resilient operators ($G$, $C$, $T$, $S$)\\
-      $\downarrow$\\
-      Field Calculus constructs\\
-      $\downarrow$\\
-      Device capabilities, sensors, communication, and runtime}}
+  \includegraphics[width=0.7\textwidth]{figures/ch03/ac-layered.drawio.pdf}
   \caption{Layered organization of Aggregate Computing. Each layer hides part
   of the distributed coordination machinery while retaining a collective
   interpretation and a local execution model.}
@@ -444,18 +430,18 @@ Aggregate Computing therefore introduces a layer of reusable coordination operat
 Four operator families are especially common:
 
 \begin{itemize}
-  \item \textbf{$G$---gradient cast} builds a potential away from one or more
+  \item \textbf{$G$--gradient cast} builds a potential away from one or more
   sources and propagates information outward along it. Distance estimation,
   broadcast, and bounded spatial diffusion are instances of this pattern.
 
-  \item \textbf{$C$---converge cast} routes and aggregates values toward minima
+  \item \textbf{$C$--converge cast} routes and aggregates values toward minima
   of a potential. It supports operations such as counting, summation, and
   distributed collection at elected sinks.
 
-  \item \textbf{$T$---time evolution} manages bounded state changes, including
+  \item \textbf{$T$--time evolution} manages bounded state changes, including
   timers, decay, and recent-event tracking.
 
-  \item \textbf{$S$---sparse choice} selects a spatially separated subset of
+  \item \textbf{$S$--sparse choice} selects a spatially separated subset of
   devices. It is commonly used for decentralized leader election and dynamic
   network partitioning.
 \end{itemize}
@@ -619,14 +605,7 @@ Third,
 
 \begin{figure}[t]
   \centering
-  \fbox{%
-    \parbox[c][5.1cm][c]{0.84\linewidth}{\centering
-      \textbf{Image placeholder: Phyelds architecture}\\[0.5em]
-      Simulator $\rightarrow$ Calculus $\rightarrow$ Libraries\\
-      $\hspace{4em}\searrow\quad\downarrow\quad\swarrow$\\
-      Virtual Machine $\leftrightarrow$ Data\\[0.5em]
-      Show the main classes and functions inside each module, following the
-      architecture diagram in the Phyelds paper.}}
+  \includegraphics[width=\textwidth]{figures/ch03/phyelds.drawio.pdf}
   \caption{Modular architecture of Phyelds. The virtual machine and data
   modules implement execution and field representation; the calculus exposes
   Pythonic constructs; libraries provide reusable coordination blocks; and the
