@@ -4,25 +4,29 @@
 \label{chap:reinforcement-learning}
 \minitoc
 
-\sidenote{
-  double check
-}
+Learning in an interactive environment requires more than 
+ deriving a fixed mapping from inputs to outputs. 
+% 
+An autonomous agent must repeatedly decide how to act, 
+ observe the consequences of its decisions, 
+ and adapt its future behavior accordingly. 
+% 
+These decisions are inherently sequential: 
+ an action may provide little immediate benefit 
+ while substantially affecting the outcomes that can be obtained later.
 
-\glsentryfull{RL} addresses sequential decision-making problems in
-which the consequences of an action may become apparent only through subsequent
-interaction with an environment.
-%
-Unlike supervised learning, it does not provide the learner with the correct
-action for each input. Instead, an agent must discover which behavior is useful
-from a scalar reward signal and from the state transitions induced by its own
-decisions.
-%
-This interaction-based formulation is particularly relevant to autonomous
-systems, whose behavior must account for the long-term effects of actions rather
-than only for immediate predictions.
+\glsentryfull{RL} provides a framework for addressing this form 
+ of sequential decision-making. 
+% 
+Rather than learning from a predetermined collection of input--target pairs, 
+ an \gls{RL} agent generates experience through its own interaction 
+ with the environment and evaluates that experience through a scalar reward signal. 
+% 
+Its objective is therefore not to reproduce known correct outputs, 
+ but to discover a behavior that maximizes the reward accumulated over time.
 
-This chapter introduces the RL foundations required by the contributions in
-Chapter~8.
+This chapter introduces the \gls{RL} foundations required 
+ by the contributions in~\Cref{chap:scalable-rl}.
 %
 \Cref{sec:rl-single-agent} presents the single-agent learning cycle, its
 formalization as a \gls{MDP}, and deep Q-learning.
@@ -45,15 +49,17 @@ on a central learner.
 \label{sec:rl-framework}
 %=============================================================================
 
-In the single-agent setting, learning proceeds through a closed feedback loop
-between an \emph{agent} and an \emph{environment}~\cite{Sutton1998}.
+In the single-agent setting, 
+ learning proceeds through a closed feedback loop
+ between an \emph{agent} and an \emph{environment}~\cite{Sutton1998}.
 %
-At discrete time step $t$, the agent observes the current state $s_t$, selects an
-action $a_t$, and receives a scalar reward $r_{t+1}$ after the environment moves
-to state $s_{t+1}$.
+As shown in~\Cref{fig:rl-loop}, 
+ at discrete time step $t$, the agent observes the current state $s_t$, 
+ selects an action $a_t$, and receives a scalar reward $r_{t+1}$ after 
+ the environment moves to state $s_{t+1}$.
 %
-The new state becomes the input to the next decision, and the cycle continues
-until a terminal condition is reached or for an indefinite horizon.
+The new state becomes the input to the next decision, 
+ and the cycle continues until a terminal condition is reached or for an indefinite horizon.
 %
 The sequence
 
@@ -64,14 +70,16 @@ The sequence
 
 is referred to as a trajectory.
 %
-Because the trajectory depends on the actions selected by the agent, the data
-used for learning are not independent of the learner's behavior.
+Because the trajectory depends on the actions selected by the agent, 
+ the data used for learning are not independent of the learner's behavior.
 %
-This property distinguishes RL from supervised learning, where the training set
-is normally collected before optimization and provides an explicit target for
-each input. It also distinguishes RL from unsupervised learning: although neither
-setting supplies action labels, RL includes an evaluative signal that assigns
-value to the consequences of behavior.
+This property distinguishes \gls{RL} from supervised learning, 
+ where the training set is normally collected before optimization 
+ and provides an explicit target for each input. 
+% 
+It also distinguishes \gls{RL} from unsupervised learning: 
+ although neither setting supplies action labels, 
+ \gls{RL} includes an evaluative signal that assigns value to the consequences of behavior.
 
 \begin{figure}[htbp]
   \centering
@@ -80,8 +88,8 @@ value to the consequences of behavior.
   \label{fig:rl-loop}
 \end{figure}
 
-The standard mathematical model for this interaction is a \glsfull{MDP},
-defined by the tuple
+The standard mathematical model for this interaction is a \glsfull{MDP}~\cite{szepesvari1996generalized},
+ defined by the tuple
 
 \begin{equation}
   \mathcal{M} = (\mathcal{S},\mathcal{A},P,R,\gamma),
@@ -136,7 +144,7 @@ satisfies the Bellman optimality equation
 An optimal deterministic policy can therefore be obtained by selecting an action
 that maximizes $Q^*(s,a)$ in each state.
 
-Q-learning estimates this function directly from sampled transitions, without
+Q-learning~\cite{watkins1992q} estimates this function directly from sampled transitions, without
 requiring an explicit model of $P$ or $R$.
 %
 In its tabular form, the estimate is updated as
@@ -153,8 +161,8 @@ where $\alpha$ is the learning rate and the expression in brackets is the
 temporal-difference error.
 %
 Tabular storage becomes impractical when $\mathcal{S}$ is large or continuous.
-Deep Q-learning addresses this limitation by replacing the table with a neural
-network $Q(s,a;\theta)$ parameterized by $\theta$~\cite{mnih2015humanlevel}.
+Deep Q-learning~\cite{mnih2015humanlevel} addresses this limitation by replacing the table with a neural
+network $Q(s,a;\theta)$ parameterized by $\theta$.
 %
 The network is trained from transitions sampled from a replay buffer
 $\mathcal{D}$ by minimizing
@@ -211,7 +219,7 @@ The remainder of this chapter focuses on the cooperative case, which most closel
 matches collective systems whose components must coordinate toward a shared goal.
 
 A cooperative, partially observable multi-agent problem can be represented as a
-decentralized partially observable Markov decision process~\cite{mnih2015humanlevel}:
+decentralized partially observable Markov decision process~\cite{Oliehoek2016}:
 
 \begin{equation}
   \mathcal{M}_{\mathrm{dec}} =
@@ -312,12 +320,12 @@ and communication requirements become increasingly important as $N$ grows.
 
 
 %=============================================================================
-\section{Scalability in Multi-Agent Reinforcement Learning}
+\section{Scalability in MARL}
 \label{sec:rl-scalability}
 %=============================================================================
 
-Scaling MARL is not a single problem, but the combination of several forms of
-growth.
+Scaling \gls{MARL} is not a single problem, 
+ but the combination of several forms of growth.
 %
 If every agent has $|\mathcal{A}|$ actions, the joint action space contains
 $|\mathcal{A}|^N$ alternatives. A centralized action-value function must therefore
@@ -373,7 +381,7 @@ systems are governed primarily by nearby interactions.
 %
 When the interaction graph $G_t$ is available, a \gls{GNN} can construct each
 agent's representation by aggregating messages from its neighborhood, using the
-mechanism introduced in~\Cref{eq:gnn-message,eq:gnn-aggregation,eq:gnn-update}.
+mechanism introduced in~\Cref{eq:aggregate}.
 %
 Because the same message and update functions are applied to every node, the
 number of policy parameters does not depend directly on $N$, and permutation-
@@ -388,21 +396,13 @@ policy trained at one scale will remain effective at another: changes in density
 connectivity, or collective dynamics may still induce a substantial distribution
 shift.
 
-These strategies act on different bottlenecks and can be combined.
-%
-Parameter sharing controls model growth, value decomposition structures the team
-objective, mean-field approximations summarize large populations, and graph-based
-models preserve local relational information under variable topology.
-%
-None of them, however, determines where learning takes place or which information
-must be globally available during training. Those architectural choices define
-the degree of decentralization considered next.
-
-
 %=============================================================================
-\section{Decentralized Multi-Agent Reinforcement Learning}
+\section{Decentralized MARL}
 \label{sec:rl-decentralized}
 %=============================================================================
+
+\note{double check this}
+
 
 Decentralization in MARL has two distinct meanings.
 %
