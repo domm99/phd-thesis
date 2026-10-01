@@ -888,8 +888,7 @@ Using the pre-trained graph Q-network with shared parameters \(\theta\),
 
 Decentralized execution follows a \(K\)-round message passing protocol 
  per environment step as follows:
- neighbors exchange \(d\)-dimensional embeddings \(\mathbf{h}^{(k-1)}\), 
- \sidenote{ref to background on GNNs here}
+ neighbors exchange \(d\)-dimensional embeddings \(\mathbf{h}^{(k-1)}\),
  then each agent updates \(\mathbf{h}^{(k)}\) via~\Cref{eq:message,eq:aggregate,eq:update}. 
 %
 The final embedding \(\mathbf{h}_i^{(K)}\) aggregates information up to \(K\) hops away, 
