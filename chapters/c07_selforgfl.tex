@@ -2377,8 +2377,7 @@ In particular,
 %
 This design allows the benchmark to reproduce realistic proximity-based non-IID scenarios, 
  where data are homogeneous within regions and heterogeneous across regions, 
- \sidenote{anche qui ref dopo averla messa in background}
- as illustrated in~\Cref{fig:areas}.
+ as illustrated in~\Cref{fig:spatial-heterogeneity}.
 %
 In the following, we detail the implemented methods to synthesize skewed datasets, 
  the supported datasets and the API of the benchmark.
@@ -2422,9 +2421,8 @@ While existing approaches typically apply these partitioning methods
  our framework introduces an intermediate layer of regional clustering.
 % 
 ProFed first distributes data heterogeneously among subregions and 
- then splits them homogeneously among devices within the same subregion, 
-\sidenote{aggiungere img in background e ref}
- thereby creating clustered heterogeneity---see~\Cref{fig:areas}.
+ then splits them homogeneously among devices within the same subregion,
+ thereby creating clustered heterogeneity---see~\Cref{fig:spatial-heterogeneity}.
 %
 To support extensibility, ProFed enables custom partitioning 
  based on a user-specified distribution matrix. 
@@ -3066,6 +3064,8 @@ C2FL substantially preserves accuracy on previously visited regions and achieves
 The performance increments after successive transitions show that replay retains knowledge 
  from previously visited regions, while the consistent gap over the continual-learning-only baseline 
  isolates the additional benefit of regional model integration.
+
+\note{aggiungere gli altri due grafici}
 
 \begin{figure}
     \centering
