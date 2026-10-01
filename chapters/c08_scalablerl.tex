@@ -2042,11 +2042,11 @@ This work focus on zero-shot scalability in swarm coordination with \glspl{GNN},
 
 \subsubsection{Scalability in the Number of Agents}
 Independent learners face non-stationarity 
- and coordination issues as agent counts grow~\cite{busoniu2008comprehensive,tan1993multiagent}.
+ and coordination issues as agent counts grow~\cite{DBLP:journals/smca/BusonuiBDS08,tan1993multiagent}.
 %
 Mean-field \gls{MARL} mitigates this via population distributions, 
  enabling large-scale training but relying on strong homogeneity 
- assumptions~\cite{yang2018mean,subramanian2022adaptive,mondal2022approximate}. 
+ assumptions~\cite{DBLP:conf/icml/YangLLZZWY18,subramanian2022adaptive,mondal2022approximate}. 
 % 
 Parameter sharing helps but can limit behavioral diversity~\cite{li2021celebrating}. 
 % 
@@ -2058,10 +2058,10 @@ To handle variable populations,
 
 \subsubsection{Scalability in State and Action Spaces}
 Deep function approximation (e.g., MADDPG) addresses high-dimensional observations 
- or actions under CTDE~\cite{lowe2017multi}, 
+ or actions under CTDE~\cite{DBLP:conf/nips/LoweWTHAM17}, 
  while value decomposition (VDN, QMIX, QTRAN, QPLEX, and QFIX) 
  enables decentralized execution via structured 
- mixing~\cite{sunehag2017value,rashid2018qmix,son2019qtran,wang2021qplex,baisero2025fixing}. 
+ mixing~\cite{DBLP:conf/aaai/SunehagLGCZJLSL18,DBLP:conf/icml/RashidSWFFW18,son2019qtran,wang2021qplex,baisero2025fixing}. 
 % 
 Partial observability is tackled with centralized critics 
  and attention for selective aggregation~\cite{foerster2018counterfactual,zhang2021multi}. 
@@ -2076,7 +2076,7 @@ CTDE is the prevailing paradigm for practical deployment~\cite{amato2024introduc
 %
 Learned communication improves coordination via differentiable 
  channels, attention, and sparsity, including under wireless 
- constraints~\cite{sukhbaatar2016learning,das2019tarmac,singh2019learning,hu2023learning}. 
+ constraints~\cite{DBLP:conf/nips/SukhbaatarSF16,das2019tarmac,singh2019learning,hu2023learning}. 
 %
 Transformers and routing mechanisms have been proposed 
  for long-range information flow~\cite{zhang2024complementary,guo2023scalable}, 
@@ -2087,7 +2087,7 @@ Transformers and routing mechanisms have been proposed
 This work study zero-shot population scaling with \glspl{GNN} in value-based \gls{MARL} under CTDE, 
  without training on multiple team sizes. 
 %
-Compared to mean-field methods~\cite{yang2018mean} 
+Compared to mean-field methods~\cite{DBLP:conf/icml/YangLLZZWY18} 
  and GNN-based population-transfer approaches~\cite{nayak2023scalable}, 
  this work quantify how performance degrades as deployment sizes diverge from training. 
 %
