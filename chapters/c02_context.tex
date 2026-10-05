@@ -181,88 +181,226 @@ Self-stabilizing coordination mechanisms provide a foundation for resilient \gls
 \subsection{Characteristic Properties and Engineering Implications}
 \label{subsec:cas-properties}
 
+% Although \glspl{CAS} encompass different application domains, 
+%  several recurring properties shape how they can be engineered.
+
+% \paragraph{Situatedness and locality.}
+% The entities of a \gls{CAS} operate within a logical or physical environment 
+%  from which they obtain observations and on which their actions have effects. 
+% %
+% Access to this environment is normally local: 
+%  an entity observes only part of the relevant state and communicates with a limited neighborhood. 
+% % 
+% Locality improves scalability and permits timely decisions, 
+%  but prevents any component from assuming a continuously available global view. 
+% % 
+% Information about collective conditions must instead be estimated, propagated, 
+%  or aggregated through the system.
+
+% \paragraph{Scale and openness.}
+% \glspl{CAS} may contain hundreds or thousands of entities, 
+%  and their population is often open. 
+% % 
+% Components can join, leave, move, fail, or become temporarily unreachable, 
+%  changing both the system size and its interaction topology.
+% %
+% Algorithms that depend on a fixed membership, 
+%  a stable ordering of entities, or global synchronization become increasingly fragile under these conditions.
+% %
+% Collective mechanisms should instead operate incrementally 
+%  and tolerate asynchrony and partial participation.
+
+% \paragraph{Autonomy and decentralized control.}
+% Individual entities retain control over at least part of their state 
+%  and behavior. 
+% % 
+% Their decisions are based on local knowledge 
+%  and may be made without authorization from a permanent central coordinator. 
+% % 
+% Decentralization removes single points of control, distributes computational load, 
+%  and can improve responsiveness and fault tolerance. 
+% % 
+% At the same time, 
+%  it makes global correctness harder to establish: 
+%  locally reasonable decisions can conflict, and delayed or inconsistent information 
+%  can prevent coordination or slow convergence.
+
+% \paragraph{Heterogeneity.}
+% The members of a CAS may differ in hardware, energy availability,
+%  communication capacity, data, mobility, and assigned role. 
+% % 
+% Heterogeneity can expand the capabilities of the collective, 
+%  since different components contribute complementary resources and observations. 
+% % 
+% It also prevents uniform assumptions about what each component can compute, communicate, or learn. 
+% %
+% Coordination mechanisms must therefore distinguish differences 
+%  that are operationally relevant while avoiding dependencies on the identity 
+%  or ordering of individual entities.
+
+% \paragraph{Resilience.}
+% Failures and environmental changes are part of the expected operating conditions of a \gls{CAS} 
+%  rather than exceptional events. 
+% % 
+% Resilience consequently does not mean preventing every disruption, 
+%  but maintaining acceptable system-level behavior and recovering when the collective is perturbed.
+% %
+% Redundant components and decentralized control can support graceful degradation, 
+%  although redundancy alone is insufficient: 
+%  the collective must also detect changes and
+%  reorganize its activity around the resources that remain available.
+
+% These properties create an important engineering trade-off. 
+% %
+% Local interaction, decentralization, and openness enable scale and robustness, 
+%  but also make the system difficult to predict, verify, and control. 
+% %
+% Evaluation must consequently consider both levels of the system. 
+% %
+% Component-level measures such as latency, energy consumption, 
+%  or individual accuracy remain necessary, 
+%  but they do not by themselves establish that the collective satisfies its intended function.
+% %
+% Macro-level properties such as coverage, convergence, fairness, stability, 
+%  and resource utilization must be assessed as outcomes of the interactions among components.
+
 Although \glspl{CAS} encompass different application domains, 
  several recurring properties shape how they can be engineered.
-
-\paragraph{Situatedness and locality.}
-The entities of a \gls{CAS} operate within a logical or physical environment 
- from which they obtain observations and on which their actions have effects. 
 %
-Access to this environment is normally local: 
- an entity observes only part of the relevant state and communicates with a limited neighborhood. 
-% 
-Locality improves scalability and permits timely decisions, 
- but prevents any component from assuming a continuously available global view. 
-% 
-Information about collective conditions must instead be estimated, propagated, 
+These include distribution, awareness, adaptation, interdependence, 
+ collaboration, anonymity, scalability, and open-endedness~\cite{DBLP:journals/scp/AlrahmanNL20}.
+%
+Rather than occurring independently, these properties reinforce one another:
+ local awareness supports adaptation, openness requires identity-independent
+ interaction, and interdependence allows local actions to affect collective
+ outcomes.
+
+\paragraph{Situatedness, awareness, and locality.}
+The entities of a \gls{CAS} operate within a logical or physical environment
+ from which they obtain observations and on which their actions have effects.
+%
+Their knowledge can include information about their own run-time condition,
+ such as available energy, computational load, or current role, as well as
+ information about the surrounding context.
+%
+These two forms of knowledge are commonly referred to as
+ \emph{self-awareness} and \emph{context-awareness}, respectively.
+%
+Awareness provides the information on which adaptation is based: an entity
+ cannot respond meaningfully to a change that it cannot detect or estimate.
+%
+However, access to this information is normally local.
+%
+An entity observes only part of the relevant environmental state and
+ communicates with a limited neighborhood.
+%
+Locality improves scalability and enables timely decisions, but prevents any
+ component from assuming a continuously available global view.
+%
+Information about collective conditions must instead be estimated, propagated,
  or aggregated through the system.
 
-\paragraph{Scale and openness.}
-\glspl{CAS} may contain hundreds or thousands of entities, 
- and their population is often open. 
-% 
-Components can join, leave, move, fail, or become temporarily unreachable, 
- changing both the system size and its interaction topology.
+\paragraph{Scale, openness, and anonymity.}
+A \gls{CAS} may contain hundreds or thousands of entities, and its population
+ is often open.
 %
-Algorithms that depend on a fixed membership, 
- a stable ordering of entities, or global synchronization become increasingly fragile under these conditions.
+Components can join, leave, move, fail, or become temporarily unreachable,
+ changing both the size of the system and its interaction topology.
 %
-Collective mechanisms should instead operate incrementally 
- and tolerate asynchrony and partial participation.
+Algorithms that depend on fixed membership, a stable ordering of entities,
+ or global synchronization become increasingly fragile under these conditions.
+%
+For the same reason, interactions should not necessarily depend on the
+ identities or permanent addresses of specific participants.
+%
+In many cases, an entity is relevant because of its current properties,
+ capabilities, or role rather than because of its identity.
+%
+Anonymity in this context therefore denotes identity-independent interaction,
+ not the concealment of identity for security purposes.
+%
+It enables groups to form dynamically around run-time conditions and allows
+ components to be replaced without requiring the interaction logic to be
+ reconfigured explicitly.
 
 \paragraph{Autonomy and decentralized control.}
-Individual entities retain control over at least part of their state 
- and behavior. 
-% 
-Their decisions are based on local knowledge 
- and may be made without authorization from a permanent central coordinator. 
-% 
-Decentralization removes single points of control, distributes computational load, 
- and can improve responsiveness and fault tolerance. 
-% 
-At the same time, 
- it makes global correctness harder to establish: 
- locally reasonable decisions can conflict, and delayed or inconsistent information 
- can prevent coordination or slow convergence.
+Individual entities retain control over at least part of their state and
+ behavior.
+%
+Their decisions are based on local knowledge and may be made without
+ authorization from a permanent central coordinator.
+%
+Decentralization removes single points of control, distributes computational
+ load, and can improve responsiveness and fault tolerance.
+%
+At the same time, it makes global correctness harder to establish:
+ locally reasonable decisions can conflict, while delayed or inconsistent
+ information can prevent coordination or slow convergence.
+%
+Engineering mechanisms must therefore constrain local autonomy sufficiently
+ to preserve collective properties without eliminating the ability of
+ individual entities to adapt independently.
+
+\paragraph{Interdependence and collaboration.}
+Entities in a \gls{CAS} are interdependent because their actions may alter
+ conditions experienced by other entities.
+%
+This influence may be direct, as when components exchange messages, or
+ indirect, as when an entity modifies a shared environment and thereby affects
+ the observations or behavior of others.
+%
+Consequently, even an action selected from purely local information can have
+ system-wide effects that were neither intended nor immediately observable.
+%
+At the same time, the intended behavior of the system often depends on
+ collaboration: entities must combine their capabilities, observations, or
+ actions to achieve objectives that cannot be attained individually.
+%
+Coordination mechanisms must therefore account for both deliberate cooperation
+ and unintended interference mediated by the environment.
 
 \paragraph{Heterogeneity.}
-The members of a CAS may differ in hardware, energy availability,
- communication capacity, data, mobility, and assigned role. 
-% 
-Heterogeneity can expand the capabilities of the collective, 
- since different components contribute complementary resources and observations. 
-% 
-It also prevents uniform assumptions about what each component can compute, communicate, or learn. 
+The members of a \gls{CAS} may differ in hardware, energy availability,
+ communication capacity, data, mobility, and assigned role.
 %
-Coordination mechanisms must therefore distinguish differences 
- that are operationally relevant while avoiding dependencies on the identity 
- or ordering of individual entities.
+Heterogeneity can expand the capabilities of the collective, since different
+ components contribute complementary resources and observations.
+%
+It also prevents uniform assumptions about what each component can compute,
+ communicate, or learn.
+%
+Coordination mechanisms must therefore distinguish differences that are
+ operationally relevant while avoiding unnecessary dependencies on the
+ identities or ordering of individual entities.
 
 \paragraph{Resilience.}
-Failures and environmental changes are part of the expected operating conditions of a \gls{CAS} 
- rather than exceptional events. 
-% 
-Resilience consequently does not mean preventing every disruption, 
- but maintaining acceptable system-level behavior and recovering when the collective is perturbed.
+Failures and environmental changes are part of the expected operating
+ conditions of a \gls{CAS} rather than exceptional events.
 %
-Redundant components and decentralized control can support graceful degradation, 
- although redundancy alone is insufficient: 
- the collective must also detect changes and
- reorganize its activity around the resources that remain available.
+Resilience consequently does not mean preventing every disruption, but
+ maintaining acceptable system-level behavior and recovering when the
+ collective is perturbed.
+%
+Redundant components and decentralized control can support graceful
+ degradation, although redundancy alone is insufficient:
+ the collective must also detect changes and reorganize its activity around
+ the resources that remain available.
 
-These properties create an important engineering trade-off. 
+These properties create an important engineering trade-off.
 %
-Local interaction, decentralization, and openness enable scale and robustness, 
- but also make the system difficult to predict, verify, and control. 
+Local interaction, decentralization, openness, and identity-independent
+ coordination enable scale and robustness, but also make the system difficult
+ to predict, verify, and control.
 %
-Evaluation must consequently consider both levels of the system. 
+Evaluation must consequently consider both levels of the system.
 %
-Component-level measures such as latency, energy consumption, 
- or individual accuracy remain necessary, 
- but they do not by themselves establish that the collective satisfies its intended function.
+Component-level measures such as latency, energy consumption, or individual
+ accuracy remain necessary, but they do not by themselves establish that the
+ collective satisfies its intended function.
 %
-Macro-level properties such as coverage, convergence, fairness, stability, 
- and resource utilization must be assessed as outcomes of the interactions among components.
+Macro-level properties such as coverage, convergence, fairness, stability,
+ and resource utilization must be assessed as outcomes of the interactions
+ among components.
 
 \subsection{Relationship with Adjacent Paradigms}
 \label{subsec:cas-related-paradigms}
