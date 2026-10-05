@@ -217,13 +217,13 @@ Engineering such cooperation---deciding which devices should learn together,
 This thesis adopts a collective-level perspective on engineering autonomy:
  the objective is not to engineer each device in isolation,
  but to control how the organization and interaction of many devices
- produce autonomous collective behaviour.
+ produce autonomous collective behavior.
 %
-Macroprogramming provides a natural foundation for this perspective,
+\gls{MP} provides a natural foundation for this perspective,
  as it allows coordination patterns to be expressed at the level of the collective
  and realized through local execution on individual devices.
 
-Machine learning complements this perspective by allowing models and decision policies 
+\gls{ML} complements this perspective by allowing models and decision policies 
  to be derived from data and experience rather than specified entirely in advance.
 %
 However, 
@@ -256,12 +256,6 @@ Observations are generated across distributed devices and may be sensitive
 %
 Cooperative learning should therefore extract value from distributed data 
  without requiring their centralization.
-%
-Retaining raw data locally does not by itself guarantee privacy, 
- since exchanged models or updates may also reveal information.
-%
-The collective design must consequently determine what information is exchanged, 
- with whom, and within which collaboration boundaries.
 
 \emph{Spatio-temporal data heterogeneity.}
 Because observations reflect the physical and operational context in which they are collected, 
@@ -316,6 +310,7 @@ This coupling is precisely what makes the problem resistant to solutions
  an integrated engineering approach is required,
  in which coordination, learning, and deployment are designed together.
 
+\sidenote{double-check if tone down is needed here}
 The research gap addressed by this thesis is thus not the absence of individual 
  algorithms for federated learning, multi-agent reinforcement learning, 
  decentralized coordination, or task offloading.
