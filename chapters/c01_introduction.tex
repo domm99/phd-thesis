@@ -41,14 +41,14 @@ Nevertheless,
  and jointly give rise to the behaviour observed at the system level.
 %
 This interplay between local autonomy
- and system-level emergence is characteristic of \glspl{CAS}:
+ and system-level emergence is characteristic of \glspl{CAS}~\cite{DBLP:conf/huc/Ferscha15}:
  systems composed of multiple autonomous or semi-autonomous entities that interact locally,
  adapt during operation, and pursue individual or collective objectives.
 
 Autonomy in these systems can be engineered through several approaches,
- among them explicit programming of individual device behaviour,
- macroprogramming abstractions that express collective behaviour from a global perspective,
- and learning-based methods that derive models or decision policies from data and experience.
+ among them explicit programming of individual device behaviour~\cite{DBLP:journals/aamas/BrescianiPGGM04,},
+ macroprogramming abstractions that express collective behaviour from a global perspective~\cite{DBLP:journals/csur/Casadei23,DBLP:journals/tomacs/ViroliABDP18},
+ and learning-based methods that derive models or decision policies from data and experience~\cite{DBLP:conf/icml/ZhangYBH18,DBLP:conf/icml/YangLLZZWY18}.
 %
 This thesis focuses on the latter two, 
  with learning-based methods providing the primary mechanisms for adaptation and autonomy,
@@ -62,9 +62,11 @@ Learning-based approaches are particularly suited to \glspl{CAS}
  they allow the system to adapt its behaviour as it interacts with the world.
 %
 Two paradigms are especially relevant here:
- \gls{MARL}, in which devices learn decision policies through interactions
+ \gls{MARL}~\cite{DBLP:journals/corr/abs-1911-10635}, 
+ in which devices learn decision policies through interactions
  with one another and their shared environment,
- and \gls{FL}, which allows distributed devices to construct shared models
+ and \gls{FL}~\cite{DBLP:conf/aistats/McMahanMRHA17}, 
+ which allows distributed devices to construct shared models
  without centralizing their raw data.
 
 Yet learning independently at each device is not sufficient.
@@ -110,16 +112,16 @@ These challenges are compounded by how data are generated and collected
  in physically situated systems.
 %
 Because each device observes only a particular portion of the environment,
- local datasets rarely satisfy the common \gls{IID} assumption.
+ local datasets rarely satisfy the common \gls{IID} assumption~\cite{DBLP:conf/icde/LiDCH22}.
 %
 This heterogeneity is often spatially structured:
  devices exposed to the same local phenomenon may observe related distributions,
  whereas devices operating in different regions or contexts may collect
- substantially different data.
+ substantially different data~\cite{esterle2022deep}.
 %
 Furthermore,
  mobility and changes in the underlying phenomena
- may cause these distributions and their spatial organization to evolve over time.
+ may cause these distributions and their spatial organization to evolve over time~\cite{DBLP:journals/corr/abs-2606-18003}.
 %
 As a consequence,
  deciding \emph{which} devices should cooperate,
