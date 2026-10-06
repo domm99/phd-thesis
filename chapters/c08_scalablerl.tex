@@ -310,7 +310,7 @@ At each time step $t$,
  each agent $a$ receives an observation $o_a^t$ composed of the following elements:
 \begin{itemize}
   \item \emph{Neighborhood perception}: an agent $a$ perceives the relative positions (distance and direction) 
-   of its $A_v$ (paramers of the environment) the nearest neighboring agents. 
+   of its $A_v$ (a paramers of the environment) the nearest neighboring agents. 
    This information is represented as a set $\mathcal{V}_a^t = \{(d_{aj}^t, \theta_{aj}^t) | j \in \text{Nearest } A_v \text{ agents}\}$, 
    where $d_{aj}^t$ is the Euclidean distance between agent $a$ and agent $j$ at time $t$, 
    and $\theta_{aj}^t$ is the angle between the vector pointing from agent $a$ to agent $j$ and a fixed reference axis.
@@ -334,7 +334,7 @@ In this work,
  where each agent communicates with its $k$ (parameter of the simulation) nearest neighbors.
 %
 This communication enables the exchange of information such as Q-values or experiences 
- using on of the neighboring-based strategies discussed in \Cref{sec:neighboring}.
+ using one of the neighboring-based strategies discussed in \Cref{sec:neighboring}.
 %
 The action space for each agent is discrete, 
  consisting of eight possible movements corresponding to the cardinal and diagonal directions on a grid.
@@ -490,7 +490,7 @@ $R_{mean}$ measures the average cumulative reward the agent obtains during each 
   serving as a direct indicator of how well each agent is performing in achieving its task.
 %
 Formally, 
- for a certain episode $i$, composed of $n$ agents, last $T$ time steps, the total reward $R_i$ is calculated as:
+ for a certain episode $i$, composed of $n$ agents, lasting $T$ time steps, the total reward $R_i$ is calculated as:
  \[ R_i = \sum_{t=0}^{T} \sum_{j=1}^{n} r^j_t \]
  where $r^j_t$ is the reward obtained by agent $j$ at time step $t$. 
 %
@@ -499,7 +499,7 @@ The reward $R_{mean}$,
  can be calculated as the arithmetic mean of the individual rewards per episode $R_i$.
 
 On the other hand, 
- the $L_{mean}$ represents the average number of time steps needed to reaching the terminal state, i.e., no more items to collect. 
+ the $L_{mean}$ represents the average number of time steps needed to reach the terminal state, i.e., no more items to collect. 
 %
 It provides insights into the agent's efficiency in completing tasks, especially in environments 
  where shorter episodes indicate better performance. 
@@ -648,7 +648,7 @@ These systems must operate under stringent constraints where agents possess only
  for learning coordination policies in distributed environments. 
 %
 However, 
- a critical limitation emerges in the practical deployment. 
+ a critical limitation emerges in practical deployment. 
 %
 The current \gls{MARL} approaches typically learn policies for fixed agent populations during training, 
  while the real-world deployments often require operation with variable agent numbers. 
@@ -733,7 +733,7 @@ This study specifically focuses on homogeneous swarms performing 2D navigation t
  providing a controlled setting to isolate the effects of \gls{GNN}-based policy scaling 
  rather than addressing more complex or heterogeneous domains.
 
-The main contributions of this work are threefold as the following:
+The main contributions of this work are threefold:
 
 \begin{enumerate}
     \item Algorithmic contribution: 
@@ -842,13 +842,13 @@ The training objective is to minimize the standard DQL loss function,
 \left[\sum_{i=1}^{\mathcal{N}}\bigl(y_i - Q(\mathbf{o}^t,\mathcal{G}_t;\theta)_i[a_i^t]\bigr)^2\right]
 \end{equation}
 where $[a_i^t]$ denotes the Q-value corresponding to the action taken by agent $i$ at time $t$.
-T
+%
 The target value \(y_i\) for agent \(i\) 
  is calculated using a target network \(Q'\) with parameters \(\theta'\) as follows:
 {\begin{equation}
 y_i = r_i^{t+1} + \gamma \max_{a' \in \mathcal{A}} Q'(\mathbf{o}^{t+1},\mathcal{G}_{t+1}; \theta')_i[a']
 \end{equation}}
-T
+%
 where the parameters \(\theta\) 
  are updated via gradient descent on this loss. 
  The target network parameters \(\theta'\) 
@@ -1331,7 +1331,7 @@ In some cases,
 To verify if the proposed approach is able to generalize across different swarm sizes and to 
  perform different swarming behaviors, a set of tasks were designed for the swarm of agents to perform.
 %
-We restrict our evaluation to simple, 
+We restrict our evaluation to simple tasks, 
  as they allow systematic investigation of scalability without 
  confounding factors from task-specific dynamics.
 %
@@ -1395,10 +1395,11 @@ The shared reward for the swarm is the sum of individual rewards,
 	\caption{The Go to Position task. The agents (green dots) must converge to a target location (black dot).}
 	\label{fig:Task1}
 \end{figure}
+
 \sidenote{check perche per uno facciamo il paragraph e gli altri no}
 \paragraph{Obstacle Avoidance (\Cref{fig:Task3})}
-
-This task (\Cref{fig:Task3}) extends the Go to Position scenario by introducing a static, 
+%
+This task extends the Go to Position scenario by introducing a static, 
  circular obstacle into the environment. 
 % 
 Agents must not only navigate towards the goal \(g\)

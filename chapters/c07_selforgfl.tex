@@ -61,7 +61,7 @@ Standard \gls{FL} algorithms such as \gls{FedAvg}~\cite{DBLP:conf/aistats/McMaha
 In practice, this assumption frequently fails.
 %
 When data distributions vary significantly across clients 
- (a condition commonly referred to as statistical heterogeneity or non-\gls{IID} data) 
+ (a condition commonly referred to as statistical heterogeneity or non-\gls{IID} data), 
  training a single global model introduces a bias toward the majority distribution and degrades
  performance for underrepresented clients.
 
@@ -286,7 +286,7 @@ The concrete mechanisms through which the federations $\mathcal{F}$ are discover
 %=============================================================================
 
 As discussed in~\Cref{sec:selforgfl-motivation}, 
- the approach developed in this chapter frames the custering problem as a self-organization problem 
+ the approach developed in this chapter frames the clustering problem as a self-organization problem 
  amenable to field-based coordination.
 %
 The main objective of this line of work has therefore been to map the key
@@ -302,8 +302,8 @@ aggregate program, without relying on a distinguished server or requiring the
 number and composition of the federations to be known in advance.
 
 The coordination structure is obtained through the
-Self-organizing Coordination Regions (\gls{SCR}) pattern introduced in
-Chapter~3.
+Self-organizing Coordination Regions (\gls{SCR}) pattern introduced 
+ in~\Cref{chap:macroprogramming}.
 %
 The pattern combines three aggregate computing building blocks.
 %
@@ -2463,12 +2463,12 @@ ProFed supports various TorchVision datasets widely used in computer vision rese
  (details in~\Cref{tab:datasets}). 
 %
 We include MNIST~\cite{lecun2010mnist} as a baseline: 
- grayscale $28 \times 28$ pixel images of handwritten digits across 10 classes.% (\Cref{fig:mnist}). 
+ grayscale $28 \times 28$ pixel images of handwritten digits across 10 classes.
 %
-ProFed extends this with Fashion MNIST~\cite{DBLP:journals/corr/abs-1708-07747} (clothing items, 10 classes) %\Cref{fig:fashion}) 
+ProFed extends this with Fashion MNIST~\cite{DBLP:journals/corr/abs-1708-07747} (clothing items, 10 classes) 
  and Extended MNIST~\cite{DBLP:journals/corr/CohenATS17} (EMNIST, Latin alphabet letters, 27 classes). 
 % 
-For color images, ProFed includes CIFAR10 and CIFAR100 with 32x32 RGB images. %(\Cref{fig:cifar100}). 
+For color images, ProFed includes CIFAR10 and CIFAR100 with 32x32 RGB images. 
 %
 CIFAR10 has 10 classes while CIFAR100 has 100, offering greater complexity. 
 %

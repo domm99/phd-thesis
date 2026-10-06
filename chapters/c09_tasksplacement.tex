@@ -223,8 +223,8 @@ The key innovation lies in supporting both \emph{local} and \emph{collective} co
  regardless of deployment decisions:
 %
 \begin{enumerate*}[label=(\arabic*)]
-  \item a \emph{macroprogramming model} that structures applications a
-   s interconnected components with defined ports and bindings;
+  \item a \emph{macroprogramming model} that structures applications as
+   interconnected components with defined ports and bindings;
   \item an \emph{infrastructural model} distinguishing between application devices 
    that execute the macroprogram and infrastructural devices that provide offloading resources; and
   \item a \emph{deployment model} that maps component instances to execution devices via owner--surrogate relationships.
@@ -304,7 +304,7 @@ We distinguish between \emph{collective}
  and \emph{local} components (\Cref{fig:collective-local-components}).
 %
 A component is said \emph{collective} (thick border square in \Cref{fig:collective-component}) 
- if the execution of one of its instance requires the interaction 
+ if the execution of one of its instances requires the interaction 
  with other neighbor instances of the same component.
 %
 Conversely,
@@ -351,11 +351,11 @@ For instance a component ``\emph{taking the temperature and return a boolean hol
 \end{figure*}
 
 \paragraph{Components Interaction.}
-Components instance interaction occurs at two levels:
+Components-instance interactions occur at two levels:
  \emph{inter-component interaction} and \emph{intra-component interaction}.
 %
 The former occurs when a component instance---instantiated in a device---gets inputs 
- from an upstream components instances associated to the same device.
+ from an upstream component instances associated to the same device.
 %
 The latter occurs when given a component instance $\mathtt{C}$ associated to a device,
  it exchanges information with the $\mathtt{C}$ instances associated to its neighbor devices.
@@ -522,7 +522,7 @@ The macroprogram can be defined as the interaction between four components:
 \begin{itemize}
   \item \textsc{Position sensor} \PositionSensor{} defining the component responsible for acquiring the device location; this component is \emph{local} since it does not require interaction with other devices;
   \item \textsc{Density estimator} \DensityEstimation{} defining the component responsible for computing the local density of the crowd; this component is \emph{collective} since it requires the interaction with neighbor devices to define a distributed collective data structure;
-  \item \textsc{Route planner} \Router{} defining the component responsible to compute the route towards the safe zone; also this component is \emph{collective} since it requires a global view of the system to compute the best route; and
+  \item \textsc{Route planner} \Router{} defining the component responsible for computing the route towards the safe zone; also this component is \emph{collective} since it requires a global view of the system to compute the best route; and
   \item \textsc{Navigation system} \GuidanceActuator{} defining the component responsible for interpreting the route and providing the user with the proper guidance; this component is \emph{local} since no neighbor interaction is required.
 \end{itemize}
 
@@ -534,7 +534,7 @@ In this application,
 %
 The output of this component,
  expressed with the port $\port{\sigma}$,
- it is then used by the \textsc{Density estimator} to compute the density estimation of the crowd.
+ is then used by the \textsc{Density estimator} to compute the density estimation of the crowd.
 %
 This component is collective since the density estimation is computed by a global perspective,
  requiring the continuous interaction with neighbor devices.
@@ -567,7 +567,7 @@ Conversely,
  all the computation is performed on the application devices $\mathbf{D}$ (i.e., user devices),
  ensuring a faster reaction time and a more responsive system.
 
-The \Cref{fig:deployment-model} shows a (simplified) deployment of this system in the two conditions:
+\Cref{fig:deployment-model} shows a (simplified) deployment of this system in the two conditions:
  \emph{steady} (\Cref{fig:deployment-steady}) and \emph{emergency} (\Cref{fig:deployment-emergency}).
 %
 The solid circles represent the application devices $\mathbf{D}$,
@@ -609,7 +609,7 @@ Specifically,
  this mapping is a function from the set of components $\mathtt{C}$ to the set of devices $\mathbf{D}_O = \mathbf{D}_I \cup \{\delta_j\}$
  where $\delta_j$ is the current device in which the policy is executed.
 %
-Each \emph{application device} may locally observe several following features like 
+Each \emph{application device} may observe several features such as 
  battery level of each \emph{application device} ($\mathbf{D}$),
  management cost of each \emph{infrastructural device} ($\mathbf{D}_I$),
  and the output of its hosted components instances.
@@ -701,7 +701,7 @@ The reward function $\mathcal{R}$ is application-dependent.
 %
 Here, 
  we employ a multi-objective approach, 
- try to balance several objectives, such as energy consumption and system-wide cost.
+ to balance several objectives, such as energy consumption and system-wide cost.
 %
 Among the possible objectives, 
  we consider a standard linear combination of the objectives.
@@ -967,7 +967,7 @@ The key components of the algorithm, detailed in \Cref{alg:idhql}, are as follow
       \State Observe current graph state $G_o$ and compute collective enrichment $c_t = Agg(G_o)$
       \For{each device $\delta \in \mathbf{D}$}
           \State Obtain device state $o_{\delta,t}$
-          \If{random() < $\epsilon$}
+          \If{random() $< \epsilon$}
               \State Select random action $a_{\delta,t}$
           \Else
               \State Compute Q-values: $G_q = Q(G_o; \theta)$
@@ -1292,7 +1292,7 @@ Finally,
     Density-based offloading strategy using IDHGQL with collective information and node movements. 
     Time flows from left to right. Each point represents an application node, and the color indicates the percentage of components being executed locally. 
     It can be observed that when, at time 100, the three nodes in the bottom-left corner move from a dense area to a less congested one, 
-    the system is able to correctly readjust .
+    the system is able to correctly readjust.
   }
   \label{fig:experiment-density-eval}
 \end{figure*}
