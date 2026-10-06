@@ -10,6 +10,7 @@
 
 \section{Motivation}\label{sec:motivation}
 
+\subsection{Context}
 The learning architectures presented in the previous chapters 
  enable collections of devices to coordinate 
  and learn without relying on a centralized view of the system.
@@ -122,7 +123,7 @@ leftmargin=*
     \item
     How can deep reinforcement learning support decentralized component offloading while accounting 
     for both individual device constraints and collective phenomena such as network congestion and server load?
-\label{rq}
+\label{idhgql-rq}
 \end{enumerate}
 
 To answer this question, 
@@ -147,7 +148,53 @@ In this way,
  the chapter extends the thesis investigation from the coordination of distributed learning processes 
  to the resource-aware deployment of their applications across heterogeneous edge infrastructures.
 
-\section{Problem Statemen}\label{sec:problem-statement}
+\subsection{Motivating Examples}\label{subsec:offloading-motivating-examples}
+\paragraph{Crowd Steering.}
+In large-scale events or emergency situations, 
+ crowd steering applications guide individuals to safe zones or emergency exits, 
+ minimizing congestion and potential hazards~\cite{DBLP:conf/IEEEcit/SassiBGMMZ15}.
+%
+These applications rely on real-time data from individual \emph{smart devices} 
+ (e.g., location, movement) and collective information (e.g., crowding density).
+%
+Collective offloading is critical here: in a normal operational condition,
+ devices may offload navigation and route planning task to nearby edge servers preserving their battery life.
+%
+However, in emergency situations,
+ devices in a high-density area 
+ may experience limited bandwidth and network congestion generating communication delays---conditions 
+ that must be avoided to ensure timely and effective crowd steering.
+%
+In such cases,
+ devices can execute tasks locally to avoid network congestion and communication delays,
+ paying the cost of higher energy consumption.
+%
+This distributed approach ensures responsiveness 
+ and personalized guidance even under stress conditions.
+
+\paragraph{Swarms Surveillance.} 
+Consider a scenario where multiple interconnected drones 
+ or robots are employed to monitor large areas for security,
+ disaster relief, or environmental monitoring~\cite{DBLP:journals/trob/ChungPDSK18a}.
+%
+Each device collects data (e.g., images or sensor readings) that needs to be processed 
+ and analyzed collectively to gain a comprehensive understanding of the monitored area.
+%
+In these tasks,
+ devices may face limitations in processing power,
+ battery life, and communication bandwidth.
+%
+Collective offloading enables efficient distribution of these computationally intensive tasks.
+% 
+For instance,
+ image recognition tasks can be offloaded to edge servers closer to the swarm, 
+ while data fusion and analysis can be performed on more powerful cloud servers.
+%
+This hierarchical approach optimizes resource utilization 
+ and enhances the overall surveillance effectiveness.
+
+
+\section{Problem Statement}\label{sec:problem-statement}
 
 Following the challenges identified in \Cref{sec:motivation}, 
  and the basic approach of system model introduced in \cite{acsos-model}, 
@@ -437,8 +484,8 @@ Nevertheless,
 
 \subsection{Crowd Steering Real World Example}\label{sec:crowd-steering-example}
 
-We consider the \emph{Crowd Steering} application presented in \Cref{sec:crowd-steering},
- and how it can be modeled using the system model introduced in \Cref{sec:system-model}.
+We consider the \emph{Crowd Steering} application presented in~\Cref{subsec:offloading-motivating-examples},
+ and how it can be modeled using the system model introduced in~\Cref{sec:system-model}.
 %
 Such modeling will be useful to better understand the offloading problem presented in the next sections.
 
@@ -944,7 +991,11 @@ The key components of the algorithm, detailed in \Cref{alg:idhql}, are as follow
 
 \section{Evaluation}
 
-To validate our proposed IDHGQL framework, we conduct a series of experiments designed to answer our research question (RQ, \Cref{rq2}). Specifically, our evaluation aims to: 
+To validate our proposed IDHGQL framework, 
+ we conduct a series of experiments designed to answer our research question (\ref{idhgql-rq}). 
+% 
+Specifically, 
+ our evaluation aims to: 
 \begin{enumerate*}[label=(\roman*)]
     \item assess the framework's ability to learn effective multi-objective offloading policies that balance individual device constraints (battery) and system-wide objectives (cost, server load), and
     \item demonstrate the critical role of integrating collective information via aggregate computing to handle emergent phenomena like network congestion.

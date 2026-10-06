@@ -690,7 +690,7 @@ While the existing approaches often address task complexity~\cite{DBLP:conf/dsrt
  or communication optimization~\cite{DBLP:conf/sac/MalucelliDAV25}, 
  few directly tackle population scalability. 
 %
-Notable exceptions include mean-field RL~\cite{yang2018mean} 
+Notable exceptions include mean-field RL~\cite{DBLP:conf/icml/YangLLZZWY18} 
  and macro-programming abstractions~\cite{DBLP:journals/scp/DominiCAV24}. 
 %
 However, 
@@ -782,7 +782,7 @@ This integration is motivated
 % 
 By representing agent interactions as dynamic graphs and using \glspl{GNN} for Q-value estimation, 
  DGQL can learn coordination policies that generalize across different swarm topologies 
- and sizes—a critical requirement for scalable deployment.
+ and sizes---a critical requirement for scalable deployment.
 % 
 The core innovation of DGQL lies in its adaptation of the standard \gls{DQL} components 
  to incorporate graph-structured reasoning as the following:
@@ -809,7 +809,6 @@ The core innovation of DGQL lies in its adaptation of the standard \gls{DQL} com
     as input and computes Q-values for each agent \(i \in \mathcal{V}\) 
     and each possible action \(a \in \mathcal{A}\). 
     The GQN architecture first employs GNN layers 
-    (as described in \Cref{sec:related}) 
     that perform message passing to compute node embeddings 
     \(\mathbf{h}_i^{(K)}\) for each agent \(i\). 
     These embeddings encode information about the agent's state 
@@ -1327,7 +1326,7 @@ In some cases,
 \end{figure}
 
 
-\subsection{Evaluation}
+\subsection{Evaluation}\label{subsec:gnn-evaluation}
 
 To verify if the proposed approach is able to generalize across different swarm sizes and to 
  perform different swarming behaviors, a set of tasks were designed for the swarm of agents to perform.
@@ -1669,7 +1668,7 @@ To qualitatively assess emergent spatial organization as team size grows,
 %
 Unless stated otherwise, 
  results aggregate multiple seeds per configuration, 
- following the protocol in \Cref{sec:evaluation}, 
+ following the protocol in \Cref{subsec:gnn-evaluation}, 
  and execution is fully decentralized with one message-passing round per step (\Cref{alg:decentralized}).
 
 At a high level, 
