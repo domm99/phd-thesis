@@ -29,16 +29,16 @@ Rather than operating in isolation,
  robotic collectives~\cite{DBLP:journals/scp/AguzziV25},
  and the edge--cloud continuum~\cite{DBLP:journals/fgcs/FarabegoliDAV26}.
 
-The behaviour of these systems cannot be understood solely
+The behavior of these systems cannot be understood solely
  in terms of their individual components.
 %
 Each device acts on the basis of partial information,
  derived from its local state and from interactions with a limited
- and possibly changing set of neighbours.
+ and possibly changing set of neighbors.
 %
 Nevertheless,
  these locally situated actions influence one another
- and jointly give rise to the behaviour observed at the system level.
+ and jointly give rise to the behavior observed at the system level.
 %
 This interplay between local autonomy
  and system-level emergence is characteristic of \glspl{CAS}~\cite{DBLP:conf/huc/Ferscha15}:
@@ -46,8 +46,8 @@ This interplay between local autonomy
  adapt during operation, and pursue individual or collective objectives.
 
 Autonomy in these systems can be engineered through several approaches,
- among them explicit programming of individual device behaviour~\cite{DBLP:journals/aamas/BrescianiPGGM04,},
- macroprogramming abstractions that express collective behaviour from a global perspective~\cite{DBLP:journals/csur/Casadei23,DBLP:journals/tomacs/ViroliABDP18},
+ among them explicit programming of individual device behavior~\cite{DBLP:journals/aamas/BrescianiPGGM04,},
+ macroprogramming abstractions that express collective behavior from a global perspective~\cite{DBLP:journals/csur/Casadei23,DBLP:journals/tomacs/ViroliABDP18},
  and learning-based methods that derive models or decision policies from data and experience~\cite{DBLP:conf/icml/ZhangYBH18,DBLP:conf/icml/YangLLZZWY18}.
 %
 This thesis focuses on the latter two, 
@@ -59,7 +59,7 @@ Learning-based approaches are particularly suited to \glspl{CAS}
  because the environment is often too dynamic, large, or uncertain
  to be fully described or anticipated in advance:
  rather than requiring a designer to enumerate every operating condition,
- they allow the system to adapt its behaviour as it interacts with the world.
+ they allow the system to adapt its behavior as it interacts with the world.
 %
 Two paradigms are especially relevant here:
  \gls{MARL}~\cite{DBLP:journals/corr/abs-1911-10635}, 
@@ -73,7 +73,7 @@ Yet learning independently at each device is not sufficient.
 %
 Because each device observes only a partial view of the environment,
  no single device can acquire the breadth of experience
- needed to support reliable behaviour across the collective.
+ needed to support reliable behavior across the collective.
 %
 Cooperation among devices is therefore necessary:
  by sharing knowledge, model updates, or learned representations,
@@ -87,7 +87,7 @@ This is the core motivation for \emph{cooperative learning} in \glspl{CAS}:
 %
 Designing such cooperation, however, is itself a non-trivial engineering problem
  in a setting where there is no fixed central coordinator
- and devices can communicate only with a local neighbourhood.
+ and devices can communicate only with a local neighborhood.
 
 Engineering these systems is further complicated 
  by both scale and dynamism. 
@@ -150,7 +150,7 @@ However,
  that will subsequently be observed. 
 % 
 This creates a continuous feedback loop between local observations, 
- individual decisions, and system-level behaviour.
+ individual decisions, and system-level behavior.
 
 Useful information is not uniformly distributed across the fleet. 
 %
@@ -179,7 +179,7 @@ A complementary scenario arises after a natural disaster,
  and locate people. 
 % 
 Each device observes only a limited portion of the environment 
- and can communicate only with currently reachable neighbours. 
+ and can communicate only with currently reachable neighbors. 
 % 
 Building an operational picture therefore requires
  combining observations collected at different locations and times.
@@ -323,7 +323,7 @@ Rather,
 %
 Accordingly, 
  this thesis treats cooperative learning as an integral component 
- of collective behaviour, rather than as an algorithm added after 
+ of collective behavior, rather than as an algorithm added after 
  the surrounding system has already been designed.
 
 \section{Contribution}
@@ -358,7 +358,7 @@ to temporal distribution shifts caused by mobility and changing environments?
 
 \item
 How can decentralized learning remain effective and scalable when devices have
-access only to local observations, communicate with a limited neighbourhood,
+access only to local observations, communicate with a limited neighborhood,
 and operate in collectives whose size may change?
 \label{itm:rq3}
 
@@ -389,7 +389,7 @@ the spatial structure of collaboration.
 The second line addresses~\ref{itm:rq3} through \emph{scalable decentralized
 reinforcement learning}. It investigates training strategies based on
 interactions among neighbouring devices and learning architectures that operate
-on variable-sized neighbourhoods. The resulting analysis characterizes the
+on variable-sized neighborhoods. The resulting analysis characterizes the
 trade-offs between centralized training, independent learning, and local
 cooperation, and examines whether policies trained with a given number of
 devices remain effective when deployed in larger collectives.
@@ -403,7 +403,7 @@ congestion, and infrastructure load, thereby accounting for the externalities
 created by concurrent device decisions.
 
 Together, these contributions treat cooperative learning not as an isolated
-algorithm but as a component of collective behaviour, surrounded by explicit
+algorithm but as a component of collective behavior, surrounded by explicit
 coordination and deployment mechanisms.
 They provide concrete methods and broader design evidence for engineering
 learning into \glspl{CAS} under the conditions that define them:
@@ -419,7 +419,7 @@ contributions. \Cref{chap:context} presents Collective Adaptive Systems,
 self-adaptive systems, and the edge--cloud continuum, establishing the
 computational and deployment setting considered throughout the thesis.
 \Cref{chap:macroprogramming} introduces macroprogramming and the abstractions
-used to express collective behaviour through local interactions.
+used to express collective behavior through local interactions.
 \Cref{chap:ml} provides the machine-learning foundations required by the
 subsequent chapters. \Cref{chap:federated-learning} focuses on federated
 learning, with particular attention to decentralized architectures, non-IID data,
