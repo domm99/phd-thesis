@@ -1092,21 +1092,17 @@ This limitation motivates the data-aware distance function introduced in the fol
 \label{sec:psfl}
 %=============================================================================
 
-The purely spatial organization adopted by \gls{FBFL} is effective when physical
-proximity reflects similarity between local data distributions.
+The purely spatial organization adopted by \gls{FBFL} is effective 
+ when physical proximity reflects exactly similarity between local data distributions.
 %
-However, physical proximity alone does not indicate whether the data observed
-by nearby devices are compatible.
-%
-\sidenote{ Questa è da spiegare meglio }
-Devices located in the same area may monitor different phenomena or interact
-with the environment under different conditions, while devices with similar
-experiences may not necessarily be geographically close.
+However, 
+ physical proximity alone does not always indicate whether 
+ the data observed by nearby devices are compatible.
 %
 Proximity-Aware Self-Federated Learning
-(\gls{PSFL})~\cite{DBLP:journals/iot/DominiFAVE26} addresses this limitation by
-replacing Euclidean distance with a data-aware measure derived from the models
-trained by neighboring devices.
+ (\gls{PSFL})~\cite{DBLP:journals/iot/DominiFAVE26} 
+ addresses this limitation by replacing Euclidean distance with a data-aware 
+ measure derived from the models trained by neighboring devices.
 
 This change makes federation formation \emph{space-fluid}: the coordination
 structure remains embedded in the communication network, but the perceived
@@ -3153,9 +3149,33 @@ Replay and adaptive averaging serve complementary purposes:
 The replay memory remains local and does not introduce 
  any additional exchange of raw data.
 
+\begin{figure*}
+    \centering
+    %
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/ch07/c2fl/moving-node-FL_merge.pdf}
+        \caption{FBFL.}
+        \label{fig:moving-node-fl}
+    \end{subfigure}%
+    % \hfill
+    \begin{subfigure}{0.49\textwidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/ch07/c2fl/moving-node-C2FL_merge.pdf}
+        \caption{C2FL.}
+        \label{fig:moving-node-c2fl}
+    \end{subfigure}
+    %
+    \caption{Per-area accuracy ($\mathrm{Acc}_d^{(t)}(k)$) of a mobile device over the learning process. 
+    Each subplot reports the accuracy on the test data associated with one spatial area.
+    The vertical dashed red lines mark mobility-induced region transitions.
+}
+    \label{fig:fl-vs-c2fl}
+\end{figure*}
+
 Preliminary experiments with mobile devices moving across four heterogeneous
  regions confirm that standard field-based federated learning suffers from
- catastrophic forgetting after region transitions.
+ catastrophic forgetting after region transitions (\Cref{fig:moving-node-c2fl}).
 %
 C2FL substantially preserves accuracy on previously visited regions and achieves
  higher cumulative accuracy than local learning, replay without federation, and
@@ -3165,11 +3185,9 @@ The performance increments after successive transitions show that replay retains
  from previously visited regions, while the consistent gap over the continual-learning-only baseline 
  isolates the additional benefit of regional model integration.
 
-\note{aggiungere gli altri due grafici}
-
 \begin{figure}
     \centering
-    \includegraphics[width=0.7\textwidth]{figures/ch07/c2fl/comparison.pdf}
+    \includegraphics[width=0.55\textwidth]{figures/ch07/c2fl/comparison.pdf}
     \caption{
         Cumulative accuracy of C2FL and the three ablation baselines over global
         rounds.
