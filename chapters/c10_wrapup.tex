@@ -6,5 +6,444 @@
 \label{chap:wrapup}
 \minitoc
 %----------------------------------------------------------------------------------------
+
+This thesis investigated how cooperative learning 
+ can be engineered as part of the behavior of a \gls{CAS}, 
+ rather than treated as an isolated algorithm running
+ on top of an independently designed distributed system.
+%
+The starting point was that many-agent deployments invalidate several assumptions 
+ commonly made by centralized learning: data cannot always be pooled,
+ global state may be unavailable, the population and communication topology may change, 
+ and individual devices may lack the resources required to train or execute complex models locally.
+%
+Addressing these conditions requires more than distributing an existing learning algorithm. 
+%
+The organization of collaboration, the representation of collective state, 
+ and the placement of computation must be designed together with the learning process.
+
+The contributions developed in this thesis explored 
+ this claim along three complementary directions.
+%
+\Cref{chap:selforg-fl} studied how federated-learning groups can emerge 
+ and reorganize through local field-based coordination.
+%
+\Cref{chap:scalable-rl} examined how reinforcement learning can exploit neighborhood exchanges
+ and graph-based policies to remain decentralized and operate across different population sizes.
+%
+\Cref{chap:tasksplacement} moved from learning coordination policies to deploying distributed applications, 
+ combining heterogeneous graph learning with aggregate information to support component-level offloading 
+ across the edge--cloud continuum.
+%
+This final chapter consolidates the evidence obtained from these contributions,
+ answers the research questions introduced in~\Cref{chap:introduction}, 
+ and identifies the main directions required to move from controlled evaluations 
+ to long-lived operational systems.
+
+
+%=============================================================================
 \section{Conclusions}
-\section{Future Works}
+\label{sec:conclusions}
+%=============================================================================
+
+The central conclusion of this thesis is that cooperative learning in a \gls{CAS} 
+ benefits from an explicit coordination layer that exposes useful collective structure 
+ without requiring every device to observe or control the entire system.
+%
+Across the investigated settings, 
+ local information alone was often insufficient, 
+ whereas a centralized representation was either undesirable or incompatible with the target deployment.
+%
+Field-based coordination and graph-based learning occupied the space 
+ between these extremes. 
+% 
+They allowed each device to act locally while incorporating information about its neighborhood, 
+ its learning group, or the state of shared infrastructure.
+%
+The resulting systems did not reproduce centralized learning exactly; 
+ instead,
+ they obtained the information required for the task through bounded interactions 
+ whose structure could adapt with the collective.
+
+\paragraph{RQ1: How can privacy-aware cooperative learning be organized among
+many distributed devices without centralizing raw data or relying on a fixed
+central coordinator?}
+%
+The results of~\Cref{chap:selforg-fl} show that field-based coordination 
+ can construct the organizational structure required by \gls{FL}
+ directly from local interactions.
+%
+FBFL replaced a single global federation 
+ with a set of self-organizing spatial regions, 
+ each temporarily coordinated by an elected leader. 
+% 
+This organization realized a form of \gls{CFL} 
+ in which each region trained and maintained its own model, 
+ allowing multiple models specialized to different local data distributions to coexist. 
+% 
+When leaders failed, 
+ the regions were reconstructed and training continued 
+ without external reconfiguration or lasting accuracy loss.
+%
+PSFL generalized this organization by incorporating model compatibility 
+ into the distance used for region formation. 
+% 
+This allowed the number and membership of federations 
+ to emerge during execution instead of being fixed in advance, 
+ and enabled devices to revise their membership as they moved.
+
+These results establish that the control plane of \gls{FL} need not be centralized 
+ or statically configured.
+%
+Keeping training data on the originating devices 
+ and restricting model exchange to dynamically formed neighborhoods reduces the need 
+ for global data collection and limits the scope of collaboration.
+%
+This should nevertheless be interpreted as a privacy-aware architecture 
+ rather than a formal privacy guarantee. 
+% 
+Protecting the information contained in model parameters 
+ and updates constitutes a complementary line of research in \gls{FL}, 
+ largely orthogonal to the organizational problem addressed here. 
+% 
+Mechanisms such as secure aggregation 
+ and differential privacy can be integrated at the model-exchange 
+ and aggregation layers without altering the self-organizing principles 
+ used to form and maintain federations. 
+% 
+The proposed methods therefore provide an organizational substrate 
+ on top of which stronger privacy guarantees can be implemented, 
+ rather than replacing the mechanisms that provide those guarantees.
+
+\paragraph{RQ2: How can cooperative learning account for spatially heterogeneous
+data and adapt to temporal distribution shifts caused by mobility and changing
+environments?}
+FBFL demonstrated that spatial structure can be used as an inductive bias for
+collaboration when proximity correlates with the data-generating process. Under
+spatially partitioned non-\gls{IID} data, regional models avoided interference
+between incompatible distributions and substantially outperformed methods that
+forced all devices to optimize a single global model.
+%
+However, 
+ FBFL relied exclusively on physical proximity to cluster devices. 
+% 
+This assumption is effective when spatial closeness reflects similarity 
+ between local data distributions, 
+ but the strength and spatial scale of this relation may be difficult 
+ to determine a priori and may vary across the environment. 
+% 
+PSFL relaxed this assumption by replacing the purely spatial distance 
+ with a configurable metric incorporating loss-based model compatibility. 
+% 
+Regions could therefore expand where devices learned compatible models 
+ and contract or separate where their models diverged, 
+ allowing the emerging federations to follow the statistical structure of the data more closely 
+ while retaining local communication.
+
+Mobility revealed a distinction between organizational and model adaptation.
+%
+The field-based structure can track changes in device position 
+ and reconstruct appropriate federations, 
+ but changing collaborators does not preserve knowledge acquired in regions visited previously.
+%
+For a mobile device, 
+ spatial heterogeneity becomes a temporal sequence of distributions 
+ and can therefore produce catastrophic forgetting.
+%
+The preliminary C2FL results show that local replay and dwell-time-aware model integration 
+ can mitigate this effect while retaining the benefit of the current regional federation.
+
+
+\paragraph{RQ3: How can decentralized learning remain effective and scalable
+when devices have access only to local observations, communicate with a limited
+neighborhood, and operate in collectives whose size may change?}
+\Cref{chap:scalable-rl} investigated two distinct dimensions of decentralized scalability:
+ where learning information is exchanged and whether the learned policy 
+ can be executed by populations of different sizes.
+%
+The neighbor-based training experiments showed that full independence 
+ is not the only alternative to centralized training.
+%
+Exchanging experiences or averaging model information within bounded neighborhoods 
+improved the stability and performance of decentralized deep Q-learning, 
+approaching centralized training in the evaluated coordination task.
+%
+The comparison also exposed the cost of different exchanges. 
+%
+Experience sharing provided a favorable balance because its communication footprint remained small,
+ whereas exchanging complete model information incurred a larger cost that grew with neighborhood size.
+% 
+Local cooperation can therefore recover part of the benefit of centralized training, 
+ but the exchanged representation determines whether that improvement remains feasibile.
+
+DGQL addressed population scaling at the policy level by representing agents 
+ and their interactions as a graph and sharing the same graph-based policy across the collective.
+%
+The learned policy remained functional when deployed without retraining 
+ in swarms larger than the training population: 
+ agents continued to approach their goals and maintained obstacle avoidance.
+%
+Performance, however, 
+ degraded as population size diverged from the training configuration. 
+% 
+Increased density changed the local interaction patterns observed by the policy 
+ and exposed the limited receptive field of a fixed neighborhood 
+ and shallow message-passing architecture. 
+% 
+In the obstacle-avoidance task, this shift appeared as a safety--efficiency trade-off:
+ collisions remained rare, but agents became increasingly conservative and less effective at reaching the goal.
+
+\paragraph{RQ4: How can learning-based decisions be deployed across heterogeneous
+and resource-constrained edge--cloud infrastructures while accounting for both
+individual device constraints and collective system-level phenomena?}
+IDHGQL addressed this problem by combining three representations.
+%
+The macro-component model decomposed applications into selectively placeable
+ units while preserving their data and execution dependencies.
+%
+The heterogeneous graph distinguished application devices,
+ edge and cloud resources, communication links, and workflow relations.
+%
+Aggregate computing enriched each local observation with self-stabilizing
+ summaries of collective conditions that could not be inferred reliably from the
+ state of one device alone.
+
+The evaluation showed that the resulting policy could express different
+ trade-offs among battery preservation, infrastructure cost, and server load.
+%
+More importantly, the density-aware experiments isolated the contribution of
+ collective information. 
+% 
+With aggregate density included in the observation,
+ devices learned to execute components locally in congested areas and offload from
+ sparser regions; when this information was removed, the agents converged toward a
+ largely uniform strategy that did not reflect their position in the collective.
+%
+The learned policy also adjusted its decisions when devices moved between dense
+ and sparse areas.
+
+\paragraph{Cross-cutting findings.}
+Taken together, the four answers identify three principles that recur across the
+contributions.
+%
+First, the collaboration topology is part of the learning problem. Choosing who
+exchanges models, experiences, messages, or infrastructure information changes
+both the statistical objective and the cost of reaching it. This topology should
+therefore be adaptive and task-aware rather than treated as fixed communication
+plumbing.
+%
+Second, locality is not only a limitation. Spatial and graph neighborhoods reduce
+the information available to an individual device, but they also provide structure
+that can constrain collaboration, bound communication, and expose the context in
+which local decisions take effect.
+%
+Third, scalability is multidimensional. Removing a central server, keeping model
+size independent of population size, or supporting variable graphs addresses only
+one source of growth. Communication volume, behavioral distribution shift,
+resource contention, and adaptation time must be considered jointly.
+
+These principles clarify the role of macroprogramming in the thesis.
+%
+Its contribution is not to replace learning algorithms, but to provide a
+computational layer through which collective state and organization can be
+constructed from local interactions. Learning supplies adaptation where explicit
+rules are difficult to design; macroprogramming supplies the coordination
+structure within which that adaptation remains deployable. Their combination
+offers a practical route for connecting device-level learning updates with the
+system-level behavior expected from a \gls{CAS}.
+
+
+
+
+%=============================================================================
+\section{Future Work}
+\label{sec:future-work}
+%=============================================================================
+
+The thesis establishes mechanisms for self-organizing learning,
+ scalable policy representation, and collective-aware deployment, 
+ each investigated through focused experimental settings designed to isolate 
+ the corresponding engineering challenges.
+%
+Building on these results, 
+ future research should strengthen adaptation within each layer and examine how the proposed mechanisms 
+ interact when integrated into long-running systems.
+
+\subsection{Autonomous and Continual Organization}
+
+The formation of learning groups should become less dependent 
+ on the task model and on manually selected thresholds.
+%
+PSFL estimates compatibility by exchanging 
+ and evaluating the models used for the primary task. 
+% 
+Although effective, 
+ this couples federation discovery to model architecture 
+ and incurs repeated communication and inference costs.
+%
+Lightweight auxiliary representations, 
+ such as novelty estimators based on random network distillation, 
+ offer a way to identify distributional compatibility before or independently of task training. 
+% 
+Future work should determine when this discovery process must be repeated 
+ and replace periodic clustering with event-driven mechanisms 
+ triggered by statistically meaningful changes.
+%
+Thresholds governing compatibility, federation radius, 
+ and leader selection should likewise adapt to local uncertainty 
+ and observed stability rather than remain fixed for an entire deployment.
+
+Long-lived mobility also requires continual adaptation of model knowledge.
+%
+The initial C2FL results motivate a broader comparison among replay, regularization, 
+parameter isolation, and hybrid continual-learning strategies in decentralized federations. 
+%
+Replay buffers must be bounded on resource-constrained devices, 
+ making sample selection and replacement policies part of the system design. 
+% 
+Adaptation should be evaluated under gradual shifts, recurring regions, irregular mobility, 
+ and delayed federation updates rather than only under abrupt transitions. 
+% 
+A further challenge is to distinguish genuine distribution change from temporary noise 
+ so that federation reorganization and model consolidation are not triggered unnecessarily.
+
+\subsection{Intrinsic Model Similarity}
+
+Complementary to auxiliary representations, 
+ compatibility could be estimated directly from intrinsic properties of the trained task models, 
+ without evaluating them on local data. 
+% 
+This requires more than applying a conventional vector similarity measure, 
+ such as cosine similarity, to flattened parameters. 
+% 
+Neural networks admit multiple parameterizations of the same function: 
+ for example, hidden units can be permuted together with their incident connections 
+ without changing the network output, despite producing substantially different parameter vectors. 
+% 
+A useful model-similarity function must therefore be invariant, 
+ or at least robust, to such function-preserving transformations.
+%
+Developing this function would also provide a basis for studying how model trajectories diverge 
+ when training data are drawn from homogeneous or heterogeneous distributions, 
+ and for identifying which structural properties of the models reliably indicate statistical compatibility.
+
+\subsection{Scale- and Resource-Aware Learning}
+
+Both the federated and reinforcement learning studies show that 
+ fixed local interaction parameters become limiting when density, topology, 
+ or resource availability changes.
+%
+Neighborhood size, communication frequency, and the type of exchanged information 
+ should be selected at runtime according to their expected benefit.
+%
+Agents could communicate when uncertainty is high, 
+ when a neighbor holds novel experience, or when local estimates indicate that 
+ the collective is becoming inconsistent. 
+% 
+Such event-driven protocols would make communication a controlled
+ resource rather than a fixed side effect of every training round.
+
+Graph-based policies similarly require explicit awareness of scale.
+%
+Training across randomized population sizes and densities, conditioning policies on local density, 
+ and progressively increasing coordination complexity may reduce the distribution shift observed by DGQL. 
+% 
+Adaptive graph construction could vary neighborhood size and receptive field with the task, 
+ while hierarchical or attention-based message passing could combine local responsiveness with
+ longer-range information. 
+% 
+These extensions must be evaluated against their communication and inference costs: 
+ increasing message-passing depth may improve coordination while undermining the bounded local interaction 
+ that makes the architecture deployable.
+
+Resource adaptation should also extend beyond a uniform model shared by all devices. 
+%
+SParSeFuL showed that sparsification affects not only computational cost and accuracy, 
+ but also the similarity estimates from which federations emerge.
+%
+Future methods should therefore adapt model capacity jointly with federation membership, 
+ accounting for heterogeneous processors, memory budgets, battery levels, and link quality. 
+% 
+This requires metrics that include transmitted bytes, training energy, 
+ and wall-clock adaptation time in addition to predictive performance.
+
+\subsection{Joint Learning and Deployment}
+
+The current contributions optimize learning organization 
+ and application placement in separate stages. 
+% 
+Operational systems will require these decisions to interact.
+%
+The device hosting a model, 
+ the neighbors with which it exchanges information,
+ and the infrastructure on which its components execute all influence latency,
+ energy consumption, and the freshness of the available knowledge. 
+% 
+A natural extension is therefore a unified control layer that 
+ can jointly adapt federation membership, model capacity, communication, and component placement.
+
+Such integration should preserve a separation between different timescales.
+%
+Fast field computations can track topology, congestion, and failures; 
+ learning can optimize decisions whose consequences unfold over longer horizons; 
+ and continual-learning mechanisms can consolidate knowledge across persistent changes. 
+% 
+Allowing one mechanism to control all three timescales directly 
+ would make the system difficult to stabilize and diagnose. 
+% 
+Explicit interfaces between coordination fields, learned policies, 
+ and deployment actions would instead make their dependencies observable 
+ and allow each layer to adapt at an appropriate rate.
+
+For IDHGQL, 
+ the immediate next step is to coordinate the placement of dependent
+ components rather than letting each agent choose independently. 
+% 
+Agents may need to negotiate compatible placements, reserve shared capacity, 
+ or account for the future decisions of nearby devices. 
+% 
+Multi-objective policies should also move beyond fixed linear scalarization, 
+ either by learning a set of Pareto-efficient policies or by adapting priorities to the operating context. 
+% 
+These extensions would turn collective-aware individual offloading into coordinated deployment 
+ of distributed workflows.
+
+\subsection{Validation in Operational Systems}
+
+The experiments in this thesis deliberately isolate individual mechanisms in simulation. 
+%
+Establishing external validity requires deployments in which sensing, communication, computation, 
+ and mobility introduce delays and failures that are only approximated by the current models.
+%
+Future evaluations should include physical robot or sensor collectives 
+ and edge--cloud testbeds with heterogeneous hardware, intermittent connectivity,
+ asynchronous execution, packet loss, and devices joining or leaving during operation. 
+% 
+Population size and topology should vary during both training 
+ and deployment, rather than being changed only between experimental runs.
+
+Evaluation criteria must also broaden beyond final task accuracy or reward.
+%
+Relevant measures include recovery time after disruption, communication volume,
+ energy consumed by training and inference, stability during reorganization,
+ fairness across devices and regions, and the quality of service experienced 
+ while adaptation is still in progress. 
+% 
+Privacy claims should be assessed against explicit adversary models, 
+ including information leakage from exchanged parameters and collective summaries. 
+% 
+Finally, 
+ comparisons should include the engineering cost of configuration: 
+ an approach that performs well only after selecting the correct number of clusters, 
+ neighborhood size, reward weights, or aggregation interval may be less useful 
+ in an open system than one with slightly lower peak performance but reliable self-configuration.
+
+Progress along these directions would move the proposed methods from separate proofs of feasibility 
+ toward a unified engineering discipline for cooperative learning in \glspl{CAS}. 
+% 
+The defining challenge is not merely to make each device learn, 
+ but to ensure that learning, coordination, and deployment continue 
+ to support one another as the collective changes. 
+%
+The evidence developed in this thesis indicates that this objective is attainable 
+ when collective structure is made explicit and treated as a first-class element of the learning system.
