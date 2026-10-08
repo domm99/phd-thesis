@@ -2,7 +2,7 @@
 %! Author = davidedomini
 
 %----------------------------------------------------------------------------------------
-\chapter{Deployment on Resource-constrained Edge Devices}
+\chapter{Deployment on Resource-Constrained Edge Devices}
 \label{chap:tasksplacement}
 \minitoc
 %----------------------------------------------------------------------------------------
@@ -260,7 +260,7 @@ The key innovation lies in supporting both \emph{local} and \emph{collective} co
 
 \subsubsection{Macroprogramming Model}
 
-\paragraph{Macro-program as a DAG of components.}
+\paragraph{Macroprogram as a DAG of Components.}
 The application logic is specified as a \emph{\gls{DAG}} of components,
  captured by a single \emph{macroprogram} $\mathtt{MP}$.
 %
@@ -299,7 +299,7 @@ A macroprogram $\mathtt{MP}$ is said \emph{well-formed} if:
 Input and output ports not connected to any components 
  are defined \emph{global} ports of the macroprogram $\mathtt{MP}$.
 
-\paragraph{Collective and local components.}
+\paragraph{Collective and Local Components.}
 We distinguish between \emph{collective} 
  and \emph{local} components (\Cref{fig:collective-local-components}).
 %
@@ -388,7 +388,7 @@ Note that the fourth element (i.e., the shared state with neighbor devices) is n
 
 \subsubsection{Infrastructural and Device Model}
 
-\paragraph{Physical system.}
+\paragraph{Physical System.}
 The \emph{physical system} consists of a network of \emph{physical devices} $\delta \in \mathbf{D}_P$ interconnected with each other.
 Assuming they can exchange messages in a peer-to-peer fashion,
  without a central controller.
@@ -401,7 +401,7 @@ The network on the left, depicted in~\Cref{fig:pulverization-model-all}
  shows an example of a physical system composed of devices interconnected in a peer-to-peer fashion,
  determining our \emph{physical system model}.
 
-\paragraph{Application devices.}
+\paragraph{Application Devices.}
 Given a macroprogram $\mathtt{MP}$,
  it is assumed to be collectively executed by a subset of the physical devices $\mathbf{D}$,
  which we call \emph{application devices}.
@@ -412,7 +412,7 @@ The network in the middle, depicted in \Cref{fig:pulverization-model-all},
 The \emph{application devices} define a neighborhood relationship $\mathcal{N}$ 
  which is a subset of the \emph{physical neighborhood} relationship $\mathcal{N}_P$.
 
-\paragraph{Infrastructural devices.}
+\paragraph{Infrastructural Devices.}
 We define additional devices that we call \emph{infrastructural devices} $\mathbf{D}_I \subseteq \mathbf{D}_P$ of physical devices,
 that can host the computation on behalf of some (zero or many) application devices.
 %
@@ -438,9 +438,9 @@ We assume $\mathbf{D}$ and $\mathbf{D}_I$ to be fixed and known in advance,
   \label{fig:pulverization-model-all}
 \end{figure}
 
-\subsubsection{Application and deployment model}\label{sec:deployment-model}
+\subsubsection{Application and Deployment Model}\label{sec:deployment-model}
 
-\paragraph{Device-component relationship.}
+\paragraph{Device-Component Relationship.}
 Given a macroprogram $\mathtt{MP}$,
  and a set $\mathbf{D}$ of application devices on which the macro-program will be executed,
  the overall system will run a component instance $\mathtt{C}^i_j$
@@ -714,7 +714,7 @@ $$
 $$
 where $\lambda_i$ are the weights of the objectives.
 
-\section{Proposed method: IDHGQL}\label{sec:methodology}
+\section{Proposed Approach: IDHGQL}\label{sec:methodology}
 To address the collective component offloading problem formulated in~\Cref{sec:problem-statement}, 
  we introduce the \textbf{I}nformed \textbf{D}eep \textbf{H}etero \textbf{G}raph \textbf{Q}-\textbf{L}earning (IDHGQL) framework. 
  This approach finds a decentralized offloading policy that optimizes multiple objectives 
@@ -920,7 +920,7 @@ Moreover, aggregate programs provide interpretable, domain-specific features
 This integration accelerates learning and leads to more robust, context-aware offloading strategies.
 
 
-\subsection{The Informed Deep Hetero Graph Q-Learning (IDHGQL) Algorithm}
+\subsection{The IDHGQL Algorithm}
 The IDHGQL algorithm integrates the \gls{HGNN} policy network and the aggregate computing state enrichment into a coherent learning procedure. 
  It adapts the core principles of \gls{DQL}, 
  including experience replay and the use of a target network, 
@@ -1177,7 +1177,7 @@ Furthermore, \Cref{fig:mixed-tradeoff}
 \begin{figure}
   \centering  
   \centering
-  \includegraphics[width=0.5\linewidth, keepaspectratio]{experiment/mixed/review/alpha-0.3_beta-0.1_gamma-0.6/alpha-0.3_beta-0.1_gamma-0.6_allinone-edge.pdf}
+  \includegraphics[width=\linewidth,keepaspectratio]{experiment/mixed/review/alpha-0.3_beta-0.1_gamma-0.6/alpha-0.3_beta-0.1_gamma-0.6_allinone-edge.pdf}
   \caption{ 
     Learning results in the sanity check scenario,
     optimizing all three components of the reward simultaneously, 
@@ -1359,7 +1359,7 @@ The framework currently lacks explicit coordination mechanisms for joint compone
 Investigating coordinated offloading strategies for dependent components represents an important direction for future research.
 
 
-\section{Related Works}
+\section{Related Work}
 \label{sec:related-works}
 
 \subsection{Partial and Workflow-Based Offloading}

@@ -128,7 +128,7 @@ For this investigation,
  and we consider the following strategies: 
  k-nearest neighbor averaging, k-nearest neighbor consensus, and experience sharing.
 
-\paragraph{K-Nearest Neighbor Definition}
+\paragraph{k-Nearest Neighbor Definition}
 The proposed strategies rely on the concept of k-nearest neighbors.
 %
 Formally, 
@@ -154,7 +154,7 @@ Then,
   where $\text{rank}(d(i,j))$ denotes the rank of the distance $d(i,j)$ among all distances from agent $i$ to other agents in the neighborhood, sorted in ascending order (e.g, $\text{rank}(d(i,j)) = 1$ for the smallest distance).
 Ties can be broken arbitrarily.
 
-\paragraph{K-Nearest Neighbor Averaging}
+\paragraph{k-Nearest Neighbor Averaging}
 In this strategy, 
  each agent maintains a local Q-network and shares its Q-values with its neighbors.
 %
@@ -171,7 +171,7 @@ Formally,
   \theta^{t+1}_i = \theta^t_i + \alpha \sum_{j \in \mathcal{N}_k(i)} \frac{1}{k} \theta^t_j
 \end{equation}
 
-\paragraph{K-Nearest Neighbor Consensus}
+\paragraph{k-Nearest Neighbor Consensus}
 In case of homogeneous agents (i.e., when all agents have the same action and observation space),
 %
 the goal of learning is to find a common policy that all agents can follow.
@@ -447,7 +447,7 @@ r_t^a =
 \rho_t^a.
 \end{equation}
 
-\subsection{Experimental setup}
+\subsection{Experimental Setup}
 The described environment was implemented using 
  the \emph{Gymnasium} framework~\cite{DBLP:journals/corr/abs-2407-17032}.
 %
@@ -477,7 +477,7 @@ Furthermore, we ran $15$ evaluation experiments, namely:
 In this case, 
  for each experiment we ran $100$ evaluation episodes.
 
-\subsection{Evaluation metrics} 
+\subsection{Evaluation Metrics} 
 In our experiments, 
  we employed two metrics to evaluate the performance of the learning agents 
  and monitor the quality of the training process, namely: 
@@ -766,7 +766,7 @@ While \glspl{GNN} successfully prevent catastrophic failure across different sca
  thus providing a realistic baseline for deployments with variable yet constrained 
  swarm populations.
 
-\subsection{Proposed approach: Deep Graph Q-Learning}
+\subsection{Proposed Approach: Deep Graph Q-Learning}
 
 This section introduces and evaluates Deep Graph Q-learning (DGQL), 
  a \gls{MARL} tailored for swarm coordination tasks.
@@ -2033,7 +2033,7 @@ The methodological choices reflect a research strategy that prioritizes controll
  establishing a foundation for future work that can address deployment 
  considerations systematically.
 
-\subsection{Related Works}
+\subsection{Related Work}
 The scalability of \gls{MARL} remains a central challenge. 
 %
 This work focus on zero-shot scalability in swarm coordination with \glspl{GNN},
