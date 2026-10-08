@@ -204,7 +204,7 @@ A neighbor may be defined by physical radio range,
 
 Each device repeatedly performs an asynchronous computation round. 
 %
-A round can be summarized in three phases:
+A round can be summarized in three phases (\Cref{fig:ac-model}):
 
 \begin{enumerate}
   \item \emph{context acquisition}: the device reads local sensors, retrieves
@@ -216,6 +216,14 @@ A round can be summarized in three phases:
   neighbors and may use the local result to affect the environment.
 \end{enumerate}
 
+\begin{figure}[t]
+    \centering
+    \def\svgwidth{0.9\textwidth}
+    {\scriptsize\input{figures/ch03/ac.pdf_tex}}
+    \caption{Graphical representation of the aggregate computing system model. (Left) The system is a dynamic graph of computing devices, where a device communicates only with \emph{neighbours}. (Right) Every device repeatedly runs asynchronous \emph{sense--compute--interact rounds} (cf. self-organisation steering).}
+    \label{fig:ac-model}
+\end{figure}
+
 Rounds are not globally synchronized. 
 %
 Devices may execute at different rates,
@@ -224,20 +232,6 @@ Devices may execute at different rates,
 % 
 This model captures the operational constraints of many \gls{CAS} while leaving 
  scheduling, transport, and message retention policies to concrete runtimes.
-
-\begin{figure}[t]
-  \centering
-  \fbox{%
-    \parbox[c][4.6cm][c]{0.88\linewidth}{\centering
-      \textbf{Image placeholder}\\[0.4em]
-      Left: a network of neighboring devices labeled with local values.\\
-      Right: successive asynchronous rounds forming a field over space-time.\\
-      Highlight one device's sense--compute--communicate cycle.}}
-  \caption{Local and aggregate interpretations of a field computation. Each
-  device evaluates the program using local context, while the collection of
-  evaluations defines a computational field over the network and time.}
-  \label{fig:field-local-global-view}
-\end{figure}
 
 The key property of Field Calculus is this dual interpretation. 
 %
