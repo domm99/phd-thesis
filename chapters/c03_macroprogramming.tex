@@ -373,18 +373,19 @@ These results support compositional reasoning:
 \section{Aggregate Computing}
 \label{sec:aggregate-computing}
 
-\glsentryfull{FC} and \glsentryfull{AC} are closely related 
- but serve different roles. 
-% 
-\gls{FC} is the minimal formal programming model; 
- \gls{AC} is the broader engineering approach that turns 
- field-based coordination into practical software~\cite{DBLP:journals/jlap/ViroliBDACP19}. 
-% 
-It combines language implementations, runtime support, 
- resilient coordination operators, reusable libraries, simulation, and deployment tools. 
-% 
-The result is a layered stack in which application developers work with collective concepts
- while lower layers realize them through local execution.
+\glsentryfull{AC} builds on \glsentryfull{FC}, using its minimal computational
+ model as the formal core of a broader approach to engineering collective
+ systems~\cite{DBLP:journals/jlap/ViroliBDACP19}.
+%
+Whereas \gls{FC} isolates the essential mechanisms for state evolution,
+ neighbor interaction, and domain restriction, \gls{AC} develops these
+ foundations into practical languages, runtimes, reusable coordination
+ operators, and supporting tools.
+%
+Its purpose is therefore not merely to provide an executable version of the
+ calculus, but to offer a complete programming stack (\Cref{fig:aggregate-computing-stack}) in which collective
+ behavior can be specified at the macro level and realized through distributed
+ local execution.
 
 \begin{figure}[t]
   \centering
@@ -400,26 +401,34 @@ At the bottom of the stack,
  sensing, actuation, and alignment. 
 % 
 Above it, 
- a concrete language exposes the field constructs. 
+ a concrete language exposes the field constructs through abstractions suited
+ to a general-purpose programming environment.
 % 
 Protelis~\cite{DBLP:conf/sac/PianiniVB15} 
- provides an external domain-specific language hosted on the Java Virtual Machine, 
- whereas ScaFi~\cite{DBLP:journals/softx/CasadeiVAP22} 
- embeds a field-calculus variant as an internal Scala DSL. 
+ provides an external domain-specific language hosted on the Java Virtual Machine;
+ ScaFi~\cite{DBLP:journals/softx/CasadeiVAP22} embeds a field-calculus variant
+ as an internal Scala DSL; and Collektive~\cite{DBLP:conf/acsos/Cortecchia24}
+ offers a Kotlin-based internal DSL designed for multiplatform applications.
 %
 In ScaFi, 
  neighborhood computations are expressed by folding over aligned neighbors, 
  so fields need not appear explicitly in the host-language type system. 
 % 
 Despite differences in syntax and integration, 
- these languages share the same aggregate interpretation 
- and decentralized round-based execution model.
+ these implementations preserve the same basic programming perspective:
+ every device evaluates a common aggregate program locally, while the
+ interaction of these evaluations realizes a collective computation.
 
-The calculus alone is intentionally general: 
- it can express useful collective algorithms as well as programs with undesirable dynamics. 
+The core calculus is intentionally general and low-level.
 % 
-Aggregate Computing therefore introduces a layer of reusable coordination operators 
- whose behavior is better understood. 
+Although its constructs are sufficient to express complex distributed
+ computations, engineering applications directly from them would repeatedly
+ expose programmers to details of information propagation, state evolution,
+ and recovery from change.
+%
+\gls{AC} addresses this problem through libraries of reusable coordination
+ operators that capture recurring information-flow structures and whose
+ behavior can be analyzed independently of a particular application.
 % 
 Four operator families are especially common:
 
@@ -487,50 +496,18 @@ Alternative implementations of the same operator may also trade communication co
  convergence speed, and robustness while preserving the same eventual collective 
  result~\cite{DBLP:conf/saso/BealV14a,DBLP:journals/tomacs/ViroliABDP18}.
 
-Operators can in turn be composed into higher-level patterns.
+This layered organization changes how distributed applications are engineered.
 %
-A representative example is the \gls{SCR} pattern~\cite{DBLP:conf/coordination/CasadeiPVN19}. 
+Instead of assembling messaging protocols around individual devices, a developer
+ composes functions with explicit collective meanings.
 %
-It elects multiple leaders, 
- partitions
- the network into their regions of influence, 
- collects local information at each leader, 
- and disseminates a regional decision back to the members. 
+The runtime and libraries encapsulate alignment, information propagation, and
+ recovery mechanisms, while application code supplies domain-specific sensors,
+ metrics, aggregation functions, or local computations.
 % 
-The pattern implements a distributed feedback loop without assuming a fixed set of servers.
+The same macroprogram is executed by all participating devices, and the
+ resulting local values jointly realize the intended computational fields.
 %
-\Cref{lst:scr-pattern} shows its structure; 
- the signatures are illustrative because concrete libraries 
- provide several variants of each operator.
-
-\begin{lstlisting}[language=scafi,float=t,
-  caption={Composition of aggregate operators into self-organizing coordination regions.},
-  label={lst:scr-pattern}]
-def coordinationRegions[A, B](grain: Double, local: A)
-                             (merge: (A, A) => A,
-                              decide: A => B): Option[B] = {
-  val leader    = S(grain, nbrRange)
-  val potential = distanceTo(leader)
-  val summary   = C(potential, merge, local)
-  val decision  = mux(leader) {
-    Some(decide(summary))
-  } {
-    None
-  }
-  G(leader, decision, identity)
-}
-\end{lstlisting}
-
-This layering changes how distributed applications are engineered. 
-%
-Instead of combining messaging protocols directly, 
- a developer composes collective functions with explicit system-level meanings.
-% 
-Libraries encapsulate alignment, information propagation, and recovery mechanisms. 
-%
-The same macroprogram is then executed across the participating devices; 
- their local results collectively realize the specified fields and patterns. 
-% 
 Application code can still access local sensors or invoke local machine-learning functions,
  but coordination is expressed independently from individual addresses 
  and a fixed deployment size.
@@ -565,25 +542,138 @@ The abstraction removes much accidental complexity,
  but it does not remove the need to select an appropriate metric, execution strategy, 
  and set of building blocks.
 
+\subsection{Self-Organizing Coordination Regions}
+\label{sec:ac-scr}
+
+The operators introduced above can be composed into higher-level coordination
+ patterns with explicit system-level meanings.
+%
+One pattern of particular relevance to this thesis is
+ \gls{SCR}~\cite{DBLP:conf/coordination/CasadeiPVN19}.
+%
+\gls{SCR} addresses a recurring requirement in large-scale distributed systems:
+ partitioning a dynamic network into multiple regions, each coordinated by a
+ locally elected leader, without relying on global knowledge or a fixed
+ coordination infrastructure.
+%
+The resulting organization resembles a distributed Voronoi partition, but both
+ the leaders and the boundaries of their regions are computed and continuously
+ maintained through local interactions.
+
+The pattern combines leader election, information flow, and regional feedback
+ into a single, repeatedly evaluated collective process.
+%
+First, the sparse-choice operator $S$ selects a spatially separated set of
+ leaders.
+%
+Each device is then associated with one of these leaders through a distance
+ field, which also defines the direction along which information flows within
+ the corresponding region.
+%
+The converge-cast operator $C$ routes and aggregates the values produced by the
+ members toward their leader.
+%
+The leader applies an application-specific function to the resulting regional
+ summary, and the decision is finally disseminated back to the members through
+ a gradient cast $G$.
+%
+Conceptually, \gls{SCR} therefore implements a distributed feedback loop with
+ four stages:
+
+\begin{enumerate}
+  \item elect a distributed set of regional leaders;
+  \item associate each device with a leader and establish the corresponding region;
+  \item collect and aggregate local information at the regional leader; and
+  \item compute and disseminate a regional decision to the member devices.
+\end{enumerate}
+
+These stages describe the collective information flow rather than a globally
+ synchronized protocol.
+%
+Every device repeatedly executes the same aggregate program using its local
+ state and the most recent values received from its neighbors.
+%
+Consequently, leadership and region membership are not permanent assignments.
+%
+When devices move, communication links change, or a leader becomes unavailable,
+ the underlying fields evolve and the affected devices can elect new leaders or
+ join different regions.
+%
+When the pattern is instantiated through self-stabilizing building blocks and
+ its inputs eventually remain stable, the partition and its associated
+ information flows converge again without an external reconfiguration procedure.
+
+\Cref{lst:scr-pattern} summarizes the composition underlying \gls{SCR}.
+%
+The signatures are illustrative, since concrete libraries provide variants of
+ the same operators with different tradeoffs in convergence speed,
+ communication cost, and resilience.
+
+\begin{lstlisting}[language=scafi,float=t,
+  caption={Composition of aggregate operators into self-organizing coordination regions.},
+  label={lst:scr-pattern}]
+def coordinationRegions[A, B](grain: Double, local: A)
+                             (merge: (A, A) => A,
+                              decide: A => B): Option[B] = {
+  val leader    = S(grain, nbrRange)
+  val potential = distanceTo(leader)
+  val summary   = C(potential, merge, local)
+  val decision  = mux(leader) {
+    Some(decide(summary))
+  } {
+    None
+  }
+  G(leader, decision, identity)
+}
+\end{lstlisting}
+
+A central parameter of \gls{SCR} is the metric used to construct the distance
+ field.
+%
+With Euclidean distance or communication range, region boundaries reflect the
+ physical deployment of the devices.
+%
+Hop count, latency, energy cost, or another application-specific quantity can
+ instead determine which leader is considered closest.
+%
+The metric therefore defines the effective geometry in which regions form,
+ while the structure of the coordination pattern remains unchanged.
+%
+This separation makes \gls{SCR} reusable across applications: the same
+ composition of $S$, $C$, and $G$ can produce different regional organizations
+ by changing the notion of distance and the application logic executed at the
+ leaders.
+
+This principle can be extended through \emph{space-fluid} metrics, in which
+ distance is influenced by a spatially distributed phenomenon rather than being
+ determined solely by physical separation~\cite{DBLP:journals/lmcs/CasadeiMPVZ23}.
+%
+Regions can consequently expand where neighboring devices are compatible with
+ respect to the phenomenon of interest and contract where their observations or
+ states diverge.
+%
+The network remains organized through local communication, but its regional
+ boundaries adapt to application-level information.
+%
+This property is particularly relevant when physical proximity is an
+ informative but imperfect proxy for which devices should cooperate.
+
 For the purposes of this thesis,
- the central benefit of \gls{AC} is the separation between \emph{coordination}
-  and \emph{local computation}.
+ \gls{SCR} is especially important because it separates the organization of a
+ collective from the local computation performed by its members.
 %
-A field may contain sensor values, roles, model parameters, predictions, or quality measures;
- the same operators organize how those values spread, aggregate, and define regions---independently
- of the learning algorithm that produces or consumes them.
+The exchanged field may contain sensor values, roles, model parameters,
+ predictions, or quality measures, while the same regional structure determines
+ how those values are collected and disseminated.
 %
-In the federated learning setting, this separation allows a macroprogram to specify
- which devices form a learning group and how their model updates are aggregated,
- without prescribing the local training procedure.
+In~\Cref{chap:selforg-fl}, this pattern provides the organizational substrate
+ for clustered federated learning: each region acts as a dynamically maintained
+ federation, and its leader temporarily performs model aggregation without
+ becoming a permanent server.
 %
-In the multi-agent reinforcement learning setting, it determines which neighbors
- a policy can observe and how collective state is summarized,
- without encoding a fixed collective size in the learned solution.
-%
-This makes field-based coordination a natural substrate for the self-organizing
- and scalable learning architectures developed in~\Cref{chap:selforg-fl}
- and~\Cref{chap:scalable-rl}.
+The chapter instantiates this common structure with different metrics and
+ learning-specific decision functions, while the mechanism described here
+ remains responsible for forming, maintaining, and reorganizing the regions.
 
 \section{Phyelds}
 \label{sec:phyelds}
