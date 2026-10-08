@@ -424,21 +424,54 @@ Aggregate Computing therefore introduces a layer of reusable coordination operat
 Four operator families are especially common:
 
 \begin{itemize}
-  \item \textbf{$G$--gradient cast} builds a potential away from one or more
+  \item \textbf{$G$--gradient cast} (\Cref{fig:g-operator}) builds a potential away from one or more
   sources and propagates information outward along it. Distance estimation,
   broadcast, and bounded spatial diffusion are instances of this pattern.
 
-  \item \textbf{$C$--converge cast} routes and aggregates values toward minima
+  \item \textbf{$C$--converge cast} (\Cref{fig:c-operator}) routes and aggregates values toward minima
   of a potential. It supports operations such as counting, summation, and
   distributed collection at elected sinks.
 
   \item \textbf{$T$--time evolution} manages bounded state changes, including
   timers, decay, and recent-event tracking.
 
-  \item \textbf{$S$--sparse choice} selects a spatially separated subset of
+  \item \textbf{$S$--sparse choice} (\Cref{fig:s-operator}) selects a spatially separated subset of
   devices. It is commonly used for decentralized leader election and dynamic
   network partitioning.
 \end{itemize}
+
+
+\begin{figure}
+    \centering
+        \begin{subfigure}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ch03/s-operator.pdf}
+        \caption{\emph{S}.}
+        \label{fig:s-operator}
+    \end{subfigure}
+        \begin{subfigure}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ch03/g-operator.pdf}
+        \caption{\emph{G}.}
+        \label{fig:g-operator}
+    \end{subfigure}
+        \begin{subfigure}{0.32\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ch03/c-operator.pdf}
+        \caption{\emph{C}.}
+        \label{fig:c-operator}
+    \end{subfigure}
+  
+
+    \caption{Visual representation of the building blocks used in our approach.
+    The leftmost block represents the \emph{S} building block, 
+    which selects a subset of nodes based on a spatially distributed phenomenon.
+    The middle block represents the \emph{G} building block,
+        which diffuses information along a gradient.
+    The rightmost block represents the \emph{C} building block,
+        which aggregates information to a sink device.
+    }\label{fig:building-blocks}
+\end{figure}
 
 These operators are parameterized by application logic. 
 %
