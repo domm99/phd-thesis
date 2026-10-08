@@ -401,9 +401,6 @@ shift.
 \label{sec:rl-decentralized}
 %=============================================================================
 
-\note{double check this}
-
-
 Decentralization in MARL has two distinct meanings.
 %
 \emph{Decentralized execution} requires each agent to select actions from locally
@@ -415,81 +412,154 @@ Conflating these requirements obscures an important distinction: a policy may be
 decentralized at deployment while having been learned through a fully centralized
 procedure.
 
-The dominant compromise is \glsfull{CTDE}.
-%
-During training, a centralized critic or value-mixing network may use the global
-state and the actions or observations of all agents. At execution time, each
-agent acts from its local observation or history.
-%
-Multi-Agent Deep Deterministic Policy Gradient exemplifies centralized critics,
-while QMIX exemplifies centralized value factorization~\cite{DBLP:conf/nips/LoweWTHAM17,DBLP:conf/icml/RashidSWFFW18}.
-%
-Access to joint information during training reduces the apparent non-stationarity
-of the learning target and can support more informative credit assignment.
-However, it assumes that experience can be collected centrally and that the
-training infrastructure can process joint information, assumptions that become
-difficult to satisfy in large, open, or geographically distributed systems.
 
-At the opposite extreme, independent learners optimize their policies using only
-local trajectories and rewards. This is decentralized in both training and
-execution and requires no inter-agent communication for learning.
+\begin{figure}
+  \centering
+  \begin{subfigure}{0.35\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{figures/ch06/CTDE.pdf}
+      \caption{}
+      \label{fig:ctde}
+    \end{subfigure}
+    \begin{subfigure}{0.35\textwidth}
+      \centering
+      \includegraphics[width=\textwidth]{figures/ch06/DTDE.pdf}
+      \caption{}
+      \label{fig:dtde}
+    \end{subfigure}
+  %\vskip 1 mm
+  \caption{Graphical representation of CTDE (left) and DTDE (right) in MARL.
+  For simplicity, only two agents are represented. However, the model can easily be extended to the general case of N agents.
+  }
+  \label{fig:learning_paradigms}
+\end{figure}
+
+
+\paragraph{Centralized training with decentralized execution.}
+The dominant compromise is \gls{CTDE} (\Cref{fig:ctde}).
+%
+Under \gls{CTDE}, information available only during training is used to improve the
+ learning process, while the learned decision rules remain executable from local
+ information.
+%
+This distinction can be illustrated directly in a Q-learning setting.
+%
+A centralized learner may collect joint transitions
+$(s_t,\mathbf{a}_t,r_{t+1},s_{t+1})$ and use them to estimate a team action-value
+function $Q_{\mathrm{tot}}(s,\mathbf{a})$.
+%
+Unlike the local estimate in~\Cref{eq:per-agent-q}, this function evaluates the
+joint action and can therefore account explicitly for interactions among the
+agents during training.
+%
+A direct representation of $Q_{\mathrm{tot}}$, however, requires access to the
+global state and joint action even when selecting actions, and is consequently
+incompatible with decentralized execution.
+
+Value-factorization methods resolve this tension by representing the team value
+through per-agent utility functions.
+%
+QMIX, for example, learns local utilities $Q_i(h_i,a_i)$ and combines them through
+a centralized mixing network conditioned on the global
+state~\cite{DBLP:conf/icml/RashidSWFFW18}.
+%
+The monotonicity constraint of the mixer ensures that the joint action maximizing
+$Q_{\mathrm{tot}}$ can be obtained by independently maximizing each local utility.
+%
+Training can therefore use the team reward, global state, and joint experience,
+whereas execution discards the mixing network and lets each agent select
+\begin{equation}
+  a_i^t = \arg\max_{a_i} Q_i(h_i^t,a_i).
+  \label{eq:ctde-local-action}
+\end{equation}
+%
+The same separation is also used by actor--critic methods: a centralized critic
+may evaluate joint information during training while each actor remains a local
+policy. Multi-Agent Deep Deterministic Policy Gradient is a representative
+example~\cite{DBLP:conf/nips/LoweWTHAM17}.
+
+By exploiting joint information, CTDE can reduce the apparent non-stationarity
+of the learning target and provide a stronger basis for multi-agent credit
+assignment.
+%
+These benefits come with an infrastructure requirement: trajectories or other
+training information must be gathered centrally, and the central learner must
+process representations whose size and complexity may grow with the collective.
+%
+This assumption can become impractical in large, open, or geographically
+distributed systems and introduces a central bottleneck or failure point during
+training, even though execution is decentralized.
+
+\paragraph{Decentralized training with decentralized execution.}
+At the opposite end of the spectrum, \emph{decentralized training with
+decentralized execution} (DTDE) (\Cref{fig:dtde}) removes the central learner from both phases.
+%
+Each agent updates its decision model from locally available experience and
+executes the resulting policy using local observations or histories.
+%
+DTDE describes where information is processed, but does not by itself determine
+whether agents exchange information during learning.
+
+Independent learners constitute the simplest form of DTDE.
+%
+In independent Q-learning, each agent maintains its own estimate $Q_i$ and
+applies the ordinary Q-learning update to its local transitions, treating the
+other agents as part of the environment~\cite{tan1993multiagent}.
+%
+No centralized dataset, global state, or exchange of model updates is required.
 %
 Its simplicity and weak infrastructure assumptions come at the cost of treating
 the changing behavior of other agents as unmodeled environment dynamics.
-Consequently, independently learned policies may be unstable or fail to discover
-behaviors that require coordinated exploration.
-
-Between these extremes, networked approaches retain decentralized training while
-allowing neighboring agents to exchange learning information.
 %
-In fully decentralized MARL with networked agents, each agent performs local
-actor--critic updates and combines selected parameters or value estimates with
-those received from its neighbors through consensus~\cite{zhang2018fully}.
+Moreover, a shared reward gives each learner only indirect evidence of how its
+own action contributed to the collective outcome.
+%
+Consequently, independent learners may be unstable, learn mutually incompatible
+behaviors, or fail to discover strategies that require coordinated exploration.
+
+Networked approaches retain DTDE while allowing neighboring agents to exchange
+learning information.
+%
+Each agent still performs its own optimization, but may combine parameters,
+gradients, value estimates, or other training statistics with those received
+from its neighbors~\cite{zhang2018fully}.
 %
 Repeated local exchanges allow information to propagate without a parameter
-server. Their effectiveness depends on the communication graph: sparse,
+server or a globally shared replay buffer.
+%
+Their effectiveness depends on the communication graph: sparse,
 intermittent, or poorly connected topologies slow consensus and may leave
 different portions of the collective with inconsistent estimates.
 %
-They also introduce a systems-level trade-off between the frequency and volume of
-communication and the speed at which learning information diffuses.
+They also introduce a systems-level tradeoff between the frequency and volume of
+communication, the speed at which learning information diffuses, and the degree
+to which the agents' models remain consistent.
 
-Communication can concern either the learning process or the execution policy.
-Parameter and gradient exchanges belong to the former category. In the latter,
-agents exchange messages that become inputs to their action-selection process.
+Communication during decentralized training must be distinguished from
+communication within the learned execution policy.
+%
+Parameter, gradient, and value exchanges affect how the policy is optimized.
+In contrast, execution-time messages become inputs to action selection and are
+part of the policy itself.
+%
 Architectures such as CommNet and Differentiable Inter-Agent Learning train the
-content of these messages jointly with the policy
-~\cite{DBLP:conf/nips/SukhbaatarSF16,DBLP:conf/icml/FoersterAFW16}.
+content of these messages jointly with the
+policy~\cite{DBLP:conf/nips/SukhbaatarSF16,DBLP:conf/icml/FoersterAFW16}.
 %
 Learned communication can improve coordination when local observations omit
 information held by other agents, but it does not automatically imply
 decentralized training: differentiable communication channels are commonly
 optimized with joint trajectories and centralized backpropagation.
 
-\begin{figure}[htbp]
-  \centering
-  \fbox{\parbox[c][4.7cm][c]{0.88\linewidth}{\centering
-    \textbf{Image placeholder}\\[4pt]
-    Comparison of three training architectures.\\
-    Left: centralized training with decentralized execution, where a central
-    learner uses joint information.\\
-    Center: networked decentralized training, where agents exchange learning
-    information only with neighbors.\\
-    Right: independent training, where each agent learns exclusively from its
-    local trajectory.
-  }}
-  \caption{Degrees of decentralization in multi-agent reinforcement learning.}
-  \label{fig:decentralized-spectrum}
-\end{figure}
-
-The relevant choice is therefore not whether a method is simply centralized or
-decentralized, but which information is shared, with whom, and at what stage.
+The relevant distinction is therefore not whether a MARL method is simply
+centralized or decentralized, but which information is available, where it is
+processed, with whom it is shared, and during which phase.
 %
-Centralized training can exploit joint information but creates a coordination
-and infrastructure bottleneck. Independent learning removes that bottleneck but
-weakens the learning signal available to each agent. Networked training occupies
-the middle ground, using local communication to improve collective learning while
-preserving the absence of a central coordinator.
+CTDE exploits joint information but depends on centralized training
+infrastructure. Independent DTDE removes that dependency but provides each agent
+with a weaker and potentially non-stationary learning signal. Networked DTDE
+occupies the middle ground, using local communication to propagate learning
+information while preserving the absence of a central coordinator.
 %
 This last setting provides the conceptual basis for the decentralized and
-scalable reinforcement-learning methods developed in Chapter~8.
+scalable reinforcement-learning methods developed in~\Cref{chap:scalable-rl}.
