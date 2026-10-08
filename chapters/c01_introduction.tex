@@ -306,7 +306,38 @@ This coupling is precisely what makes the problem resistant to solutions
  an integrated engineering approach is required,
  in which coordination, learning, and deployment are designed together.
 
-\sidenote{double-check if tone down is needed here}
+Existing approaches address individual parts of this problem.
+%
+In cooperative \gls{MARL},
+ credit-assignment methods such as COMA and QMIX help determine how individual
+ actions contribute to a shared outcome~\cite{foerster2018counterfactual,DBLP:conf/icml/RashidSWFFW18}.
+%
+However,
+ they rely on centralized training with access to joint trajectories,
+ global state information, or the actions of multiple agents.
+%
+The resulting information and computational requirements can become a bottleneck
+ as the collective grows and are difficult to reconcile with fully decentralized training.
+%
+Peer-to-peer and gossip-based \gls{FL} remove the need for a permanent aggregation
+ server~\cite{DBLP:conf/dais/HegedusDJ19}, but commonly retain the objective of
+ reaching network-wide consensus on a single model and are often formulated under
+ \gls{IID} or bounded-heterogeneity assumptions.
+%
+They therefore provide limited support when the relevant data distributions are
+ spatially structured and evolve with the collective.
+%
+Conversely,
+ \gls{CFL} explicitly accommodates statistical heterogeneity by learning multiple
+ models, but representative algorithms perform client assignment and aggregation
+ through a central server and often require the number of clusters, or an equivalent
+ clustering configuration, to be specified in advance
+ ~\cite{DBLP:journals/tit/GhoshCYR22,DBLP:journals/tnn/SattlerMS21}.
+%
+These approaches provide important building blocks, but do not jointly support
+ adaptive group formation, decentralized learning, scalability, and resource-aware
+ deployment in a dynamic \gls{CAS}.
+
 The research gap addressed by this thesis is thus not the absence of individual 
  algorithms for federated learning, multi-agent reinforcement learning, 
  decentralized coordination, or task offloading.
