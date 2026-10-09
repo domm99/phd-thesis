@@ -5,9 +5,60 @@
 \chapter{Scalable Decentralized Learning}
 \label{chap:scalable-rl}
 \minitoc
+
+\Cref{chap:selforg-fl} showed how field-based coordination can organize
+ the collaboration structure of supervised learning,
+ forming and maintaining federations through local interactions.
+This chapter turns to decision making,
+ where devices do not learn from a fixed dataset
+ but from the consequences of their own actions in a shared environment.
+In this setting,
+ the challenges introduced in~\Cref{chap:reinforcement-learning} become central:
+ each agent observes only part of the system,
+ the behavior of the other learners makes the environment non-stationary,
+ and the size of the collective may differ between training and deployment.
+The chapter therefore addresses~\ref{itm:rq3},
+ which asks how decentralized learning can remain effective and scalable
+ when agents rely on local observations,
+ communicate with a limited neighborhood,
+ and operate in collectives whose size may change.
+
+Scalability is examined along two complementary dimensions.
+The first concerns \emph{where} learning information is exchanged during training.
+Centralized training with decentralized execution provides stable learning signals
+ but requires a central learner,
+ whereas independent learners remove this dependency
+ at the cost of slower and less coordinated learning.
+\Cref{sec:scalable-rl-neighbor} investigates the middle ground between these extremes:
+ agents train independently but exchange model parameters or experiences
+ with their nearest neighbors~\cite{DBLP:conf/sac/MalucelliDAV25}.
+The analysis compares these neighbor-based strategies with centralized and independent training
+ in terms of learning performance, behavior at larger population sizes, and communication overhead.
+
+The second dimension concerns \emph{whether} a learned policy can be executed
+ by populations of different sizes.
+Policies whose inputs depend on a fixed number or ordering of agents
+ must be retrained whenever the collective changes.
+\Cref{sec:scalable-rl-gnn} addresses this limitation through Deep Graph Q-Learning (DGQL),
+ which represents agents and their interactions as a graph
+ and shares a single graph-based policy across the swarm~\cite{DBLP:journals/ai/AguzziDVV26}.
+Although DGQL is trained centrally,
+ its execution relies only on local message passing,
+ which allows the learned policy to be deployed without retraining
+ in swarms larger than the one used for training.
+The evaluation quantifies how far this zero-shot transfer extends
+ and how coordination efficiency changes as the population grows.
+
+The two studies are deliberately complementary rather than combined:
+ the first relaxes the assumption of a central learner,
+ while the second relaxes the assumption of a fixed population.
+\Cref{sec:scalable-rl-future} discusses how the two perspectives could be integrated
+ into graph-based policies trained through local exchanges,
+ and outlines the remaining challenges of adapting to heterogeneous and dynamic deployments.
 %----------------------------------------------------------------------------------------
 
 \section{Neighbor-Based Strategies for Decentralized Reinforcement Learning}
+\label{sec:scalable-rl-neighbor}
 
 \subsection{Motivation}
 Cooperative \gls{MARL} provides a natural framework for
@@ -628,6 +679,7 @@ All approaches require under 25MB for up to 10 neighbors,
 %\subsection{Future Directions}
 
 \section{Scaling Swarm Coordination with GNNs}
+\label{sec:scalable-rl-gnn}
 
 \subsection{Motivation}
 \textbf{Context.} 
@@ -2096,6 +2148,7 @@ DGQL complements permutation-invariant models~\cite{hao2023boosting,lin2024hgap}
  providing an empirical baseline on the limits of zero-shot scalability in swarm coordination.
 
 \section{Future Directions}
+\label{sec:scalable-rl-future}
 
 The studies presented in this chapter address complementary aspects of scalable multi-agent reinforcement learning: 
  distributing the learning process through local exchanges and representing interactions through graph-based policies 
