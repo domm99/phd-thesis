@@ -1738,7 +1738,7 @@ However,
 These operations may become expensive on resource-constrained devices,
  particularly as the size of the adopted neural networks increases.
 
-To address this limitation, this chapter introduces
+To address this limitation, this section introduces
  \emph{SParSeFuL} (\emph{Sparse Proximity-based Self-Federated 
  Learning})~\cite{DBLP:conf/ijcnn/DominiEACZLV25,domini2026sparseful}.
 %
@@ -1771,7 +1771,7 @@ In particular,
  and the resulting distance field is used by the SCR pattern to elect leaders 
  and induce a Voronoi-like partition of the network.
 %
-We therefore focus here only on the integration of sparsification 
+This section therefore focuses only on the integration of sparsification 
  into this learning process.
 
 Let \(\boldsymbol{\theta} = (\theta_1,\ldots,\theta_p)\)
@@ -1996,7 +1996,7 @@ The evaluation investigates the extent to which model sparsification can be
  either federation formation or predictive performance.
 %
 Accordingly, 
- we consider the following research question:
+ the evaluation addresses the following research question:
 
 \begin{chapRQ}{7}
   \item
@@ -2029,7 +2029,7 @@ Each experiment was repeated with multiple random seeds,
 
 \paragraph{Datasets and data distribution}
 
-We considered EMNIST~\cite{DBLP:journals/corr/CohenATS17} and
+The evaluation considered EMNIST~\cite{DBLP:journals/corr/CohenATS17} and
  CIFAR-100~\cite{krizhevsky2009learning}, obtained through the
  ProFed benchmark~\cite{DBLP:journals/jors/DominiIALV26}.
 %
@@ -2059,11 +2059,11 @@ Devices could therefore exchange information only with their spatial neighbors,
 Dataset-specific convolutional neural networks were used.
 %
 For EMNIST, 
- we adopted a compact CNN composed of one convolutional layer, 
+ a compact CNN was adopted, composed of one convolutional layer, 
  two max-pooling operations, and a two-layer linear classifier.
 %
 For CIFAR-100, 
- we used a larger network with three convolutional layers,
+ a larger network was used, with three convolutional layers,
  each followed by batch normalization and max pooling, 
  and a final linear classifier.
 %
@@ -2100,11 +2100,11 @@ The baselines cover centralized global learning,
 \paragraph{Evaluation Metrics}
 
 During training, 
- we recorded training loss, validation loss, 
- and validation accuracy at each communication round.
+ training loss, validation loss, 
+ and validation accuracy were recorded at each communication round.
 %
 For SParSeFuL,
- we additionally monitored the number of federations formed over time.
+ the number of federations formed over time was additionally monitored.
 %
 This metric makes it possible to determine whether sparsification interferes
  with the identification of the underlying spatial data partition.
@@ -2117,8 +2117,8 @@ A separate test set was retained for each spatial region,
  and the reported test accuracy was computed by averaging the results across regions.
 
 Finally, 
- we measured the number of floating-point operations 
- and inference latency of the resulting models.
+ the number of floating-point operations 
+ and the inference latency of the resulting models were measured.
 %
 These metrics quantify the computational benefits obtained at different sparsity levels.
 %
@@ -2468,16 +2468,16 @@ This design allows the benchmark to reproduce realistic proximity-based non-IID 
  where data are homogeneous within regions and heterogeneous across regions, 
  as illustrated in~\Cref{fig:spatial-heterogeneity}.
 %
-In the following, we detail the implemented methods to synthesize skewed datasets, 
+The following paragraphs detail the implemented methods to synthesize skewed datasets, 
  the supported datasets and the API of the benchmark.
 
 
 
-\paragraph{Data Distribution.} As part of our analysis, 
- we reviewed several studies in the literature on non-IID 
- Federated Learning to identify and select the most commonly used partitioning methods.
+\paragraph{Data Distribution.} The supported partitioning methods were selected 
+ by reviewing studies in the literature on non-IID 
+ Federated Learning and identifying the most commonly used ones.
 %
-We observed that several works employed \emph{Dirichlet} distribution for data partitioning. 
+Several works employ the \emph{Dirichlet} distribution for data partitioning. 
 %
 This approach results in each party having instances of most labels, 
  although the distribution is highly imbalanced, 
@@ -2500,14 +2500,14 @@ This creates a significantly more skewed distribution,
 %
 An example of this distribution is represented in~\Cref{fig:hard}.
 %
-In ProFed, we enable fine-grained control over the data distribution, allowing either 
+ProFed enables fine-grained control over the data distribution, allowing either 
  balanced label subsets across regions or customizable cardinality per subregion.
 %
-For comparative analysis, we also implement an IID split as a baseline distribution (\Cref{fig:iid}).
+For comparative analysis, ProFed also implements an IID split as a baseline distribution (\Cref{fig:iid}).
 %
 While existing approaches typically apply these partitioning methods 
  directly at the device level (e.g.,~\cite{DBLP:journals/corr/abs-2302-02949,DBLP:conf/nips/LinKSJ20}), 
- our framework introduces an intermediate layer of regional clustering.
+ ProFed introduces an intermediate layer of regional clustering.
 % 
 ProFed first distributes data heterogeneously among subregions and 
  then splits them homogeneously among devices within the same subregion,
@@ -2551,7 +2551,7 @@ Each cell $(i,j)$ indicates the proportion of instances with label $i$
 ProFed supports various TorchVision datasets widely used in computer vision research 
  (details in~\Cref{tab:datasets}). 
 %
-We include MNIST~\cite{lecun2010mnist} as a baseline: 
+MNIST~\cite{lecun2010mnist} is included as a baseline: 
  grayscale $28 \times 28$ pixel images of handwritten digits across 10 classes.
 %
 ProFed extends this with Fashion MNIST~\cite{DBLP:journals/corr/abs-1708-07747} (clothing items, 10 classes) 
@@ -2661,7 +2661,7 @@ for region_id, devices in mapping_devices_area.items():
 \section*{Quality Control}
 \paragraph{Experimental Setup}
 To evaluate ProFed's effectiveness and usability, 
- we conducted experiments using supported datasets with three
+ experiments were conducted on the supported datasets with three
  state-of-the-art algorithms: 
  FedAvg~\cite{DBLP:conf/aistats/McMahanMRHA17}, 
  FedProx~\cite{DBLP:conf/mlsys/LiSZSTS20}, and 
@@ -2689,7 +2689,7 @@ All code is publicly available under a permissive license for
 
 \paragraph{Discussion}
 Results were systematically collected during training, validation, and testing phases.
-We first established a baseline using homogeneous data distribution (IID) to assess model stability and accuracy. 
+A baseline was first established using a homogeneous data distribution (IID) to assess model stability and accuracy. 
 %
 FedAvg was the only algorithm evaluated under IID conditions, 
  whereas FedProx and Scaffold were not considered in this setting, 
@@ -2794,9 +2794,9 @@ These findings indicate that state-of-the-art algorithms inadequately address
 
 \subsection{Baseline Algorithms}
 
-This section describes the baseline algorithms used for comparison in this work.
+This section describes the baseline algorithms used for comparison in this chapter.
 %
-\Cref{tab:methods-comparison} summarizes the main characteristics we focus on, 
+\Cref{tab:methods-comparison} summarizes the main characteristics considered in this chapter, 
  comparing the baselines with the proposed approach.
 
 \paragraph{FedAvg}
@@ -3079,7 +3079,7 @@ The resulting block structure provides direct evidence that the auxiliary predic
     \label{fig:future-rnd-novelty}
 \end{figure}
 
-They also indicate substantially lower clustering overhead than IFCA: 
+They also indicate substantially lower clustering overhead than IFCA (\Cref{fig:chart-time}): 
  even when clustering is repeated at every round, 
  the measured cost is approximately one order of magnitude lower because the auxiliary predictors 
  are much smaller than the task model.
@@ -3168,11 +3168,11 @@ The replay memory remains local and does not introduce
 
 Preliminary experiments with mobile devices moving across four heterogeneous
  regions confirm that standard field-based federated learning suffers from
- catastrophic forgetting after region transitions (\Cref{fig:moving-node-c2fl}).
+ catastrophic forgetting after region transitions (\Cref{fig:moving-node-fl}).
 %
-C2FL substantially preserves accuracy on previously visited regions and achieves
- higher cumulative accuracy than local learning, replay without federation, and
- federated learning without replay, as reported in~\Cref{fig:future-c2fl-comparison}.
+C2FL substantially preserves accuracy on previously visited regions (\Cref{fig:moving-node-c2fl}) 
+ and achieves higher cumulative accuracy than local learning, replay without federation, 
+ and federated learning without replay, as reported in~\Cref{fig:future-c2fl-comparison}.
 %
 The performance increments after successive transitions show that replay retains knowledge 
  from previously visited regions, while the consistent gap over the continual-learning-only baseline 

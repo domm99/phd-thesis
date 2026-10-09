@@ -194,15 +194,15 @@ This hierarchical approach optimizes resource utilization
 
 Following the challenges identified in \Cref{sec:motivation}, 
  and the basic approach of system model introduced in \cite{acsos-model}, 
- we describe the problem of collective component offloading in cloud-edge computing systems.
+ this section describes the problem of collective component offloading in cloud-edge computing systems.
 %
 First, 
- we present the macro-behavior model that leverages device neighborhoods 
+ it presents the macro-behavior model that leverages device neighborhoods 
  and self-organizing principles to enable distributed component deployment, 
  supporting partial offloading of workflow-based tasks.
 %
 Based on this model, 
- we formulate the collective component offloading problem in cloud-edge systems 
+ it formulates the collective component offloading problem in cloud-edge systems 
  as a multi-agent reinforcement learning task. 
 Here, 
  agents represent system devices that make offloading decisions by considering 
@@ -210,7 +210,7 @@ Here,
 
 
 \subsection{System Model}\label{sec:system-model}
-We introduce a system model that decomposes applications 
+The system model decomposes applications 
  into macro-components organized as directed acyclic graphs,
  enabling partial offloading where components can be selectively migrated across the infrastructure.
 %
@@ -296,8 +296,8 @@ Input and output ports not connected to any components
  are defined \emph{global} ports of the macroprogram $\mathtt{MP}$.
 
 \paragraph{Collective and Local Components.}
-We distinguish between \emph{collective} 
- and \emph{local} components (\Cref{fig:collective-local-components}).
+Components are either \emph{collective} 
+ or \emph{local} (\Cref{fig:collective-local-components}).
 %
 A component is said \emph{collective} (thick border square in \Cref{fig:collective-component}) 
  if the execution of one of its instances requires the interaction 
@@ -369,7 +369,7 @@ When a component instance is executed (i.e., a \emph{round} is performed),
  it yields a new state $\theta$ containing---among other things---the computation output $\mathtt{v}$.
 %
 The collective nature of the component can be implemented in several ways,
- as follows we leverage the aggregate computing approach~\cite{DBLP:journals/computer/BealPV15} 
+ and the following description leverages the aggregate computing approach~\cite{DBLP:journals/computer/BealPV15} 
  to describe the collective execution of the component.
 %
 The collective behavior is implemented by making the component instance of a certain component $\mathtt{C}$ 
@@ -395,12 +395,12 @@ The communications occur in a reflexive and symmetric way,
 %
 The network on the left, depicted in~\Cref{fig:pulverization-model-all} 
  shows an example of a physical system composed of devices interconnected in a peer-to-peer fashion,
- determining our \emph{physical system model}.
+ determining the \emph{physical system model}.
 
 \paragraph{Application Devices.}
 Given a macroprogram $\mathtt{MP}$,
  it is assumed to be collectively executed by a subset of the physical devices $\mathbf{D}$,
- which we call \emph{application devices}.
+ called \emph{application devices}.
 %
 The network in the middle, depicted in \Cref{fig:pulverization-model-all}, 
  shows an example of a physical system where some devices are \emph{application devices}.
@@ -409,13 +409,13 @@ The \emph{application devices} define a neighborhood relationship $\mathcal{N}$
  which is a subset of the \emph{physical neighborhood} relationship $\mathcal{N}_P$.
 
 \paragraph{Infrastructural Devices.}
-We define additional devices that we call \emph{infrastructural devices} $\mathbf{D}_I \subseteq \mathbf{D}_P$ of physical devices,
-that can host the computation on behalf of some (zero or many) application devices.
+Additional physical devices, called \emph{infrastructural devices} $\mathbf{D}_I \subseteq \mathbf{D}_P$,
+can host the computation on behalf of some (zero or many) application devices.
 %
 The network on the right, depicted in \Cref{fig:pulverization-model-all}, 
  shows an example of a physical system where some devices are \emph{infrastructural devices}.
 %
-We assume $\mathbf{D}$ and $\mathbf{D}_I$ to be fixed and known in advance,
+$\mathbf{D}$ and $\mathbf{D}_I$ are assumed to be fixed and known in advance,
  so that $\mathbf{D} \cup \mathbf{D}_I = \mathbf{D}_P$,
  and the physical network topology $\mathcal{N}_P$ (and consequently $\mathcal{N}$) may change over time,
  because of node mobility.
@@ -442,8 +442,8 @@ Given a macroprogram $\mathtt{MP}$,
  the overall system will run a component instance $\mathtt{C}^i_j$
  for each pair of component $\mathtt{C}_i$ and device $\delta_j$ (belonging to $\mathbf{D}$).
 %
-We call \emph{owner} of a component instance $\mathtt{C}^i_j$ the device $\delta_j$,
- namely the device on which the component instance is intended to be executed.
+The \emph{owner} of a component instance $\mathtt{C}^i_j$ is the device $\delta_j$
+ on which the component instance is intended to be executed.
 %
 However,
  there may be situations preventing the execution of the component instance on the \emph{owner} device,
@@ -467,11 +467,11 @@ This property holds regardless of the deployment decisions made for each compone
  the overall system will eventually converge to a correct behavior.
 
 From an offloading perspective,
- this means we can transparently offload any component instance to any infrastructural device,
- without worrying about any constraints when we model an offloading strategy.
+ this means that any component instance can be transparently offloaded to any infrastructural device
+ without affecting functional correctness.
 %
 This property greatly simplifies the offloading problem,
- as we do not need to consider any constraint when deciding where to offload a component instance.
+ as correctness constraints need not be considered when deciding where to offload a component instance.
 %
 Nevertheless,
  taking into account the components dependencies and the infrastructure conditions can improve the non-functional properties of the system
@@ -480,19 +480,19 @@ Nevertheless,
 
 \subsection{Crowd Steering Real World Example}\label{sec:crowd-steering-example}
 
-We consider the \emph{Crowd Steering} application presented in~\Cref{subsec:offloading-motivating-examples},
+This section considers the \emph{Crowd Steering} application presented in~\Cref{subsec:offloading-motivating-examples},
  and how it can be modeled using the system model introduced in~\Cref{sec:system-model}.
 %
 Such modeling will be useful to better understand the offloading problem presented in the next sections.
 
 For the sake of clarity,
- we consider a simple infrastructure composed of a set of \emph{application devices} $\mathbf{D}$,
+ the example uses a simple infrastructure composed of a set of \emph{application devices} $\mathbf{D}$,
  defined by the smart devices carried by the users participating in the event,
  and a set of \emph{infrastructural devices} $\mathbf{D}_I$,
  defined by some edge servers deployed close to the event.
 %
 To keep the example simple,
- we consider the $\mathbf{D}$ set and the $\mathbf{D}_I$ set to be disjoint,
+ the $\mathbf{D}$ set and the $\mathbf{D}_I$ set are assumed to be disjoint,
  meaning that no infrastructural device is also an application device.
 
 Topologically,
@@ -518,7 +518,7 @@ The macroprogram can be defined as the interaction between four components:
 \begin{itemize}
   \item \textsc{Position sensor} \PositionSensor{} defining the component responsible for acquiring the device location; this component is \emph{local} since it does not require interaction with other devices;
   \item \textsc{Density estimator} \DensityEstimation{} defining the component responsible for computing the local density of the crowd; this component is \emph{collective} since it requires the interaction with neighbor devices to define a distributed collective data structure;
-  \item \textsc{Route planner} \Router{} defining the component responsible for computing the route towards the safe zone; also this component is \emph{collective} since it requires a global view of the system to compute the best route; and
+  \item \textsc{Route planner} \Router{} defining the component responsible for computing the route toward the safe zone; also this component is \emph{collective} since it requires a global view of the system to compute the best route; and
   \item \textsc{Navigation system} \GuidanceActuator{} defining the component responsible for interpreting the route and providing the user with the proper guidance; this component is \emph{local} since no neighbor interaction is required.
 \end{itemize}
 
@@ -538,12 +538,12 @@ This component is collective since the density estimation is computed by a globa
 Then,
  based on the information provided by the \textsc{Density estimator} and the \textsc{Position sensor},
  namely the ports $\port{\rho}$ and $\port{\sigma}$,
- the \textsc{Route planner} computes the best route towards the safe zone producing as output the route that should be followed by the user.
+ the \textsc{Route planner} computes the best route toward the safe zone producing as output the route that should be followed by the user.
 %
 Finally,
  this output,
  made available through the port $\port{\kappa}$,
- is taken by the \textsc{Navigation system} to provide the user with the proper guidance towards the safe zone.
+ is taken by the \textsc{Navigation system} to provide the user with the proper guidance toward the safe zone.
 
 Thanks to the partitioning of the application logic into components,
  the macroprogram $\mathtt{MP}$ can be deployed on the available devices,
@@ -569,7 +569,7 @@ Conversely,
 The solid circles represent the application devices $\mathbf{D}$,
  while the dashed circles represent the infrastructural devices $\mathbf{D}_I$.
 %
-The dashed lines towards the infrastructural devices represent the Wi-Fi/5G connections,
+The dashed lines toward the infrastructural devices represent the Wi-Fi/5G connections,
  while the solid lines among application devices represent the Bluetooth connections.
 
 \begin{figure}
@@ -597,7 +597,7 @@ The dashed lines towards the infrastructural devices represent the Wi-Fi/5G conn
 
 \subsection{Problem Formulation}
 Given the system model detailed in this section, 
- our goal is to devise a decentralized offloading strategy that optimizes system performance across several objectives (e.g., energy consumption, latency, reliability) while respecting individual device constraints and the collective dynamics of the system.
+ the goal is to devise a decentralized offloading strategy that optimizes system performance across several objectives (e.g., energy consumption, latency, reliability) while respecting individual device constraints and the collective dynamics of the system.
 %
 This strategy defines a mapping between the components of the macroprogram $\mathtt{MP}$ and the devices in the system.
 %
@@ -649,7 +649,7 @@ Therefore,
  as $o_{\delta,t} = (i_{\delta,t},\mathtt{C}_{p, \delta}, N_{\delta,t}, c_t)$.
 
 To elaborate the dynamics of the system, 
- we formulate this problem within a SwarMDP framework modeling the system 
+ the problem is formulated within a SwarMDP framework modeling the system 
  as a collective agent composed of individual devices.
 %
 This SwarMDP is defined by the tuple $\langle \mathbb{A}, \mathcal{E} \rangle$, where $\mathbb{A}$ 
@@ -683,7 +683,7 @@ At time $t$,
 
 where $\gamma$ is the discount factor.
 
-In our case, $P = |\mathbf{D}|$ agents comprise the system.  
+In this setting, $P = |\mathbf{D}|$ agents comprise the system.  
 %
 The action space $\mathcal{A}$ encompasses all possible offloading decisions for each component instance.
 Formally, 
@@ -696,15 +696,15 @@ The cardinality of $\mathcal{A}$ is $\lvert\overline{\mathtt{C}}\rvert \cdot \lv
 The reward function $\mathcal{R}$ is application-dependent.
 %
 Here, 
- we employ a multi-objective approach, 
+ a multi-objective approach is employed 
  to balance several objectives, such as energy consumption and system-wide cost.
 %
 Among the possible objectives, 
- we consider a standard linear combination of the objectives.
+ this chapter adopts a standard linear combination of the objectives.
 
 Formally, 
  given a set of reward functions $\mathcal{R}_i: \mathcal{O} \to \mathbb{R}$, 
- we define the multi-objective reward function as:
+ the multi-objective reward function is defined as:
 $$
 \mathcal{R}(o) = \sum_{i=1}^n \lambda_i \mathcal{R}_i(o) \quad \text{where} \quad \sum_{i=1}^n \lambda_i = 1
 $$
@@ -712,7 +712,7 @@ where $\lambda_i$ are the weights of the objectives.
 
 \section{Proposed Approach: IDHGQL}\label{sec:methodology}
 To address the collective component offloading problem formulated in~\Cref{sec:problem-statement}, 
- we introduce the \textbf{I}nformed \textbf{D}eep \textbf{H}etero \textbf{G}raph \textbf{Q}-\textbf{L}earning (IDHGQL) framework. 
+ this chapter introduces the \textbf{I}nformed \textbf{D}eep \textbf{H}etero \textbf{G}raph \textbf{Q}-\textbf{L}earning (IDHGQL) framework. 
  This approach finds a decentralized offloading policy that optimizes multiple objectives 
  by leveraging the structural and collective properties of the edge-cloud environment.
 %
@@ -741,7 +741,7 @@ The following subsections detail each of these components.
 \end{figure*}
 
 \subsection{HeteroGNN for Q-Function Approximation}\label{sec:heterognn-q-function}
-We employ a \gls{HGNN} as our deep Q-network to approximate the action-value function $Q$ in the SwarMDP formulation. 
+A \gls{HGNN} is employed as the deep Q-network to approximate the action-value function $Q$ in the SwarMDP formulation. 
 %
 This choice is motivated by three key advantages:
 \begin{itemize}
@@ -767,7 +767,7 @@ The action with the highest Q-value is then selected by the policy.
 More details on the \gls{HGNN} architecture and message-passing formulation follow.
 
 \subsubsection{HeteroGNN Architecture and Message-Passing Formulation}
-We now formally describe how the heterogeneous graph structure 
+The following paragraphs formally describe how the heterogeneous graph structure 
  is processed to compute Q-values for offloading decisions.
 
 \paragraph{Handling Heterogeneous Feature Spaces.}
@@ -776,9 +776,9 @@ Application devices and infrastructural devices have different feature spaces
  $\mathbf{x}^{\mathbf{D}_I}_u \in \mathbb{R}^{d_{\mathbf{D}_I}}$ including cost, available capacity, and latency parameters).
 %
 To handle this heterogeneity, 
- we adopt a practical approach: 
- we define a homogeneous Graph Attention Network (GAT)~\cite{DBLP:journals/corr/abs-1710-10903} 
- and automatically convert it into a heterogeneous architecture.
+ a practical approach is adopted: 
+ a homogeneous Graph Attention Network (GAT)~\cite{DBLP:journals/corr/abs-1710-10903} 
+ is defined and automatically converted into a heterogeneous architecture.
 %
 This conversion \emph{replicates} the message-passing operators for each edge type, 
  creating separate weight matrices that learn type-specific transformations.
@@ -830,7 +830,7 @@ After $L$ message-passing layers,
  the final node embeddings $\mathbf{h}^{(L)}_v$ encode both local features and neighborhood context.
 %
 For application device nodes $v \in \mathbf{D}$, 
- we compute Q-values for all possible offloading actions through a multi-layer perceptron (MLP) with $M$ layers (allowing $M\ge 2$):
+ Q-values for all possible offloading actions are computed through a multi-layer perceptron (MLP) with $M$ layers (allowing $M\ge 2$):
 \[
 \begin{aligned}
 \mathbf{z}_v^{(0)} &= \mathbf{h}^{(L)}_v,\\
@@ -857,10 +857,10 @@ A key challenge in \gls{CAS} is enabling individual agents to act on collective 
 Relying solely on the raw graph structure for this can be inefficient, 
  as information must propagate through many message-passing layers. 
 %
-To address this, we ``inform'' the learning process
+To address this, the learning process is ``informed''
  by directly embedding a high-level summary of the collective state into each agent's observation.
 
-We achieve this using aggregate computing. 
+This is achieved using aggregate computing. 
  Before each decision step, an aggregate program runs across the devices. 
  This program computes a distributed data structure---a computational field---that represents a specific collective property. 
  For instance, in the crowd steering scenario, 
@@ -868,14 +868,14 @@ We achieve this using aggregate computing.
  which serves as a proxy for potential network congestion.
 %
 From an operational perspective, 
- the aggregate computation executes in \emph{asynchronous rounds} (following our system model in \Cref{sec:system-model}):
+ the aggregate computation executes in \emph{asynchronous rounds} (following the system model in \Cref{sec:system-model}):
  each device periodically
 \begin{enumerate*}[label=(\roman*)]
   \item gathers the most recent messages from its neighbors;
   \item runs the aggregate program locally using this information and its own state; and
   \item broadcasts the resulting value to its neighbors.
 \end{enumerate*}
-For a comprehensive formal treatment of aggregate computing and its operational semantics, we refer the interested reader to \cite{DBLP:journals/tocl/AudritoVDPB19}.
+For a comprehensive formal treatment of aggregate computing and its operational semantics, the interested reader is referred to~\cite{DBLP:journals/tocl/AudritoVDPB19}.
 %
 This round frequency is a tunable parameter---it can match the learning decision rate,
  or it can run at a higher frequency to provide fresher collective estimates before each offloading decision.
@@ -920,7 +920,7 @@ This integration accelerates learning and leads to more robust, context-aware of
 The IDHGQL algorithm integrates the \gls{HGNN} policy network and the aggregate computing state enrichment into a coherent learning procedure. 
  It adapts the core principles of \gls{DQL}, 
  including experience replay and the use of a target network, 
- to our multi-agent, graph-based problem.
+ to the multi-agent, graph-based problem considered here.
 
 The algorithm follows a centralized training and decentralized execution pattern.
 During training, the algorithm has access to the global graph state and can sample transitions from the centralized replay buffer to learn optimal policies.
@@ -987,11 +987,11 @@ The key components of the algorithm, detailed in \Cref{alg:idhql}, are as follow
 
 \section{Evaluation}
 
-To validate our proposed IDHGQL framework, 
- we conduct a series of experiments designed to answer our research question (\ref{idhgql-rq}). 
+To validate the proposed IDHGQL framework, 
+ a series of experiments was designed to answer~\ref{idhgql-rq}. 
 % 
 Specifically, 
- our evaluation aims to: 
+ the evaluation aims to: 
 \begin{enumerate*}[label=(\roman*)]
     \item assess the framework's ability to learn effective multi-objective offloading policies that balance individual device constraints (battery) and system-wide objectives (cost, server load), and
     \item demonstrate the critical role of integrating collective information via aggregate computing to handle emergent phenomena like network congestion.
@@ -999,13 +999,13 @@ Specifically,
 The experiments are conducted in a simulated environment that mirrors the motivating crowd steering application.
 
 \subsection{Experimental Setup}\label{sec:experimental-setup}
-We use the Alchemist simulator~\cite{DBLP:journals/jos/PianiniMV13} 
+The Alchemist simulator~\cite{DBLP:journals/jos/PianiniMV13} is used 
  to model a system of 54 physical devices in a $20m \times 20m$ area, 
  configured to form two high-density zones. 
 %
 Alchemist was chosen because it supports the simulation of large-scale, 
  complex networks of devices and provides seamless integration with macroprograms written in ScaFi, 
- while also ensuring coherence with the system model underlying this work, 
+ while also ensuring coherence with the system model underlying this chapter, 
  which builds upon the macrocomponent pulverization approach introduced in~\cite{acsos-model}
  and originally evaluated using the same simulator.
 
@@ -1023,14 +1023,14 @@ The learning component is implemented using PyTorch~\cite{paszke2017automatic}.
  the complete source code is available on GitHub\footnote{\url{https://github.com/nicolasfara/experiments-2024-taas-edge-cloud-intelligence/}}.
 
 \subsection{Evaluation Scenarios}
-We design two primary experimental scenarios to systematically evaluate the IDHGQL framework.
+Two primary experimental scenarios were designed to systematically evaluate the IDHGQL framework.
 \subsubsection{Scenario 1: Multi-Objective Optimization Capability} \label{sec:sanity-check}
 \paragraph{Goal.} This experiment evaluates the learning process's stability 
  and its ability to find policies that balance the conflicting objectives of battery consumption,
  infrastructure cost, and edge server load.
 
 \paragraph{Baselines.} 
-We compare our learning-based approach against three static strategies:
+The learning-based approach is compared against three static strategies:
  \texttt{Local Execution}, where all components run on the application devices;
  \texttt{Edge Offloading}, where all components are offloaded to a random edge server;
  \texttt{Cloud Offloading}, where all components are offloaded to a random cloud server; and
@@ -1041,40 +1041,40 @@ cost minimization ($\mathcal{R}_{C}$),
 and preventing edge server overload ($\mathcal{R}_{ES}$):
 \[ \mathcal{R} = \alpha \cdot \mathcal{R}_{B} + \beta \cdot \mathcal{R}_{C} + \gamma \cdot \mathcal{R}_{ES} \quad (\text{s.t. } \alpha + \beta + \gamma = 1) \]
 By varying the weights ($\alpha, \beta, \gamma$), 
-we test the agent's ability to prioritize different objectives. In this scenario, 
+the agent's ability to prioritize different objectives is tested. In this scenario, 
 the agent's observation does not include collective information ($c_{\delta,t}$) 
 and relies only on local state and the graph structure.
 
 \subsubsection{Scenario 2: Density-Aware Offloading with Collective Information}
 \paragraph{Goal.} 
 This experiment assesses the benefit of enriching the agent's state with collective information. 
-We create a scenario with varying device densities, 
+The scenario features varying device densities, 
 where regions of high device density induce network congestion and increased latency, 
 representing a significant collective phenomenon.
 
 \paragraph{Baseline.} 
-We use a heuristic-based strategy that offloads components based on a local density estimate. 
+The baseline is a heuristic strategy that offloads components based on a local density estimate. 
 A device executes components locally if its number of neighbors within a radius $s$ exceeds a threshold $th$; 
 otherwise, it offloads. 
 This baseline highlights the challenge of setting such parameters optimally without a global perspective.
 
-\paragraph{Learning Configuration.} Here, we fully leverage the IDHGQL framework. 
+\paragraph{Learning Configuration.} This scenario fully leverages the IDHGQL framework. 
 The agent's state is enriched with collective information ($c_{\delta,t}$), 
 specifically the local device density computed via an aggregate program. 
 The agent's observation also includes local battery level, 
 offloading costs, component allocation, and estimated network latency to servers.
 The reward function balances battery, cost, and latency. 
-To prove the necessity of collective information, we conduct an ablation study where IDHGQL is trained
+To assess the necessity of collective information, an ablation study trains IDHGQL
  under identical conditions but with the collective density information removed from the agent's observation.
 
 \subsection{Metrics}
-To evaluate the performance of our proposed approach, we measure the following metrics:
+The performance of the proposed approach is evaluated through the following metrics:
 %\paragraph{Battery Consumption:} 
 \begin{itemize}
-  \item \textbf{Battery Consumption:} We measure the average percentage of battery remaining on application devices over time. 
+  \item \textbf{Battery Consumption:} the average percentage of battery remaining on application devices over time. 
   The discharge model is based on the work of Grochowski et al.~\cite{Grochowski2006EnergyPI}, considering a 4000 mAh battery, an EPI of 1 nJ/instruction, and a workload of 26.5M instructions per component execution.
   \item \textbf{Local Executed Components:} This metric represents the percentage of macroprogram components executed locally on application devices versus those offloaded to infrastructure.
-  \item \textbf{Infrastructural Costs:} We measure the total monetary cost incurred from offloading. Edge servers have a fixed cost of \$1.00/h per component instance, while cloud servers cost \$10.00/h per instance.
+  \item \textbf{Infrastructural Costs:} the total monetary cost incurred from offloading. Edge servers have a fixed cost of \$1.00/h per component instance, while cloud servers cost \$10.00/h per instance.
 \end{itemize}
 
 \subsection{Results and Discussion}
@@ -1098,7 +1098,7 @@ When targeting edge server load ($\gamma=1$, bottom row),
 %
 Moreover, 
  compared to the optimized parameter settings (\Cref{fig:mixed-edge-cases,fig:mixed-tradeoff}), 
- our approach consistently outperforms the random allocation baseline, 
+ the proposed approach consistently outperforms the random allocation baseline, 
  demonstrating that the learning process provides a tangible advantage over uninformed policies.
 
 
@@ -1110,7 +1110,7 @@ Furthermore, \Cref{fig:mixed-tradeoff}
  shows a mixed-objective case ($\alpha=0.3, \beta=0.1, \gamma=0.6$) where the agent learns a sophisticated policy. 
  It heavily penalizes edge offloading, resulting in low edge usage, high battery, 
  and correspondingly high costs. 
- These results validate that our DQL-based approach can effectively learn policies for complex, multi-objective optimization problems.
+ These results validate that the DQL-based approach can effectively learn policies for complex, multi-objective optimization problems.
 
 % \begin{figure}
 %   \centering
@@ -1182,7 +1182,7 @@ Furthermore, \Cref{fig:mixed-tradeoff}
 \end{figure}
 
 \subsubsection{Impact of Collective Information on Offloading Policy}
-This scenario directly addresses the core of our research question. 
+This scenario directly addresses the core of~\ref{idhgql-rq}. 
 \Cref{fig:experiment-density-baseline} shows the limitations of the heuristic baseline; 
 its performance is highly sensitive to the choice of parameters ($s$, $th$), 
 leading to either overestimation or underestimation of density and, 
@@ -1204,7 +1204,7 @@ Without access to the aggregate density information ($c_{\delta,t}$),
  This directly proves that integrating collective perception is crucial for making informed decisions in response to emergent system phenomena.
 
 Finally, 
- we test the generalization of the learned policy in a dynamic environment where devices move. \Cref{fig:experiment-density-eval} 
+ the generalization of the learned policy is tested in a dynamic environment where devices move. \Cref{fig:experiment-density-eval} 
   shows that when three devices move from a high-density to a low-density area (at time 100), 
   the pre-trained policy correctly adapts their behavior in real-time, 
   causing them to switch from local execution to full offloading. 
@@ -1294,26 +1294,26 @@ Finally,
 \end{figure*}
 
 \section{Limitations}\label{sec:limitations}
-While our proposed IDHGQL framework demonstrates significant promise in addressing the challenges of task offloading in edge-cloud systems,
+While the proposed IDHGQL framework demonstrates significant promise in addressing the challenges of task offloading in edge-cloud systems,
 some limitations must be acknowledged:
 
 \paragraph{Reality Gap.}
-Our evaluation is conducted in a simulated environment,
+The evaluation is conducted in a simulated environment,
 which may not capture all the nuances of real-world deployments.
-Although we strive for realism,
+Although the simulation strives for realism,
 adopting already validated consumption models~\cite{Grochowski2006EnergyPI,DBLP:journals/fgcs/FarabegoliPCV24} and network conditions,
 real-world data and deployments are necessary to fully validate the approach.
 
 \paragraph{Dynamic Environments.}
-While our experiments include dynamic scenarios like node mobility,
+While the experiments include dynamic scenarios like node mobility,
 local features changes,
 and varying network conditions (e.g., variable neighbor counts),
-we did not test highly dynamic environments such as rapid topology changes,
+highly dynamic environments were not tested, such as rapid topology changes,
 devices frequently joining/leaving the network,
 or fluctuating workloads.
 %
-Even though a comprehensive evaluation of such scenarios is beyond this paper's scope,
-we are confident that our approach can handle them due to:
+A comprehensive evaluation of such scenarios is beyond the scope of this chapter;
+nevertheless, two properties suggest that the approach could handle them:
 \begin{enumerate*}[label=(\roman*)]
     \item the inherent adaptability of reinforcement learning, 
     which allows agents to continuously learn and adjust their policies based on new experiences, and
@@ -1325,11 +1325,11 @@ we are confident that our approach can handle them due to:
 % even though preliminary results are encouraging.
 
 \paragraph{Multi-Objective Reward Scalarization.}
-Our approach employs a linear weighted combination of objectives ($\mathcal{R}(o) = \sum_{i=1}^n \lambda_i \mathcal{R}_i(o)$),
+The approach employs a linear weighted combination of objectives ($\mathcal{R}(o) = \sum_{i=1}^n \lambda_i \mathcal{R}_i(o)$),
 a common scalarization technique that, while interpretable, 
  cannot capture non-convex Pareto regions and may be sensitive to weight configurations~\cite{Hayes2022}.
 %
-The primary focus of this work is on the IDHGQL architecture---combining \gls{HGNN} with aggregate computing for collective-aware decision-making---rather than 
+The primary focus of this chapter is on the IDHGQL architecture---combining \gls{HGNN} with aggregate computing for collective-aware decision-making---rather than 
  on multi-objective optimization methods per se.
 The linear scalarization 
  serves as a straightforward mechanism to demonstrate the framework's ability to balance competing objectives.
@@ -1342,7 +1342,7 @@ Integrating such techniques within IDHGQL represents a promising direction for f
 \paragraph{Preference Polarization.}
 The current framework exhibits preference polarization in multi-objective scenarios, 
  where agents tend to select either cloud or edge resources exclusively rather than developing more nuanced, mixed strategies. 
- This behavior may result from the homogeneous treatment of application nodes in our \gls{HGNN} architecture,
+ This behavior may result from the homogeneous treatment of application nodes in the \gls{HGNN} architecture,
  which does not differentiate between devices with varying characteristics or workload patterns.
 %
 Future work should explore heterogeneous node representations to enable more sophisticated policy differentiation.

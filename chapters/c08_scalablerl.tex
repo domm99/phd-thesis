@@ -175,8 +175,8 @@ These strategies leverage local interactions between agents
  to improve learning efficiency and coordination.
 %
 For this investigation, 
- we focus on Deep Q-Learning as the underlying learning algorithm,
- and we consider the following strategies: 
+ Deep Q-Learning is adopted as the underlying learning algorithm,
+ and the following strategies are considered: 
  k-nearest neighbor averaging, k-nearest neighbor consensus, and experience sharing.
 
 \paragraph{k-Nearest Neighbor Definition}
@@ -195,7 +195,7 @@ This can be calculated,
 %
 The length of a path is the sum of the weights of the edges along the path. 
 %
-If no path exists between $i$ and $j$, we set $d(i,j) = \infty$.
+If no path exists between $i$ and $j$, then $d(i,j) = \infty$.
 %
 Then, 
  the set of $k$-nearest neighbors of agent $i$ is defined as:
@@ -231,10 +231,10 @@ This approach is typically used in large-scale systems where agents are identica
  and need to reach a consensus---see~\cite{DBLP:conf/eusipco/BaldazoPZ19}.
 %
 Instead of directly enforcing a shared policy, 
- we allow each agent to learn independently and periodically select the best-performing agent within its neighborhood as a reference. 
+ each agent learns independently and periodically selects the best-performing agent within its neighborhood as a reference. 
 %
 This approach facilitates decentralized exploration 
- while promoting consensus towards a high-performing policy.
+ while promoting consensus toward a high-performing policy.
 %
 Formally,
  let $R_i(t)^n$ be the average reward obtained by agent $i$ over the last $n$ episodes,
@@ -258,7 +258,7 @@ Choosing an appropriate interval balances independent exploration with consensus
 This approach is typically used in centralized training to improve sample efficiency 
  and learning stability~\cite{marl-book}.
 %
-In our distributed setting, 
+In the distributed setting considered here, 
  each agent maintains its own experience replay buffer, 
  but also augments it by collecting a fraction of each neighbor's buffer.
 %
@@ -266,8 +266,7 @@ This allows agents to learn from each other's experiences,
  potentially accelerating learning and improving coordination because agents can learn from each other's mistakes 
  and successes.
 %
-Formally, 
- we define: 
+Formally, let: 
  $\mathcal{D}^t_i$ the replay buffer of the agent $i$ at time $t$,
  $\beta \in \mathbb{N}^+ $ the number of experiences to collect from each neighbor,
  $\phi: \mathcal{D} \times \mathbb{N}^+ \to \mathcal{D}$ a function that, 
@@ -289,7 +288,7 @@ The algorithm follow the same structure as the Deep Q-Learning algorithm,
 This may happen with a different frequency for each strategy, 
  depending on the communication overhead and the desired level of coordination.
 %
-In \Cref{alg:neighbor_dqn} we provide a detailed description of the integration 
+\Cref{alg:neighbor_dqn} details the integration 
  of the neighboring-based strategies with Deep Q-Learning.
 
 \begin{algorithm}
@@ -380,7 +379,7 @@ The complete observation $o_a^t$ at time $t$ for agent $a$ is thus given by $o_a
 Communication between agents is restricted to a neighborhood $\mathcal{C}_a^t \subseteq \mathcal{N}_a^t$ 
  and depends on a communication graph $\mathcal{G}$ that defines the communication links between agents. 
 % 
-In this work, 
+In this study, 
  the graph is based on a k-nearest neighbor topology, 
  where each agent communicates with its $k$ (parameter of the simulation) nearest neighbors.
 %
@@ -392,7 +391,7 @@ The action space for each agent is discrete,
 
 This environment provides a challenging coordination problem, 
  requiring agents to learn individual target-seeking behaviors and collaborative strategies 
- to minimize retrieval time. 
+ to minimize retrieval time (\Cref{fig:behavior}). 
 %
 It serves as a suitable testbed for evaluating the effectiveness 
  of neighbor-based decentralized training approaches.
@@ -503,12 +502,12 @@ The described environment was implemented using
  the \emph{Gymnasium} framework~\cite{DBLP:journals/corr/abs-2407-17032}.
 %
 Moreover, 
- we employed the following libraries to implement the learning algorithms namely: 
+ the learning algorithms were implemented using the following libraries: 
  \emph{Ray}~\cite{DBLP:conf/osdi/MoritzNWTLLEYPJ18} 
  (in particular, its module \emph{RLlib}~\cite{DBLP:conf/icml/LiangLNMFGGJS18}),
  and \emph{PyTorch}~\cite{DBLP:conf/nips/PaszkeGMLBCKLGA19}.
 
-We ran a total of $42$ training experiments, namely: 
+A total of $42$ training experiments were run, namely: 
  $6$ different methods (centralized, distributed, MAPPO and the three neighbor-based strategies discussed).
 %
 Each method was evaluated across 10 distinct random seeds 
@@ -517,20 +516,19 @@ Each method was evaluated across 10 distinct random seeds
 Each experiment consisted of $50$ training episodes. 
 %
 In these episodes, 
- we fix the number of agents to $4$, $A_v = 3$, $T_v = 3$, $H_t = 3$, $k = 2$, $\sigma = 1$ and $\beta = 1$.
+ the number of agents is fixed to $4$, $A_v = 3$, $T_v = 3$, $H_t = 3$, $k = 2$, $\sigma = 1$ and $\beta = 1$.
 %
-As learning algorithms we employed the Deep Q-Learning algorithm and MAPPO.
+The learning algorithms employed were Deep Q-Learning and MAPPO.
 
-Furthermore, we ran $15$ evaluation experiments, namely: 
- $5$ different methods and for each method we varied the number of agents ($8$, $16$ and $32$) 
+Furthermore, $15$ evaluation experiments were run, namely: 
+ $5$ different methods, each evaluated while varying the number of agents ($8$, $16$ and $32$) 
  to assess the metrics under various conditions leaving the other parameters fixed.
 % 
 In this case, 
- for each experiment we ran $100$ evaluation episodes.
+ each experiment comprised $100$ evaluation episodes.
 
 \subsection{Evaluation Metrics} 
-In our experiments, 
- we employed two metrics to evaluate the performance of the learning agents 
+Two metrics were employed to evaluate the performance of the learning agents 
  and monitor the quality of the training process, namely: 
  \begin{enumerate*}[label=(\roman*)]
   \item \emph{Mean Episode Reward} ($R_{mean}$); and
@@ -579,7 +577,7 @@ This difference becomes even more evident when considering the $L_{mean}$,
  where CTDE not only converges faster but also solves the task using shorter episodes than DTDE. 
  
 Additionally, 
- we implemented another state-of-the-art algorithm, namely MAPPO, as a baseline for comparison. 
+ another state-of-the-art algorithm, MAPPO, was implemented as a baseline for comparison. 
 %
 However, 
  MAPPO performed worse than both CTDE and DTDE across both metrics---yielding lower results and exhibiting less stability, 
@@ -607,7 +605,7 @@ Nevertheless,
 
 \paragraph{Scalability}
 To evaluate the scalability of the learned policies, 
- we conducted several experiments by increasing the number of agents--specifically to 8, 16, and 32--and measuring the time required 
+ several experiments were conducted by increasing the number of agents--specifically to 8, 16, and 32--and measuring the time required 
  to complete the task (i.e., $L_{mean}$). 
 
 \Cref{fig:time-eval} shows that as the number of agents increases, 
@@ -649,7 +647,7 @@ Similar to the training phase, k-NN consensus does not achieve the same results 
 \paragraph{Communication overhead}
 
 The proposed neighbor-based approaches, particularly k-NN averaging and experience sharing, 
- achieve performance comparable to CTDE while maintaining a decentralized structure similar to DTDE. 
+ achieve performance comparable to CTDE while maintaining a decentralized structure similar to DTDE (\Cref{fig:scalability}). 
 % 
 However, 
  runtime communication is required as agents exchange information with neighbors. 
@@ -765,27 +763,32 @@ While the recent work on \gls{GNN} applications for swarm dynamics~\cite{DBLP:co
  and efficiency across swarm sizes without retraining--remains unexplored.
 
 \textbf{Contribution.}
-This paper addresses the research gap above through an empirical investigation 
- of \glspl{GNN} scalability in swarm coordination. 
-%
-Our key research question is: 
- To what extent can \gls{GNN}-based policies trained at a fixed swarm size 
- preserve functional coordination  and maintain efficiency when deployed 
- at different population sizes without retraining?
+This section addresses the research gap above through an empirical investigation 
+ of \glspl{GNN} scalability in swarm coordination, 
+ guided by the following research question:
+
+\begin{chapRQ}{8}
+  \item
+  To what extent can \gls{GNN}-based policies trained at a fixed swarm size
+  preserve functional coordination and maintain efficiency when deployed
+  at different population sizes without retraining?
+  \label{rq:dgql}
+\end{chapRQ}
+
 %
 To investigate this question, 
- we introduce Deep Graph Q-Learning (DGQL), 
+ this section introduces Deep Graph Q-Learning (DGQL), 
  a \gls{MARL} algorithm that integrates \glspl{GNN} into deep Q-learning for swarm coordination. 
 %
 DGQL operates under the CTDE paradigm, 
  utilizing \glspl{GNN} to process dynamic agent-neighbor interaction graphs during training 
  while enabling fully decentralized execution through local message passing.
 %
-This study specifically focuses on homogeneous swarms performing 2D navigation tasks,
+This section specifically focuses on homogeneous swarms performing 2D navigation tasks,
  providing a controlled setting to isolate the effects of \gls{GNN}-based policy scaling 
  rather than addressing more complex or heterogeneous domains.
 
-The main contributions of this work are threefold:
+The main contributions of this section are threefold:
 
 \begin{enumerate}
     \item Algorithmic contribution: 
@@ -954,11 +957,11 @@ Critically,
  not the global swarm size \(\mathcal{N}\), 
  ensuring scalability. 
 % 
-We set \(K{=}1\) in our experiments to minimize communication rounds 
+The experiments use \(K{=}1\) to minimize communication rounds 
  while preserving immediate neighborhood awareness.
 %
 More formally, 
- we can characterize the resulting decentralized policy as follows:
+ the resulting decentralized policy can be characterized as follows:
  at time step \(t\),
  each agent \(i\) forms its ego-graph \(\mathcal{G}_t^i\) over nodes \(\{i\}\cup\mathcal{N}_t(i)\). 
 % 
@@ -968,7 +971,7 @@ With \(K\) GNN layers and shared parameters \(\theta\),
 %
 This policy is permutation invariant with respect to agent indexing 
  and has runtime complexity independent of global population size,
- which are key properties that enable the zero-shot scalability we investigate in this work.
+ which are key properties that enable the zero-shot scalability investigated in this section.
 
 % \begin{algorithm}[H]
 %     \caption{Deep graph Q-learning (DGQL)}
@@ -1383,7 +1386,7 @@ In some cases,
 To verify if the proposed approach is able to generalize across different swarm sizes and to 
  perform different swarming behaviors, a set of tasks were designed for the swarm of agents to perform.
 %
-We restrict our evaluation to simple tasks, 
+The evaluation is restricted to simple tasks, 
  as they allow systematic investigation of scalability without 
  confounding factors from task-specific dynamics.
 %
@@ -1399,15 +1402,14 @@ For instance,
 The experiments described below are fully available and reproducible in the 
  repository\footnote{\url{https://github.com/domm99/experiments-2025-marl-scalability-for-swarming-behaviors}}.
 %
-In the following, 
- we describe the tasks, the experimental setup, and the results obtained.
+The following subsections describe the tasks, the experimental setup, and the results obtained.
 
 
 \subsubsection{Tasks}\label{sec:Tasks}
 To evaluate the coordination capabilities and scalability of the learned policies, 
- we designed two benchmark tasks within a simulated 2D continuous environment.
+ two benchmark tasks were designed within a simulated 2D continuous environment.
 %
-These tasks require agents to navigate towards a common goal while managing spatial interactions, 
+These tasks require agents to navigate toward a common goal while managing spatial interactions, 
  both among themselves and potentially with environmental obstacles. 
 %
 The reward structures are designed to elicit specific coordinated behaviors.
@@ -1415,7 +1417,7 @@ The reward structures are designed to elicit specific coordinated behaviors.
 The primary objective of this task (\Cref{fig:Task1}) 
  is for a swarm of agents, 
  starting from randomized positions, 
- to collectively converge towards a predefined target location \( g \in \mathbb{R}^2 \) 
+ to collectively converge toward a predefined target location \( g \in \mathbb{R}^2 \) 
  within the environment.
 %
 Let \( p_i \in \mathbb{R}^2 \) denote the position of agent \( i \) at a given time step, 
@@ -1434,7 +1436,7 @@ Since the objective in \gls{MARL} is typically to maximize the sum of rewards ov
  this formulation encourages agents to reach the goal as quickly as possible.
 %
 Although inter-agent collisions are not explicitly penalized in this task, 
- they inherently impede progress towards the goal, 
+ they inherently impede progress toward the goal, 
  thus indirectly promoting the emergence of coordinated, 
  collision-averse navigation strategies to maximize the collective return. 
 %  
@@ -1454,14 +1456,14 @@ The shared reward for the swarm is the sum of individual rewards,
 This task extends the Go to Position scenario by introducing a static, 
  circular obstacle into the environment. 
 % 
-Agents must not only navigate towards the goal \(g\)
+Agents must not only navigate toward the goal \(g\)
   but also actively avoid colliding with the obstacle.
 %
 Let \( o \in \mathbb{R}^2 \) be the center position of the obstacle, 
  and let \( d_{oi} = \|p_i - o\|_2 \) 
  be the Euclidean distance between agent \( i \) and the obstacle center. 
 % 
-We introduce a penalty threshold distance, \(d_{thresh}\), 
+A penalty threshold distance is introduced, \(d_{thresh}\), 
  representing a safety margin around the obstacle 
  (e.g., obstacle radius plus agent radius or a slightly larger buffer). 
 %
@@ -1478,8 +1480,8 @@ The \( \max(0, \cdot) \) operation ensures that the penalty is only applied when
  to the obstacle than the threshold distance (\( d_{oi} < d_{thresh} \)) 
  and increases linearly as the agent gets closer.
 %
-In our experiments, 
- we set \( \alpha = 2.5 \). This value was chosen to impose a significant penalty for approaching the obstacle, 
+In the experiments, 
+ \( \alpha \) is set to \(2.5\). This value was chosen to impose a significant penalty for approaching the obstacle, 
  encouraging agents to prioritize safety and find alternative paths to the goal when necessary. 
 % 
 This task presents a more complex coordination challenge, 
@@ -1497,7 +1499,7 @@ The collective objective remains the maximization of the sum of these individual
 
 \subsubsection{Experimental Setup}\label{subsec:setup}
 
-We implement the tasks in a 2D multi-agent simulator built on VMAS~\cite{DBLP:conf/dars/BettiniKBP22}, 
+The tasks are implemented in a 2D multi-agent simulator built on VMAS~\cite{DBLP:conf/dars/BettiniKBP22}, 
  using PyTorch~\cite{paszke2017automatic} and 
  PyTorch Geometric~\cite{DBLP:journals/corr/abs-1903-02428} for differentiable graph processing. 
 %
@@ -1614,8 +1616,8 @@ During training,
 %
 The fixed goal position design choice serves a specific methodological purpose: 
  by maintaining a consistent target location, 
- we isolate the scalability question from goal generalization, 
- allowing us to focus exclusively 
+ the scalability question is isolated from goal generalization, 
+ allowing the analysis to focus exclusively 
  on whether learned coordination patterns transfer across different swarm sizes.
 %
 The specific goal position \((-0.8,\,0.8)\) creates a non-trivial coordination scenario requiring agents 
@@ -1626,7 +1628,7 @@ The specific goal position \((-0.8,\,0.8)\) creates a non-trivial coordination s
 Episodes last at most 100 steps. 
 %
 At the beginning of each step,
- we additively perturb the agent positions with a 
+ the agent positions are additively perturbed with a 
  Gaussian noise \(\epsilon \sim \mathcal{N}(\mu,\,\sigma^2)\) with \(\mu=0.6\) and \(\sigma=0.4\). 
 %
 The Obstacle Avoidance task includes a circular obstacle centered at \(o = (-0.1,\,0.1)\) with radius \(R = 0.2\) m.
@@ -1647,13 +1649,13 @@ The choice of \(k=5\) neighbors represents a balance between coordination capabi
 %
 This parameter choice aligns with biological swarm studies showing 
  that effective collective behaviors often emerge from sparse local interactions~\cite{DBLP:conf/siggraph/Reynolds87}, 
- and ensures that our approach remains applicable 
+ and ensures that the approach remains applicable 
  to resource-constrained robotic platforms where communication bandwidth is limited.
 %
 Optimization is performed with Adam (learning rate \(10^{-3}\)), 
  a replay buffer of size \(10^6\), and mini-batches of size 32. 
 %
-We apply DGQL with discount \(\gamma=0.99\) and update the target network every 200 steps. 
+DGQL is applied with discount \(\gamma=0.99\), and the target network is updated every 200 steps. 
 %
 Exploration follows an \(\varepsilon\)-greedy policy with exponential decay the following:
 \begin{equation}
@@ -1662,18 +1664,18 @@ Exploration follows an \(\varepsilon\)-greedy policy with exponential decay the 
 \end{equation}
 where \(\tau\) is the training episode index.
 %
-We log per-episode cumulative reward and average TD loss. 
+Per-episode cumulative reward and average TD loss are logged. 
 % 
 All experiments are repeated across multiple random seeds to assess robustness.
 
 For zero-shot evaluation, 
- we vary the swarm size from 15 to 30 agents without retraining. 
+ the swarm size is varied from 15 to 30 agents without retraining. 
 %
 The goal and obstacle configurations match training. 
 %
 The initial agent positions are randomized. 
 %
-We select the best checkpoint by validation return and report two metrics:
+The best checkpoint is selected by validation return, and two metrics are reported:
 \begin{enumerate*}[label=(\roman*)]
     \item terminal mean distance to goal,
      \(\bar{d}_T = \frac{1}{\mathcal{N}}\sum_{i=1}^{\mathcal{N}} \lVert p_i^{T} - g \rVert_2\); and
@@ -1697,8 +1699,8 @@ In these models,
  information propagates over time through the swarm's dynamics rather
  than via explicit multi-hop message passing in a single step. 
 %
-Since our goal is to emulate such minimal reactive coordination, 
- we fix \(K=1\) so that each decision uses only immediate neighbor information with a single exchange. 
+Since the goal is to emulate such minimal reactive coordination, 
+ \(K=1\) is fixed so that each decision uses only immediate neighbor information with a single exchange. 
 %
 This preserves the intended local-rule prior, 
  avoids oversmoothing from multi-hop aggregation, 
@@ -1708,16 +1710,16 @@ This preserves the intended local-rule prior,
 The analysis proceeds in two parts. 
 %
 First, 
- we report training dynamics to verify that DGQL learns stable policies 
+ the training dynamics are reported to verify that DGQL learns stable policies 
  (loss and cumulative return; \Cref{fig:training-results}). 
 %
 Second, 
- we evaluate zero-shot population scaling by deploying the learned policies on larger swarms without retraining, 
+ zero-shot population scaling is evaluated by deploying the learned policies on larger swarms without retraining, 
  summarizing performance with terminal mean distance to the goal and, 
  for Obstacle Avoidance, obstacle-collision counts (\Cref{fig:testing-results}). 
 %
 To qualitatively assess emergent spatial organization as team size grows, 
- we complement scalar metrics with KDE visualizations of agent trajectories (\Cref{fig:testing-position}).
+ scalar metrics are complemented with KDE visualizations of agent trajectories (\Cref{fig:testing-position}).
 %
 Unless stated otherwise, 
  results aggregate multiple seeds per configuration, 
@@ -1831,7 +1833,7 @@ The testing phase results are summarized
  in~\Cref{fig:testing-results,fig:testing-position} for both tasks. 
 %
 \Cref{fig:trajectories} shows example trajectories of agents in the Obstacle Avoidance task 
- for different swarm sizes to illustrate how agents navigate around the obstacle while moving towards the goal 
+ for different swarm sizes to illustrate how agents navigate around the obstacle while moving toward the goal 
  and how this behavior changes with swarm size.
 %
 In~\Cref{fig:testing-results}, 
@@ -1862,7 +1864,7 @@ The KDE plots for this task (bottom row) demonstrate that as the swarm size incr
  relative to goal-seeking behavior.
 %
 This is also evident in \Cref{fig:trajectories}, 
- where agents navigate around the obstacle while moving towards the goal, with larger swarms showing more pronounced avoidance patterns.
+ where agents navigate around the obstacle while moving toward the goal, with larger swarms showing more pronounced avoidance patterns.
 
 \begin{figure}
 
@@ -1903,7 +1905,7 @@ This is also evident in \Cref{fig:trajectories},
 The experimental results reveal important aspects about how GNN-based approaches 
  to swarm coordination handle varying numbers of agents. 
 %
-Our analysis highlights both promising capabilities and notable limitations of the DGQL approach. 
+The analysis highlights both promising capabilities and notable limitations of the DGQL approach. 
 %
 The following insights delve into the nature of the learned policies' scalability, 
  examining how and why performance characteristics change as swarm sizes increase beyond training conditions. 
@@ -1913,7 +1915,7 @@ The following insights delve into the nature of the learned policies' scalabilit
  enabling functional coordination in swarms larger 
  than the training size without retraining.
 \end{tcolorbox}
-Our results show that the swarms did not collapse into complete disarray when the agent count increased. 
+The results show that the swarms did not collapse into complete disarray when the agent count increased. 
 %
 Agents generally maintained goal-oriented behavior and obstacle avoidance capabilities (\Cref{fig:testing-results}, 
  right panel shows near-zero collisions). 
@@ -1932,7 +1934,7 @@ Despite this near zero-shot scalability,
 %
 This decline is evident in the steadily increasing average distance to the goal observed 
  in both tasks as agent numbers rise (\Cref{fig:testing-results}, left and center panels), 
- with no counterexamples in our evaluated sizes.
+ with no counterexamples among the evaluated sizes.
 % 
 Although the GNN architecture can handle variable neighbor counts, 
  the coordination patterns learned from a ten-agent swarm (e.g., ideal spacing and synchronized movements) 
@@ -2017,11 +2019,11 @@ This suggests density-driven interaction effects and receptive-field limitations
 
 \subsubsection{Final Remarks}
 Collectively, 
- these insights sharpen the answer to our research question: 
+ these insights sharpen the answer to~\ref{rq:dgql}: 
  GNN-based policies generalize functionally across population changes without retraining,
  but efficiency degrades as deployment size diverges from training, with task-dependent trade-offs. 
 %
-In our setup, 
+In the evaluated setup, 
  efficiency declines monotonically across the tested sizes (15 to 29 agents) 
  and degrades more rapidly once exceeding twice the training size, 
  suggesting that density and receptive-field mismatches increasingly impact performance as populations grow. 
@@ -2033,26 +2035,26 @@ Closing this gap likely requires scale-aware training
  and objectives that explicitly balance safety and goal progress across scales.
 %
 These directions aim to preserve zero-shot generalization while stabilizing efficiency; 
- we now turn to limitations and threats to validity.
+ the following subsection discusses limitations and threats to validity.
 
 \subsubsection{Limitations and Threats to Validity}
 \label{subsec:limitations}
-Our study has several limitations that should be considered when interpreting the results,
+The study has several limitations that should be considered when interpreting the results,
  though each represents a deliberate methodological choice with specific justifications 
  as the following:
 
 \begin{itemize}
     \item \emph{Limited training diversity}: 
-    We train on a single swarm size (ten agents), 
+    Training uses a single swarm size (ten agents), 
     which may bias the learned coordination patterns toward this specific scale and limit generalization to significantly different sizes.
     However, 
     this choice enables a controlled investigation of 
     zero-shot scalability---training on diverse swarm sizes would conflate learning scalable representations with learning to handle size variation directly.
     
-    \item \emph{Shallow GNN architecture}: Our use of single-layer message passing (\(K{=}1\)) 
+    \item \emph{Shallow GNN architecture}: The use of single-layer message passing (\(K{=}1\)) 
     constrains the receptive field to immediate neighbors, 
     potentially missing longer-range coordination dependencies critical for larger swarms.
-    This limitation is deliberate and aligns with minimal local-rule models (e.g., Reynolds' Boids~\cite{DBLP:conf/siggraph/Reynolds87}). The agents react only to 1-hop neighbors via a sparse kNN neighborhood  in our case), 
+    This limitation is deliberate and aligns with minimal local-rule models (e.g., Reynolds' Boids~\cite{DBLP:conf/siggraph/Reynolds87}). The agents react only to 1-hop neighbors (via a sparse kNN neighborhood in this case), 
     letting coordination emerge as information propagates over time through motion rather than explicit multi-hop messaging.
     This choice reduces communication and computation, 
     avoids oversmoothing, and supports real-time deployment.
@@ -2061,24 +2063,24 @@ Our study has several limitations that should be considered when interpreting th
     Nevertheless, the kNN model provides a reasonable approximation of proximity-based communication common in robotic swarms, 
     and the \(k=5\) parameter choice represents realistic communication fanout for resource-constrained devices.
     
-    \item \emph{Task complexity}: Our evaluation focuses on relatively simple 2D navigation tasks with basic dynamics. 
+    \item \emph{Task complexity}: The evaluation focuses on relatively simple 2D navigation tasks with basic dynamics. 
     More complex scenarios involving heterogeneous objectives, dynamic environments,
     or 3D coordination may reveal different scalability patterns.
-    We deliberately chose these canonical swarm coordination problems to establish baseline scalability behavior 
+    These canonical swarm coordination problems were deliberately chosen to establish baseline scalability behavior 
     in well-understood scenarios before tackling more complex domains.
     The tasks capture fundamental swarm coordination challenges (collision avoidance, goal convergence, formation maintenance) that form building blocks for more sophisticated behaviors.
     
-    \item \emph{Limited evaluation metrics}: We primarily assess terminal distance to goal and collision counts,
+    \item \emph{Limited evaluation metrics}: The assessment primarily relies on terminal distance to goal and collision counts,
      omitting other important factors such as energy consumption, communication overhead, convergence time, 
      and trajectory efficiency that may be critical for real deployments.
-    Our metric selection focuses on task completion quality---the most direct measure of coordination effectiveness---while additional metrics 
+    The metric selection focuses on task completion quality---the most direct measure of coordination effectiveness---while additional metrics 
     would be valuable for comprehensive deployment evaluation.
 
-    \item {\emph{Hyperparameter sensitivity}: We did not perform an explicit sensitivity analysis on the hyperparameters of the proposed method. While this choice keeps the focus on scalability behavior, exploring how parameter variations affect performance represents an important direction for future work.}
+    \item {\emph{Hyperparameter sensitivity}: No explicit sensitivity analysis was performed on the hyperparameters of the proposed method. While this choice keeps the focus on scalability behavior, exploring how parameter variations affect performance represents an important direction for future work.}
 \end{itemize}
 
  Despite these limitations, 
- our results provide meaningful evidence for GNN-based scalability in swarm coordination. 
+ the results provide meaningful evidence for GNN-based scalability in swarm coordination. 
 %
 The methodological choices reflect a research strategy that prioritizes controlled 
  evaluation of specific hypotheses over comprehensive real-world validation, 
@@ -2088,8 +2090,8 @@ The methodological choices reflect a research strategy that prioritizes controll
 \subsection{Related Work}
 The scalability of \gls{MARL} remains a central challenge. 
 %
-This work focus on zero-shot scalability in swarm coordination with \glspl{GNN},
- and position our study within three complementary strands: 
+This section focuses on zero-shot scalability in swarm coordination with \glspl{GNN}
+ and positions the study within three complementary strands: 
  scaling in agent count, scaling in state/action complexity, and CTDE with learned communication.
 
 \subsubsection{Scalability in the Number of Agents}
@@ -2135,13 +2137,13 @@ Transformers and routing mechanisms have been proposed
  while \gls{GNN}-based communication scales to large teams with efficiency 
  and safety guarantees~\cite{liu2024graph,du2025scalable}.
 
-\subsubsection{Positioning of this work}
-This work study zero-shot population scaling with \glspl{GNN} in value-based \gls{MARL} under CTDE, 
+\subsubsection{Positioning}
+This section studies zero-shot population scaling with \glspl{GNN} in value-based \gls{MARL} under CTDE, 
  without training on multiple team sizes. 
 %
 Compared to mean-field methods~\cite{DBLP:conf/icml/YangLLZZWY18} 
  and GNN-based population-transfer approaches~\cite{nayak2023scalable}, 
- this work quantify how performance degrades as deployment sizes diverge from training. 
+ this section quantifies how performance degrades as deployment sizes diverge from training. 
 %
 DGQL complements permutation-invariant models~\cite{hao2023boosting,lin2024hgap} 
  and communication-centric methods~\cite{guo2023scalable,du2025scalable}, 
