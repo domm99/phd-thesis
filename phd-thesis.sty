@@ -71,6 +71,20 @@
 \setlist[questions,1]{label=(RQ\arabic*),ref=RQ\arabic*}
 \setlist[questions,2]{label=(\alph*),ref=\thequestionsi(\alph*)}
 
+\newcounter{chaprqnum}[chapter]
+\newlist{chapterquestions}{enumerate}{1}
+\newenvironment{chapRQ}[1]{%
+  \begin{chapterquestions}[%
+    label=\textbf{RQ#1.\arabic*:},
+    ref=RQ#1.\arabic*,
+    leftmargin=*,
+    start=\numexpr\value{chaprqnum}+1\relax
+  ]%
+}{%
+  \setcounter{chaprqnum}{\value{chapterquestionsi}}%
+  \end{chapterquestions}%
+}
+
 \newtoggle{publicationlist}
 \newcounter{publicationitem}
 \let\standardarticledriver\blx@bbx@article

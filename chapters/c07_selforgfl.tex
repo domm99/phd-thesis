@@ -687,11 +687,7 @@ The evaluation investigates whether spatially organized federations can preserve
 More specifically, 
  it addresses the following research questions:
 
-\begin{enumerate}[
-  label=\textbf{RQ\arabic*:},
-  ref=RQ\arabic*,
-  leftmargin=*
-]
+\begin{chapRQ}{7}
   \item
   How does Field-Based Federated Learning perform compared with centralized
   \gls{FL} under \gls{IID} data?
@@ -710,7 +706,7 @@ More specifically,
   self-organizing hierarchical architecture in terms of resilience,
   adaptability, and fault tolerance?
   \label{rq:fbfl-resilience}
-\end{enumerate}
+\end{chapRQ}
 
 
 \subsection{Experimental Setup}
@@ -1277,11 +1273,7 @@ system.
 %
 More specifically, it addresses the following research questions:
 
-\begin{enumerate}[
-  label=\textbf{RQ\arabic*:},
-  ref=RQ\arabic*,
-  leftmargin=*
-]
+\begin{chapRQ}{7}
   \item
   Can devices be clustered according to both topological proximity and data
   distribution similarity in a fully decentralized manner?
@@ -1296,7 +1288,7 @@ More specifically, it addresses the following research questions:
   Can the self-organizing federation structure adapt to device mobility without
   disrupting the learning process?
   \label{rq:psfl-mobility}
-\end{enumerate}
+\end{chapRQ}
 
 
 \subsection{Experimental Setup}
@@ -2006,13 +1998,14 @@ The evaluation investigates the extent to which model sparsification can be
 Accordingly, 
  we consider the following research question:
 
-\begin{quote}
-  \textbf{RQ1.}
+\begin{chapRQ}{7}
+  \item
   To what extent can neural network sparsification be integrated into
   proximity-based decentralized federated learning to reduce communication
   and computational overhead while preserving model accuracy under spatially
   non-IID data distributions?
-\end{quote}
+  \label{rq:sparseful}
+\end{chapRQ}
 
 Answering this question requires considering both sides of the trade-off.
 %
@@ -2371,7 +2364,7 @@ The experiments evaluate computational cost
 
 \subsubsection{Answer to the Research Question}
 
-The results provide a positive but conditional answer to \textbf{RQ1}.
+The results provide a positive but conditional answer to \ref{rq:sparseful}.
 %
 Neural network sparsification can be integrated directly into proximity-based decentralized federated learning, 
  reducing model complexity and potentially limiting communication payloads 
