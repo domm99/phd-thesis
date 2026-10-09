@@ -14,19 +14,57 @@
 \input{front}
 
 \begin{abstract}	
-\glspl{CAS} `comprise devices whose local observations and actions jointly shape the behavior of the collective. Enabling them to learn and act together is challenging when data are distributed and heterogeneous, communication is local, populations change, and computational resources are limited. Conventional learning methods often assume centralized coordination, fixed populations, or a shared data distribution. This thesis investigates cooperative learning and decision making under the conditions of a CAS.
+\glspl{CAS} comprise devices whose local observations 
+ and actions jointly shape the behavior of the collective. 
+%
+Enabling them to learn and act together is challenging when data are distributed and heterogeneous, 
+ communication is local, populations change, and computational resources are limited. 
+%
+Conventional learning methods often assume centralized coordination, 
+ fixed populations, or a shared data distribution. 
+% 
+\emph{This thesis investigates cooperative learning 
+ and decision making under the conditions of a \gls{CAS}.}
 
-Three complementary lines of research address different aspects of this problem. First, field-based coordination enables devices to form and reorganize federated learning groups according to spatial proximity and model compatibility, without pooling raw data or relying on a permanent central server. Preliminary work explores random network distillation to identify compatible collaborators independently of the task model, and continual learning to retain knowledge as devices move between regions. Second, exchanges among neighbors improve decentralized reinforcement learning, while graph-based policies support execution in swarms larger than those seen during training, albeit with declining efficiency. Third, a graph-based offloading approach combines local device information with aggregate estimates of shared conditions to guide application placement across edge and cloud resources.
+Three complementary lines of research address different aspects of this problem. 
+%
+First, 
+ field-based coordination enables devices to form and reorganize federated learning groups 
+ according to spatial proximity and model compatibility, 
+ without pooling raw data or relying on a permanent central server. 
+% 
+Preliminary work explores random network distillation to identify compatible collaborators independently of the task model, 
+ and continual learning to retain knowledge as devices move between regions. 
+% 
+Second, 
+ exchanges among neighbors improve decentralized reinforcement learning, 
+ while graph-based policies support execution in swarms larger than those seen during training, 
+ albeit with declining efficiency. 
+% 
+Third, 
+ a graph-based offloading approach combines local device information with aggregate estimates 
+  of shared conditions to guide application placement across edge and cloud resources.
 
-In simulated evaluations, self-organizing federations support models specialized to spatially heterogeneous data and reorganize after changes in membership or position. Neighbor exchanges improve learning over independent agents, while graph-based policies remain functional in larger swarms, though their efficiency declines. Collective density information also enables offloading decisions that differ between congested and sparse areas. These findings show the value of collective structure across the three settings and delineate the remaining challenges of adapting to changing populations, distributions, and resources.
-
+In simulated evaluations, 
+ self-organizing federations support models specialized to spatially heterogeneous data 
+ and reorganize after changes in membership or position. 
+% 
+Neighbor exchanges improve learning over independent agents, 
+ while graph-based policies remain functional in larger swarms, 
+ though their efficiency declines. 
+% 
+Collective density information also enables offloading decisions 
+ that differ between congested and sparse areas. 
+% 
+These findings show the value of collective structure across the three settings 
+ and delineate the remaining challenges of adapting to changing populations, distributions, and resources.
 \end{abstract}
 
-\begin{dedication} % this is optional
+\begin{dedication}
 A Nonna Pina.
 \end{dedication}
 
-\begin{acknowledgements} % this is optional
+\begin{acknowledgements} 
 
 The list of people I wish to thank may seem long. 
 %
