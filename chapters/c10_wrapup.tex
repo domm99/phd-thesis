@@ -7,23 +7,22 @@
 \minitoc
 %----------------------------------------------------------------------------------------
 
-This thesis investigated how cooperative learning 
- can be engineered as part of the behavior of a \gls{CAS}, 
- rather than treated as an isolated algorithm running
- on top of an independently designed distributed system.
+This thesis investigated how cooperative learning can be engineered
+ in \glspl{CAS} under conditions that complicate conventional learning methods.
 %
 The starting point was that many-agent deployments invalidate several assumptions 
- commonly made by centralized learning: data cannot always be pooled,
- global state may be unavailable, the population and communication topology may change, 
+ commonly made by centralized learning: 
+ data cannot always be pooled, global state may be unavailable, 
+ the population and communication topology may change, 
  and individual devices may lack the resources required to train or execute complex models locally.
 %
-Addressing these conditions requires more than distributing an existing learning algorithm. 
+Addressing these conditions ultimately requires attention to how learning,
+ collective organization, and deployment interact.
 %
-The organization of collaboration, the representation of collective state, 
- and the placement of computation must be designed together with the learning process.
+This thesis examined parts of that broader problem in separate experimental settings,
+ developing methods and evidence for each without combining them into a single system.
 
-The contributions developed in this thesis explored 
- this claim along three complementary directions.
+The contributions followed three complementary directions.
 %
 \Cref{chap:selforg-fl} studied how federated-learning groups can emerge 
  and reorganize through local field-based coordination.
@@ -31,7 +30,7 @@ The contributions developed in this thesis explored
 \Cref{chap:scalable-rl} examined how reinforcement learning can exploit neighborhood exchanges
  and graph-based policies to remain decentralized and operate across different population sizes.
 %
-\Cref{chap:tasksplacement} moved from learning coordination policies to deploying distributed applications, 
+\Cref{chap:tasksplacement} examined the placement of distributed applications,
  combining heterogeneous graph learning with aggregate information to support component-level offloading 
  across the edge--cloud continuum.
 %
@@ -46,24 +45,18 @@ This final chapter consolidates the evidence obtained from these contributions,
 \label{sec:conclusions}
 %=============================================================================
 
-The central conclusion of this thesis is that cooperative learning in a \gls{CAS} 
- benefits from an explicit coordination layer that exposes useful collective structure 
- without requiring every device to observe or control the entire system.
+Across the investigated settings, the central finding is that information about
+ collective structure can improve learning and decentralized decisions
+ without requiring each device to observe or control the entire system.
 %
-Across the investigated settings, 
- local information alone was often insufficient, 
- whereas a centralized representation was either undesirable or incompatible with the target deployment.
+The relevant structure differed across the contributions:
+ learning groups in federated learning, interaction neighborhoods in swarm coordination,
+ and shared infrastructure conditions in application offloading.
 %
-Field-based coordination and graph-based learning occupied the space 
- between these extremes. 
-% 
-They allowed each device to act locally while incorporating information about its neighborhood, 
- its learning group, or the state of shared infrastructure.
+Field-based coordination organized collaboration and computed collective information,
+ while neighborhood exchanges and graph-based policies incorporated relationships
+ among agents into learning and execution.
 %
-The resulting systems did not reproduce centralized learning exactly; 
- instead,
- they obtained the information required for the task through bounded interactions 
- whose structure could adapt with the collective.
 
 \paragraph{RQ1: How can privacy-aware cooperative learning be organized among
 many distributed devices without centralizing raw data or relying on a fixed
@@ -174,7 +167,7 @@ Experience sharing provided a favorable balance because its communication footpr
  whereas exchanging complete model information incurred a larger cost that grew with neighborhood size.
 % 
 Local cooperation can therefore recover part of the benefit of centralized training, 
- but the exchanged representation determines whether that improvement remains feasibile.
+ but the exchanged representation determines whether that improvement remains feasible.
 
 DGQL addressed population scaling at the policy level by representing agents 
  and their interactions as a graph and sharing the same graph-based policy across the collective.
@@ -242,15 +235,10 @@ size independent of population size, or supporting variable graphs addresses onl
 one source of growth. Communication volume, behavioral distribution shift,
 resource contention, and adaptation time must be considered jointly.
 
-These principles clarify the role of macroprogramming in the thesis.
-%
-Its contribution is not to replace learning algorithms, but to provide a
-computational layer through which collective state and organization can be
-constructed from local interactions. Learning supplies adaptation where explicit
-rules are difficult to design; macroprogramming supplies the coordination
-structure within which that adaptation remains deployable. Their combination
-offers a practical route for connecting device-level learning updates with the
-system-level behavior expected from a \gls{CAS}.
+In the federated learning and offloading studies, macroprogramming provided
+ a computational layer for constructing learning groups and collective state
+ through local interactions. The reinforcement learning studies addressed
+ complementary questions through neighborhood exchanges and graph-based policies.
 
 
 

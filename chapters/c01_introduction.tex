@@ -301,10 +301,10 @@ The choice of collaborators simultaneously affects statistical compatibility,
  and changes introduced to improve scalability may alter the information 
  available to each learning process.
 %
-This coupling is precisely what makes the problem resistant to solutions
- that address each dimension independently:
- an integrated engineering approach is required,
- in which coordination, learning, and deployment are designed together.
+This coupling makes the broader problem difficult to resolve
+ through any one mechanism:
+ engineering a complete cooperative learning system ultimately requires
+ coordination, learning, and deployment to be considered together.
 
 Existing approaches address individual parts of this problem.
 %
@@ -334,24 +334,20 @@ Conversely,
  clustering configuration, to be specified in advance
  ~\cite{DBLP:journals/tit/GhoshCYR22,DBLP:journals/tnn/SattlerMS21}.
 %
-These approaches provide important building blocks, but do not jointly support
- adaptive group formation, decentralized learning, scalability, and resource-aware
- deployment in a dynamic \gls{CAS}.
+These approaches provide important building blocks for adaptive group formation,
+ decentralized learning, and statistical heterogeneity, but leave open how
+ their benefits can be sustained alongside resource-aware deployment in a
+ dynamic \gls{CAS}.
 
-The research gap addressed by this thesis is thus not the absence of individual 
- algorithms for federated learning, multi-agent reinforcement learning, 
- decentralized coordination, or task offloading.
+The broader research gap is the lack of an established way to engineer
+ cooperative learning across all of these interdependent dimensions in \glspl{CAS}.
 %
-Rather, 
- it lies in the limited support for integrating these mechanisms 
- within a coherent macro-level engineering approach, 
- in which the coordination structure, learning architecture, 
- and deployment strategy are designed as parts of the same collective system.
+Closing it requires understanding how devices can organize collaboration,
+ learn through local interactions, and allocate computation under changing
+ conditions, as well as how these mechanisms affect one another.
 %
-Accordingly, 
- this thesis treats cooperative learning as an integral component 
- of collective behavior, rather than as an algorithm added after 
- the surrounding system has already been designed.
+This thesis takes an initial step toward that goal by investigating
+ several parts of the broader problem in focused experimental settings.
 
 \section{Contribution}
 
@@ -364,11 +360,13 @@ Accordingly,
     \label{fig:mapping}
 \end{figure}
 
-\sidenote{double-check chapters names}
-This thesis investigates how cooperative learning can be engineered as an
-integral part of a CAS, with particular attention to the role of macroprogramming
-in expressing self-organizing structures around a learning process and to
-architectures that remain effective across collectives of varying size.
+This thesis investigates mechanisms for organizing cooperative learning in
+ \glspl{CAS}, scaling decentralized decision making, and placing computation
+ across resource-constrained infrastructure.
+%
+The three lines of research address different aspects of the broader engineering
+ problem rather than constituting a single integrated system.
+%
 The investigation is guided by the following research questions.
 
 
@@ -415,7 +413,7 @@ the spatial structure of collaboration.
 
 The second line addresses~\ref{itm:rq3} through \emph{scalable decentralized
 reinforcement learning}. It investigates training strategies based on
-interactions among neighbouring devices and learning architectures that operate
+interactions among neighboring devices and learning architectures that operate
 on variable-sized neighborhoods. The resulting analysis characterizes the
 trade-offs between centralized training, independent learning, and local
 cooperation, and examines whether policies trained with a given number of
@@ -429,13 +427,13 @@ computational capacity, with collective conditions such as latency, network
 congestion, and infrastructure load, thereby accounting for the externalities
 created by concurrent device decisions.
 
-Together, these contributions treat cooperative learning not as an isolated
-algorithm but as a component of collective behavior, surrounded by explicit
-coordination and deployment mechanisms.
-They provide concrete methods and broader design evidence for engineering
-learning into \glspl{CAS} under the conditions that define them:
-distributed data, local interactions, dynamic populations, and constrained resources.
-
+Together, these contributions provide methods and empirical evidence for
+ addressing distinct aspects of cooperative learning in \glspl{CAS}:
+ distributed data, local interactions, changing populations, and constrained resources.
+%
+They begin to reduce the gap between learning methods and the conditions of
+ collective systems, while leaving the integration of collaboration,
+ learning, and deployment within a single architecture for future work.
 
 \section{Thesis Structure}
 
