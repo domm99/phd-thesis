@@ -13,51 +13,59 @@
 \frontmatter
 \input{front}
 
-\begin{abstract}	
+\begin{abstract}
 \glspl{CAS} comprise devices whose local observations 
  and actions jointly shape the behavior of the collective. 
-%
-Enabling them to learn and act together is challenging when data are distributed and heterogeneous, 
- communication is local, populations change, and computational resources are limited. 
-%
-Conventional learning methods often assume centralized coordination, 
- fixed populations, or a shared data distribution. 
-% 
-\emph{This thesis investigates cooperative learning 
- and decision making under the conditions of a \gls{CAS}.}
+Enabling them to learn and act together is difficult: 
+ data are distributed and heterogeneous, communication is local, 
+ populations change, and computational resources are limited. 
+Conventional learning methods, by contrast, 
+ often assume centralized coordination, a fixed population, or a shared data distribution. 
+\emph{This thesis investigates how cooperative learning and decision making 
+ can be engineered under the conditions of a \gls{CAS}, 
+ treating the structure of the collective as a first-class element of the learning system.}
 
 Three complementary lines of research address different aspects of this problem. 
-%
 First, 
- field-based coordination enables devices to form and reorganize federated learning groups 
+ field-based coordination lets devices form and reorganize federated learning groups 
  according to spatial proximity and model compatibility, 
- without pooling raw data or relying on a permanent central server. 
-% 
-Preliminary work explores random network distillation to identify compatible collaborators independently of the task model, 
- and continual learning to retain knowledge as devices move between regions. 
-% 
+ without pooling raw data, relying on a permanent central server, 
+ or fixing the number of groups in advance. 
+This mechanism is extended with model sparsification 
+ and supported by a benchmark for spatially structured data heterogeneity. 
 Second, 
- exchanges among neighbors improve decentralized reinforcement learning, 
- while graph-based policies support execution in swarms larger than those seen during training, 
- albeit with declining efficiency. 
-% 
+ decentralized reinforcement learning is studied along two dimensions: 
+ the exchange of experiences or parameters among neighbors during training, 
+ and graph-based policies that can be executed by swarms of different sizes without retraining. 
 Third, 
- a graph-based offloading approach combines local device information with aggregate estimates 
-  of shared conditions to guide application placement across edge and cloud resources.
+ a graph-based offloading approach combines local device information 
+ with aggregate estimates of shared conditions 
+ to place application components across edge and cloud resources.
 
-In simulated evaluations, 
- self-organizing federations support models specialized to spatially heterogeneous data 
- and reorganize after changes in membership or position. 
-% 
-Neighbor exchanges improve learning over independent agents, 
- while graph-based policies remain functional in larger swarms, 
- though their efficiency declines. 
-% 
-Collective density information also enables offloading decisions 
- that differ between congested and sparse areas. 
-% 
-These findings show the value of collective structure across the three settings 
- and delineate the remaining challenges of adapting to changing populations, distributions, and resources.
+The methods are evaluated in simulation. 
+Self-organizing federations learn models specialized to spatially heterogeneous data, 
+ outperform single-model baselines under strong label skew, 
+ match a clustered baseline that is given the correct number of clusters, 
+ and reorganize after leader failures and device movement. 
+Moderate sparsification preserves this behavior, 
+ whereas aggressive pruning fragments the federations. 
+Preliminary results further indicate that continual learning can mitigate forgetting 
+ when devices move between regions, 
+ and that lightweight novelty estimators can identify compatible collaborators 
+ independently of the task model. 
+In the evaluated coordination task, 
+ neighbor exchanges bring decentralized learners close to centrally trained ones, 
+ with experience sharing incurring the lowest communication cost; 
+ graph-based policies trained with ten agents remain functional in swarms 
+ up to about three times larger, 
+ although their efficiency declines as the population grows. 
+Finally, 
+ collective density information enables offloading decisions 
+ that differ between congested and sparse areas, 
+ a differentiation that agents do not learn when this information is removed. 
+Together, 
+ these findings show that making collective structure explicit 
+ improves learning and decentralized decisions in each setting.
 \end{abstract}
 
 \begin{dedication}
