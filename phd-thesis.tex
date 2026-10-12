@@ -14,23 +14,65 @@
 \input{front}
 
 \begin{abstract}
-\Glspl{CAS} comprise distributed devices or agents whose local interactions give rise to emergent collective behavior that cannot be attributed to any component in isolation.
-Such behavior can be engineered through explicit coordination rules, expressed for instance through macroprogramming, or through learning mechanisms that derive models and decision policies from distributed data and experience.
-This thesis brings these two perspectives together to investigate how cooperative learning and decision making can be engineered as integral parts of a \gls{CAS}.
-This requires addressing conditions that conventional learning methods often abstract away, including heterogeneous and distributed data, local communication, changing populations, and limited computational resources.
+\Glspl{CAS} comprise distributed devices or agents whose local interactions 
+ give rise to emergent collective behavior that cannot be attributed to any component in isolation.
+%
+Such behavior can be engineered through explicit coordination rules, 
+ expressed for instance through macroprogramming, 
+ or through learning mechanisms that derive models and decision policies from distributed data and experience.
+%
+This thesis brings these two perspectives together 
+ to investigate how cooperative learning 
+ and decision making can be engineered as integral parts of a \gls{CAS}.
+%
+This requires addressing conditions that conventional learning methods often abstract away, 
+ including heterogeneous and distributed data, local communication, changing populations, 
+ and limited computational resources.
 
 Three complementary lines of research address these challenges.
-First, field-based coordination enables devices to form and reorganize federated learning groups according to spatial proximity and model compatibility, without centralizing raw data, relying on a permanent server, or fixing the number of groups in advance.
-This approach is extended with model sparsification and supported by a benchmark for spatially structured data heterogeneity.
-Preliminary extensions further investigate task-independent collaborator discovery and continual adaptation under mobility.
-Second, decentralized reinforcement learning is studied through neighbor-based training strategies and graph-based policies that can operate across different swarm sizes.
-Third, a graph-based offloading approach combines local device information with aggregate estimates of collective conditions to place application components across edge and cloud resources.
+%
+First, 
+ field-based coordination enables devices to form and reorganize federated learning groups 
+ according to spatial proximity and model compatibility, without centralizing raw data, 
+ relying on a permanent server, or fixing the number of groups in advance.
+%
+This approach is extended with model sparsification 
+ and supported by a benchmark for spatially structured data heterogeneity.
+%
+Preliminary extensions further investigate task-independent collaborator discovery 
+ and continual adaptation under mobility.
+ %
+Second, 
+ decentralized reinforcement learning is studied through neighbor-based training strategies 
+ and graph-based policies that can operate across different swarm sizes.
+%
+Third, 
+ a graph-based offloading approach combines local device information with aggregate estimates of collective conditions 
+ to place application components across edge and cloud resources.
 
-Simulation results show that self-organizing federations learn models specialized to spatially heterogeneous data, outperform single-model baselines under strong label skew, match a clustered baseline provided with the correct number of clusters, and reorganize after failures and device movement.
-Moderate sparsification preserves these properties, whereas aggressive pruning destabilizes federation formation.
-In decentralized reinforcement learning, exchanging experiences or parameters with neighboring agents narrows the performance gap with centralized training, while graph-based policies trained with ten agents remain functional in swarms nearly three times larger, although their efficiency progressively declines.
-Finally, incorporating collective density information enables agents to differentiate offloading decisions between congested and sparse areas, a behavior that does not emerge when such information is removed.
-Together, these findings show that explicitly representing and organizing the structure of the collective can support learning and decentralized decision making under the operating conditions of \glspl{CAS}.
+Simulation results show that self-organizing federations learn models specialized to spatially heterogeneous data, 
+ outperform single-model baselines under strong label skew, match a clustered baseline provided with the correct number of clusters, 
+ and reorganize after failures and device movement.
+%
+Moderate sparsification preserves these properties, 
+ whereas aggressive pruning destabilizes federation formation.
+%
+In decentralized reinforcement learning, 
+ exchanging experiences or parameters with neighboring agents narrows the performance gap with centralized training,
+ while graph-based policies trained with ten agents remain functional in swarms nearly three times larger, 
+ although their efficiency progressively declines.
+%
+Finally, 
+ incorporating collective density information enables agents to differentiate offloading decisions 
+ between congested and sparse areas, a behavior that does not emerge when such information is removed.
+%
+Together, 
+ these findings show that explicitly representing and organizing the structure of the collective 
+ can support learning and decentralized decision making under the operating conditions of \glspl{CAS}.
+
+\sloppypar
+    \textbf{Keywords} -- \emph{\glsentryfull{CAS}, \gls{CFL}, \gls{MARL}, \gls{MP}}
+
 \end{abstract}
 
 \begin{dedication}
