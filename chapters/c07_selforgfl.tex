@@ -370,11 +370,15 @@ The overall goal is that each discovered federation $F_q$ recovers the correspon
  as closely as possible;
  following, this is formalized as minimizing the \emph{misclassification rate}:
 \begin{equation}
-  \min_{\mathcal{M}} \;\frac{1}{|\mathcal{V}|} \min_{\pi \in \Pi_k}
-    \sum_{q=1}^{f} \bigl|F_q \mathbin{\triangle} C_{\pi(q)}\bigr|,
-  \label{eq:misclassification}
+\min_{\mathcal M}\;
+\min_{\pi\in\Pi_m}
+\frac{1}{2|V|}
+\sum_{q=1}^{m}
+\left|F_q\triangle C_{\pi(q)}\right|,
+\qquad m=\max(f,k),
+\label{eq:misclassification}
 \end{equation}
-where $\Pi_k$ is the set of all permutations over $\{1, \ldots, k\}$
+where $\Pi_m$ is the set of all permutations over $\{1, \ldots, m\}$
  and $\triangle$ denotes the symmetric difference between sets.
 %
 The concrete mechanisms through which the federations $\mathcal{F}$ are discovered
