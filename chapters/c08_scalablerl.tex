@@ -219,7 +219,7 @@ Formally,
  giving $\theta^t_i, i \in N$ the parameters of the Q-networks of the agent $i$ at the time $t$,
  the update rule for agent $i$ at time $t+1$ is:
 \begin{equation}
-  \theta^{t+1}_i = \theta^t_i + \alpha \sum_{j \in \mathcal{N}_k(i)} \frac{1}{k} \theta^t_j
+  \theta^{t+1}_i = (1-\alpha) \theta^t_i + \alpha \frac{1}{k} \sum_{j \in \mathcal{N}_k(i)}  \theta^t_j
 \end{equation}
 
 \paragraph{k-Nearest Neighbor Consensus}
