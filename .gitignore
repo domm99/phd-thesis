@@ -254,3 +254,6 @@ tmp/
 papers-pdf/
 papers-projects/
 *.bbl-SAVE-ERROR
+# Re-include figure folders whose names end in a digit (e.g. alpha-0.3_beta-0.1_gamma-0.6),
+# otherwise matched by the *.[1-9] rules above
+!figures/**/
