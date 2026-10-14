@@ -1,4 +1,4 @@
-\chapter{Frameworks}
+\chapter{Software Tools and Experimental Infrastructure}
 \label{chap:frameworks}
 \minitoc
 %----------------------------------------------------------------------------------------
@@ -1176,3 +1176,437 @@ Further development includes additional datasets, a wider set of clustered
 These extensions would help characterize when spatially structured
  heterogeneity changes convergence, robustness, or the relative behavior
  of federated learning methods.
+
+%=============================================================================
+\section[Project Emerge]{Project Emerge: A Toolchain for Robot Teams}
+\label{sec:project-emerge}
+%=============================================================================
+
+\subsection{Motivation and Deployment Requirements}
+
+Field-based coordination provides abstractions for expressing collective
+ behavior independently of the low-level interactions among devices.
+%
+Bringing these abstractions to physical robot teams, however, requires an
+ execution infrastructure that connects aggregate programs with localization,
+ communication, and actuation.
+%
+A program that operates on positions, neighborhood relations, and movement
+ intentions must receive suitable representations of the physical environment
+ and translate its outputs into commands that the robots can execute.
+%
+These requirements introduce an engineering gap between the computational
+ model and a working robotic deployment.
+
+Project Emerge addresses this gap through an open-source toolchain for
+ executing and demonstrating aggregate programs on mobile robot
+ teams~\cite{DBLP:journals/scp/FarabegoliABCDPV}.
+%
+It combines camera-based localization, configurable neighborhood management,
+ aggregate execution, robot control, and an interactive web dashboard.
+%
+A compatible simulation environment supports development and inspection
+ before physical deployment.
+%
+The toolchain builds on ScaFi~\cite{DBLP:journals/softx/CasadeiVAP22} for
+ aggregate execution and
+ MacroSwarm~\cite{DBLP:journals/lmcs/AguzziCV25} for collective behavior
+ abstractions, extending them with the infrastructure needed to connect
+ programs to a physical team.
+
+The design separates the collective program from the mechanisms used to
+ observe and control the robots.
+%
+Localization must provide both position and orientation, since directional
+ information is required to translate spatial intentions into movement.
+%
+Neighborhood relations must reflect the current deployment and remain
+ configurable as robots move.
+%
+Actuation must expose a common interface while accommodating the control
+ mechanisms of a particular platform.
+%
+Finally, monitoring and interaction must make collective behavior visible
+ and allow changes to programs, parameters, and environmental conditions
+ during execution.
+
+Within the infrastructure presented in this chapter, Project Emerge
+ supplies a physical demonstration environment for field-based coordination.
+%
+Its implementation is distinct from Phyelds: the aggregate runtime uses
+ Scala and ScaFi, while Python supports localization and robot emulation.
+%
+The shared foundation is the aggregate execution model, which connects
+ local sensing and state evolution with collective behavior.
+
+\subsection{Architecture and Execution Model}
+\label{sec:emerge-architecture}
+
+The architecture comprises a localization subsystem, a Neighborhood System,
+ an Aggregate Runtime, a Dashboard, and the robots themselves.
+%
+An MQTT message broker connects these components through a publish--subscribe
+ interface.
+%
+\Cref{fig:emerge-architecture} distinguishes the system-level organization
+ from the execution cycle inside the aggregate runtime.
+
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}[t]{0.57\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch_frameworks/project-emerge-architecture.drawio.pdf}
+    \caption{System-level architecture.}
+    \label{fig:emerge-system-architecture}
+  \end{subfigure}\hfill
+  \begin{subfigure}[t]{0.40\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch_frameworks/system-architecture.pdf}
+    \caption{Aggregate runtime execution cycle.}
+    \label{fig:emerge-execution-cycle}
+  \end{subfigure}
+  \caption{Project Emerge architecture. The system components exchange
+   localization, neighborhood, control, and monitoring information through
+   MQTT. Within the runtime, the Environment Provider constructs the
+   aggregate environment, the AC Orchestrator evaluates the program, and
+   the Environment Update dispatches actuation commands.}
+  \label{fig:emerge-architecture}
+\end{figure}
+
+\paragraph{Localization and neighborhood construction.}
+The physical deployment uses an external camera and ArUco markers to
+ identify robots and estimate their positions and orientations.
+%
+The detector is implemented with OpenCV and publishes pose information
+ together with robot identifiers through MQTT.
+%
+The Neighborhood System derives logical communication relations from
+ the spatial deployment using replaceable proximity policies.
+%
+This makes neighborhood membership an explicit part of the experimental
+ configuration, allowing the interaction radius to be changed independently
+ of the aggregate program.
+
+\paragraph{Aggregate environment.}
+The runtime maintains a representation of the environment containing,
+ for each robot, its identifier, position, orientation, sensing values,
+ neighborhood relations, and aggregate execution state.
+%
+An \emph{Environment Provider} constructs this representation from the
+ information supplied by the surrounding components.
+%
+The \emph{AC Orchestrator} evaluates the aggregate program using the
+ corresponding robot contexts, and an \emph{Environment Update} translates
+ the resulting actions into commands published to the robots.
+%
+These three abstractions implement the sense--compute--actuate cycle:
+ observing the current environment, computing collective actions through
+ per-robot program evaluations, and applying the resulting commands.
+
+The current implementation executes the aggregate runtime on a central
+ server and maintains a separate execution context for each robot.
+%
+Aggregate state and logical neighborhood exchanges are managed in memory
+ within that process, while communication with the physical devices occurs
+ through MQTT.
+%
+The programming model retains local state and neighborhood-based
+ computation, but its execution is centrally orchestrated at a fixed frequency.
+%
+This arrangement simplifies integration and provides control over the
+ demonstration environment; it does not evaluate the network-level behavior
+ of a fully distributed aggregate runtime.
+
+At each cycle, the runtime constructs the environment from the latest
+ available updates.
+%
+This favors responsiveness to the current robot configuration, without
+ requiring every physical component to produce an update simultaneously.
+%
+Nevertheless, the resulting control depends on the freshness and accuracy
+ of localization and on the delivery of actuation commands.
+%
+The centralized execution of logical neighbor exchanges does not remove
+ these dependencies at the interface with the physical environment.
+
+\paragraph{Actuation interface.}
+Aggregate programs produce movement intentions through an
+ \texttt{Actuation} type.
+%
+Its alternatives include a \texttt{Rotation}, a \texttt{Forward} vector,
+ and \texttt{NoOp} or \texttt{Stop} commands.
+%
+The actuation backend maps these outputs to platform-specific controls;
+ in the demonstrated deployment, velocity vectors are converted into
+ differential-drive wheel speeds.
+%
+This separates the specification of collective motion from the mechanics
+ of a particular robot, while supporting alternative platforms through
+ additional control backends.
+
+\subsection{Programming Interface and Experimental Workflow}
+\label{sec:emerge-workflow}
+
+The aggregate runtime is implemented in the
+ \texttt{aggregate-runtime} subproject.
+%
+Its core package contains the orchestrator and environment interfaces,
+ while deployment-specific components reconstruct robot state from MQTT
+ messages and publish the resulting commands.
+%
+In particular, \texttt{MqttEnvironmentProvider} supplies the environment
+ and \texttt{RobotUpdateMqtt} implements the actuation update.
+%
+The execution loop composes these components with the selected aggregate
+ program and a rendering interface.
+
+An executable collective program extends \texttt{BaseDemo}, whose entry
+ point returns an actuation command for the current robot context.
+%
+\Cref{lst:emerge-program-interface} shows this interface.
+%
+The runtime repeatedly evaluates the same program across the team's
+ contexts, maintaining the state and aligned neighborhood information
+ required by ScaFi.
+
+\begin{lstlisting}[language=scala,breaklines=true,
+  caption={Entry point for collective robot programs in Project Emerge.},
+  label={lst:emerge-program-interface}]
+trait BaseDemo extends AggregateProgram:
+  override def main(): Actuation
+\end{lstlisting}
+
+For example, the \texttt{PointTheLeader} behavior orients robots toward a
+ leader selected through the dashboard.
+%
+It uses \texttt{gradientCast} to propagate a vector field from the selected
+ leader and produces rotation commands according to the resulting field.
+%
+Leader selection changes the source of the collective computation, while
+ the same program continues to execute across the team.
+%
+The runtime also supports switching among preloaded programs and updating
+ their parameters during operation.
+
+Communication separates per-robot information from shared control inputs.
+%
+Per-robot MQTT topics use the structure
+ \texttt{robots/<robot\_id>/<topic>}, including pose and neighborhood updates.
+%
+Shared topics carry sensing inputs, program selection, and leader identity.
+%
+This organization allows localization, control, and visualization components
+ to interact with the runtime through a common communication interface.
+
+A Docker Compose configuration assembles the broker, aggregate runtime,
+ dashboard, and neighborhood services.
+%
+The same runtime can operate with physical robots or with a Python-based
+ emulation environment\footnote{\url{https://github.com/Project-Emerge/robot-emulation}}.
+%
+The emulator replaces the robots and physical localization system while
+ retaining the MQTT interfaces used by the rest of the toolchain.
+%
+Consequently, aggregate programs and the dashboard can be exercised before
+ connecting physical hardware.
+
+\paragraph{Monitoring and interaction.}
+The web dashboard displays robot positions and neighborhood relations,
+ exposes program selection and interaction parameters, and provides
+ robot-specific controls and leader assignment.
+%
+\Cref{fig:emerge-dashboard} shows the interface.
+%
+Interactive position manipulation and parameter changes support inspection
+ of how a collective program responds to an altered configuration.
+%
+The dashboard therefore serves both as a control interface and as a means
+ of making the relationship between local interactions and collective
+ behavior visible to users.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figures/ch_frameworks/frame-64.png}
+  \caption{Project Emerge dashboard. The interface displays robot positions
+   and neighborhood relations and provides controls for program selection,
+   neighborhood radius, individual robots, and leader assignment.}
+  \label{fig:emerge-dashboard}
+\end{figure}
+
+\subsection{Physical Demonstration and Collective Behaviors}
+\label{sec:emerge-demonstration}
+
+The toolchain was deployed in a physical demonstrator with nine mobile
+ robots, each equipped with an ESP32 microcontroller for communication
+ and low-level actuation.
+%
+Each robot carried an ArUco marker for external localization, while the
+ central server maintained the aggregate execution contexts and dispatched
+ commands to the team.
+%
+The infrastructure was used during the 2024 and 2025 European Researchers'
+ Night events at the University of Bologna, providing an interactive
+ demonstration for non-expert audiences.
+
+The implemented behaviors include circle, square, V-shaped, horizontal
+ and vertical line formations, and orientation toward a selected leader.
+%
+\Cref{fig:emerge-formations} shows representative outcomes.
+%
+These behaviors exercise different aspects of collective coordination,
+ including symmetry, alignment, leader-based information propagation,
+ and organization according to geometric constraints.
+%
+Program and parameter changes allow several collective behaviors to be
+ demonstrated using the same hardware and execution infrastructure.
+
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}{0.23\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch_frameworks/ndr25/circle.jpg}
+    %\caption{Circle.}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.23\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch_frameworks/ndr25/square.jpg}
+    %\caption{Square.}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.23\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch_frameworks/ndr25/v-shape.jpg}
+    %\caption{V-shape.}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.23\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch_frameworks/ndr25/point-leader.jpg}
+    %\caption{Point-the-leader.}
+  \end{subfigure}
+
+  \medskip
+  \begin{subfigure}{0.60\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch_frameworks/swarm-1.jpg}
+    %\caption{Line formation.}
+  \end{subfigure}
+  \caption{Collective behaviors demonstrated with Project Emerge.
+   A common runtime and robot interface support different spatial
+   formations and leader-based orientation.
+   From left to right, top to bottom: 
+   Circle, square, V-shape, point-the-leader, lineformation.
+   }
+  \label{fig:emerge-formations}
+\end{figure}
+
+Robustness was explored through manual displacement, removal and
+ reinsertion of robots, and changes to formation parameters and leader
+ selection during execution.
+%
+The team recovered the target formations in the demonstrated scenarios.
+%
+\Cref{fig:emerge-recovery} illustrates this behavior for a line formation:
+ after a robot is displaced, subsequent sensing and actuation cycles
+ restore the collective arrangement.
+%
+Recovery proceeds through continued program execution rather than through
+ a manually prescribed sequence of corrective actions.
+
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}[b]{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch_frameworks/swarm-1-1.png}
+    \caption{Initial formation.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[b]{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch_frameworks/swarm-2-2.png}
+    \caption{Manual displacement.}
+  \end{subfigure}\hfill
+  \begin{subfigure}[b]{0.32\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/ch_frameworks/swarm-3-3.png}
+    \caption{Recovered formation.}
+  \end{subfigure}
+  \caption{Recovery after perturbation of a line formation. Continued
+   execution of the aggregate program restores the desired arrangement
+   after a robot is manually displaced.}
+  \label{fig:emerge-recovery}
+\end{figure}
+
+These observations provide qualitative evidence that field-based
+ coordination can produce adaptive behavior in the physical demonstrator.
+%
+For programs composed from self-stabilizing operators, convergence
+ results apply under the assumptions of the corresponding computational
+ model~\cite{DBLP:journals/tomacs/ViroliABDP18}.
+%
+Connecting those results to physical formation requires accounting for
+ sensing, motion, and communication as well as the aggregate computation.
+%
+The observed recovery therefore illustrates the intended behavior without
+ establishing a general physical convergence or safety guarantee.
+
+\subsection{Scope, Limitations, and Development Directions}
+\label{sec:emerge-limitations}
+
+Project Emerge demonstrates the integration of aggregate execution with
+ physical sensing and actuation in a small robot team.
+%
+The current deployment relies on external camera-based localization and
+ centralized orchestration, which constrain its operating environment
+ and distinguish it from an autonomous distributed robot swarm.
+%
+The live demonstrations establish practical usability and qualitative
+ recovery from perturbations, but do not provide systematic measurements
+ of convergence time, scalability, or robustness across controlled levels
+ of noise and communication failure.
+
+A principal development direction is fully distributed execution,
+ with each robot hosting its own aggregate runtime and managing local
+ communication.
+%
+Indoor localization based on ultra-wideband technology is a candidate
+ for reducing dependence on an external camera.
+%
+Additional actuation backends would extend the toolchain to aerial and
+ legged robots, while richer dashboard and augmented reality interfaces
+ could improve monitoring and interaction with physical and emulated teams.
+
+Further directions include introducing communication delays into the
+ emulation environment, evaluating controlled sensing and execution
+ perturbations, and investigating natural-language generation of aggregate
+ programs.
+%
+Together, these extensions would broaden the infrastructure's applicability
+ and support more systematic study of the gap between aggregate models,
+ simulated execution, and physical collective behavior.
+
+\subsection{Availability and Role in the Thesis}
+
+Project Emerge is released under the MIT license, with the system source
+ available in a public
+ repository\footnote{\url{https://github.com/Project-Emerge/Project-Emerge-system}}
+ and an archived release on
+ Zenodo\footnote{\url{https://doi.org/10.5281/zenodo.18224119}}.
+%
+The companion robot hardware is also available as an open
+ design\footnote{\url{https://github.com/Project-Emerge/rover-circuit}}.
+%
+The separation of localization, aggregate execution, communication,
+ and actuation permits components to be adapted while retaining the
+ collective programming interface.
+
+For this thesis, the demonstrator complements the programming and
+ benchmarking tools by showing how field-based coordination can be
+ connected to physical devices.
+%
+The demonstrated robot behaviors use explicitly programmed coordination rules.
+%
+Project Emerge supplies infrastructure that could support their future
+ physical evaluation, including observation of collective behavior and
+ interaction with environmental perturbations.
+%
+Integrating those methods would require implementing the relevant learning
+ components and assessing their execution and resource requirements within
+ the robot deployment.
