@@ -1,629 +1,1178 @@
-%! TeX root = ../phd-thesis.tex
-%! Author = davidedomini
-
-%----------------------------------------------------------------------------------------
 \chapter{Frameworks}
 \label{chap:frameworks}
 \minitoc
 %----------------------------------------------------------------------------------------
 
-
+The contributions of this thesis require both an implementation environment
+ for collective coordination and experimental tools that reproduce the
+ conditions under which cooperative learning takes place.
+%
+This chapter presents two frameworks developed to meet these needs:
+ Phyelds, a native Python implementation of \gls{AC}, and ProFed,
+ a benchmark for constructing proximity-based non-IID federated learning scenarios.
+%
+Phyelds connects aggregate programs with Python-based learning and simulation
+ workflows, whereas ProFed makes the relationship between spatial organization
+ and data heterogeneity an explicit part of experimental design.
+%
+The two frameworks serve complementary purposes and can be used independently:
+ one provides coordination abstractions, while the other supplies controlled
+ data partitions for evaluating learning algorithms.
 
 %=============================================================================
-\section{Phyelds}
+\section{Phyelds: Aggregate Computing in Python}
 \label{sec:phyelds}
 %=============================================================================
 
-The work presented in this thesis required aggregate programs 
- to interact directly with machine-learning models, training procedures, 
- and multi-agent environments. 
-% 
-However, 
- the principal \gls{AC} implementations target Java, Scala, or C++, 
- whereas contemporary machine-learning workflows are predominantly developed in Python. 
-% 
-Using these frameworks would therefore require a cross-language layer around 
- model parameters, tensors, datasets, and simulation environments, 
- complicating both development and prototyping.
+\subsection{Motivation and Design Goals}
 
-Phyelds was developed to remove this barrier by providing 
- a native Python implementation of \gls{AC}~\cite{DBLP:conf/coordination/AguzziDFV26}.
-%  
-It is not a new calculus: 
- it implements the execution model introduced in the previous sections 
- through an API designed around Python's imperative and object-oriented idioms.
+The work presented in this thesis required aggregate programs to interact
+ directly with machine-learning models, training procedures, and multi-agent
+ environments.
 %
-This choice allows aggregate coordination to be embedded in ordinary Python
- applications and combined with libraries such as PyTorch and TensorFlow without
- moving data or control across language boundaries. 
-% 
-The same design also makes the framework suitable for interactive development, education, 
- and integration with Python-based robotics and multi-agent simulation software.
+However, established \gls{AC} implementations, including Protelis, ScaFi, Collektive
+ and FCPP, target Java, Scala, Kotlin and C++, respectively, whereas contemporary
+ machine-learning workflows are predominantly developed in Python.
+%
+Combining these environments requires a cross-language interface (e.g., ScalaPy~\cite{DBLP:conf/scala/LaddadS20}) 
+ for model parameters, tensors, datasets, and simulation state, introducing additional
+ complexity into development and experimentation.
 
-Phyelds was guided by three design goals. 
+Phyelds addresses this barrier through a native Python implementation of
+ \gls{AC}~\cite{DBLP:conf/coordination/AguzziDFV26}.
 %
-First, 
- the user-facing API should look and behave like conventional Python rather 
- than expose a functional syntax borrowed from another language. 
-% 
-Second, 
- the implementation should remain lightweight and modular, 
- so that the same core can support notebooks, native simulation, external simulators, 
- and physical deployments. 
-% 
-Third, 
- aggregate  values should remain ordinary Python values whenever possible, 
- allowing coordination functions to manipulate numbers, collections, model parameters,
- and tensors through their existing interfaces.
+It implements the execution model and coordination constructs introduced
+ in~\Cref{sec:field-calculus} through an API that follows Python's imperative
+ and object-oriented conventions.
+%
+Aggregate coordination can therefore be embedded in ordinary Python
+ applications and combined with libraries such as PyTorch and TensorFlow
+ without moving data or control across language boundaries.
+%
+This also makes the framework suitable for interactive development in
+ notebooks and for integration with Python-based robotics and simulation software.
+
+Three goals guided the design.
+%
+First, aggregate programs should resemble conventional Python code, allowing
+ developers to use familiar function calls, conditionals, and state updates.
+%
+Second, the architecture should remain lightweight and modular, so that
+ applications can incorporate the components they need and supply their own
+ execution environment.
+%
+Third, values manipulated by aggregate programs should retain their existing
+ Python interfaces whenever possible.
+%
+Coordination functions can consequently operate on numbers, collections,
+ model parameters, and tensors without requiring a separate application-level
+ representation for each kind of data.
+
+\subsection{Execution Architecture}
+\label{sec:phyelds-architecture}
+
+The implementation comprises five modules:
+ \emph{VM}, \emph{Data}, \emph{Calculus}, \emph{Library}, and \emph{Simulator}.
+%
+Their dependencies are summarized in~\Cref{fig:phyelds-architecture}.
+%
+The VM and Data modules provide execution and field representations;
+ the Calculus module exposes the programming interface;
+ the Library module supplies reusable coordination functions;
+ and the Simulator module supports experimentation and external integrations.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/ch03/phyelds.drawio.pdf}
-  \caption{Modular architecture of Phyelds. The virtual machine and data
-  modules implement execution and field representation; the calculus exposes
-  Pythonic constructs; libraries provide reusable coordination blocks; and the
-  simulator supplies execution environments and integration points.}
+  \caption{Modular architecture of Phyelds. The VM manages aggregate rounds
+   and execution contexts; Data represents persistent state and neighborhood
+   values; Calculus exposes Pythonic constructs; Library provides reusable
+   coordination functions; and Simulator supplies execution environments.}
   \label{fig:phyelds-architecture}
 \end{figure}
 
-\subsection{Execution architecture.}
-The implementation is organized into five modules, 
- shown conceptually in~\Cref{fig:phyelds-architecture}. 
-% 
-The \emph{VM} module manages an aggregate round, 
- including the current device context, incoming neighbor messages, persistent state, 
- and alignment paths. 
-% 
-Its central class is \texttt{Engine}, 
- which exposes a three-stage lifecycle. 
+\paragraph{Virtual machine.}
+The VM module implements the local execution of an aggregate round.
 %
-Before a round,
- \texttt{setup} installs the device identifier, sensor and time information, 
- messages received from neighbors, and the state produced by the previous round. 
-% 
-The application then invokes the aggregate function as an ordinary Python function. 
+Its main abstractions are \texttt{Engine}, \texttt{NodeContext}, and
+ \texttt{EngineState}.
 %
-Finally, 
- \texttt{cooldown} returns the updated state and the messages to transmit, 
- and resets the engine for the next execution.
-
-This separation keeps the aggregate program independent from the component that schedules it. 
+The context supplies information about the executing device, including its
+ identifier, time, and sensor readings, while the engine state retains the
+ information required across successive rounds.
 %
-A native simulator, 
- an external environment, or a physical device runtime only needs to construct the context, 
- invoke the program, and deliver its outputs. 
-% 
+The engine manages incoming neighbor messages, persistent state, and the
+ execution paths used for alignment.
 
-
-\subsection{Pythonic calculus constructs.}
-The \emph{Calculus} module maps the constructs discussed 
- in~\Cref{sec:field-calculus} to Python. 
-% 
-Its entry point is the \texttt{@aggregate} decorator, 
- which marks a function as part of an aggregate program. 
-% 
-The decorator wraps each invocation with calls that enter 
- and leave a named execution scope. 
-% 
-These scopes extend the current alignment path, 
- allowing the engine to distinguish state and messages produced 
- by different functions or different occurrences of the same operator.
-
-State evolution is exposed through \texttt{remember}. 
+The lifecycle consists of three stages, illustrated
+ in~\Cref{lst:phyelds-engine}.
 %
-Instead of receiving an update function as in a functional \texttt{rep}, 
- \texttt{remember(initial)} returns the current value together with a setter. 
-% 
-The program can read and update the state imperatively, 
- following a pattern similar to state management in Python application frameworks.
-% 
-Internally, 
- the value is represented by a \texttt{State} proxy that records both the stored object 
- and the alignment path of the corresponding call.
-
-Neighbor interaction is exposed through \texttt{neighbors(value)}. 
+Before execution, \texttt{setup} installs the current context, the messages
+ received from neighbors, and the previous local state.
 %
-The call shares \texttt{value} and returns a \texttt{NeighborhoodField}, 
- which internally maps device identifiers to the latest aligned values received from those devices. 
-% 
-The implementation hides this mapping behind a regular Python object. 
+The aggregate program then executes as an ordinary Python function.
 %
-It supports pointwise arithmetic, field combination, 
- and explicit aggregation through \texttt{foldhood}, 
- with convenience methods for common operations such as minimum and maximum. 
-% 
-When a \texttt{State} object is passed to \texttt{neighbors}, transmission is lazy:
- the value is exported only when it has changed, avoiding repeated exchange of unchanged state.
-
-\Cref{lst:phyelds-api} illustrates the resulting style. 
+Finally, \texttt{cooldown} returns the new state and outgoing messages and
+ resets the engine's round-specific execution context.
 %
-The program uses a normal Python conditional, 
- updates persistent state through a setter, 
- and operates on neighbor values as a Python object. 
-% 
-No explicit engine or message management appears in the application code.
+The surrounding runtime stores the state and delivers the messages before
+ subsequent executions.
 
-\begin{lstlisting}[language=Python,float=t,
-  caption={Pythonic state, branching, and neighbor interaction in Phyelds.},
+\begin{lstlisting}[language=Python,breaklines=true,
+  caption={Lifecycle of an aggregate round in Phyelds.},
+  label={lst:phyelds-engine}]
+from phyelds import engine
+
+engine.get().setup(
+    node_context=node_context,
+    messages=received_messages,
+    state=previous_state,
+)
+result = my_aggregate_program()
+new_state, messages_to_send = engine.get().cooldown()
+\end{lstlisting}
+
+This interface separates coordination semantics from scheduling and
+ communication.
+%
+A simulator or device runtime is responsible for deciding when a round
+ occurs and how messages are transported; the engine determines how the
+ program interprets those messages and evolves its local state.
+%
+The API does not require devices to execute in global lockstep: a round
+ consumes the neighbor information made available by the runtime.
+%
+The currently active engine is accessed through a Python
+ \texttt{ContextVar}, allowing execution contexts to be kept separate
+ when multiple aggregate executions are managed within the same application.
+
+\paragraph{Data representations.}
+The Data module represents persistent values through \texttt{State}
+ and neighbor values through \texttt{NeighborhoodField}.
+%
+A \texttt{State} object is a proxy for a value retained between rounds.
+%
+Alongside the underlying object, it records the execution path associated
+ with the stateful operation that created it.
+%
+This lets the engine associate each stored value with the appropriate
+ occurrence of a construct while exposing a Python-like interface to the program.
+
+A \texttt{NeighborhoodField} represents the aligned values available from
+ neighboring devices.
+%
+Internally, it maps device identifiers to values, but the API supports
+ operations directly on the field, including arithmetic, combination, and
+ aggregation.
+%
+For example, adding compatible neighborhood fields applies the operation
+ to corresponding device values, while \texttt{foldhood} reduces a field
+ through a user-supplied binary operator.
+%
+Convenience methods, including \texttt{min} and \texttt{max}, express common
+ reductions without exposing the underlying dictionary.
+
+\subsection{Pythonic Calculus Constructs and Alignment}
+\label{sec:phyelds-calculus}
+
+The Calculus module translates the core \gls{FC} constructs into a Pythonic API.
+%
+Its entry point is the \texttt{@aggregate} decorator, which marks a function
+ as part of an aggregate program.
+%
+Each decorated invocation enters a named execution scope and leaves it when
+ the call completes.
+%
+These scopes contribute to an alignment path, allowing the engine to
+ distinguish state and exchanged values belonging to different parts of the program.
+%
+Alignment is therefore maintained through ordinary function composition,
+ without requiring application code to assign identifiers to messages or state.
+
+\paragraph{Persistent state.}
+State evolution is exposed through \texttt{remember}.
+%
+Unlike the functional \texttt{rep} construct, which receives an initial
+ value and an update function, \texttt{remember(initial)} returns a setter
+ and the current state value.
+%
+The programmer can inspect that value and decide imperatively whether and
+ how to replace it.
+%
+For instance, a counter is expressed as follows:
+
+\begin{lstlisting}[language=Python,breaklines=true,
+  caption={Imperative update of persistent state.},
+  label={lst:phyelds-remember}]
+set_value, value = remember(0)
+set_value(value + 1)
+\end{lstlisting}
+
+The initial value is used when the corresponding state is first established;
+ later rounds retrieve the value retained at the same aligned execution path.
+%
+The setter separates access from update, making state transitions explicit
+ while allowing the surrounding computation to use ordinary Python statements.
+
+\paragraph{Neighbor interaction.}
+The \texttt{neighbors(value)} construct shares a local value and returns a
+ \texttt{NeighborhoodField} containing the aligned values received from neighbors.
+%
+When its argument is a \texttt{State} object, transmission is lazy:
+ the stored value is exported when it changes, avoiding repeated exchange
+ of unchanged state.
+%
+This mechanism is useful when the coordinated value is expensive to transmit,
+ as can be the case for model parameters.
+%
+It is an optimization of state exchange; the surrounding runtime still
+ determines message delivery and the neighborhood available at each round.
+
+\Cref{lst:phyelds-api} combines persistent state, local sensing, and neighbor
+ interaction.
+%
+The counter increases only while the device's \texttt{active} sensor is true,
+ but its value is shared on every execution of the communication construct.
+%
+Because that construct appears after the conditional, it belongs to the
+ common execution scope rather than to either branch.
+
+\begin{lstlisting}[language=Python,breaklines=true,
+  caption={State, sensing, and neighbor interaction in Phyelds.},
   label={lst:phyelds-api}]
 @aggregate
 def active_counter():
     set_counter, counter = remember(0)
 
     if sense("active"):
-        counter += 1
-        set_counter(counter)
+        set_counter(counter + 1)
 
     neighbor_counters = neighbors(counter)
     return neighbor_counters.max()
 \end{lstlisting}
 
-The use of an ordinary \texttt{if} requires special handling.
+\paragraph{Conditional alignment.}
+Ordinary Python conditionals require additional handling because branching
+ in \gls{FC} also restricts the alignment domain.
 %
-In \gls{FC},
- branching also partitions the alignment domain,
- whereas a Python conditional normally affects only local control flow.
+Devices taking different branches must not exchange values through
+ constructs located inside those branches, even if those constructs have
+ similar local code.
 %
-Phyelds reconciles the two semantics transparently: when an aggregate function
- is decorated, its \texttt{if} statements are wrapped in distinct alignment
- contexts, so devices taking different branches do not exchange values within
- those branches.
-%
-This transformation is invisible to the developer,
- who writes plain Python conditionals and relies on the engine
- to maintain correct alignment across the collective.
+Once execution returns to the common enclosing scope, subsequent constructs
+ can again involve devices from both branches.
 
-\subsection{Libraries and execution environments.}
-The \emph{Library} module builds reusable coordination functions 
- on top of the Pythonic calculus. 
-% 
-Its submodules separate device access, time, distance metrics, spreading, 
-collection, gossip, and leader election. 
+Phyelds implements this behavior by transforming the source of decorated
+ functions through Python's abstract syntax tree.
 %
-For example,
- \texttt{distance\_to}, \texttt{broadcast}, and \texttt{cast\_from} 
- implement information spreading; 
- \texttt{collect\_with}, \texttt{count\_nodes}, and \texttt{sum\_values} 
- implement aggregation toward a source; and
- \texttt{elect\_leaders} supports decentralized spatial partitioning. 
-% 
-These functions accept and return Python objects, 
- so the same coordination paths can carry sensor readings, collections, 
- or machine-learning model parameters.
-
-The \emph{Simulator} module provides a compact execution environment 
- without coupling the calculus to a particular deployment. 
-% 
-A \texttt{Node} stores a device identifier, position, and sensor data; 
- an \texttt{Environment} manages nodes and computes their neighborhoods; 
- and a discrete-event \texttt{Simulator} schedules aggregate rounds. 
-% 
-Neighborhood policies are pluggable and may describe communication 
- by radius, nearest neighbors, full connectivity, or a user-defined relation. 
-% 
-Monitors receive execution callbacks for inspection and visualization. 
+The transformation intercepts \texttt{if} statements and wraps their bodies
+ in distinct alignment context managers.
 %
-External systems can instead provide a runner and an environment adapter; 
- the VMAS integration follows this pattern, keeping the aggregate program independent 
- from the underlying multi-agent simulator.
+\Cref{lst:phyelds-alignment} shows the transformation schematically.
+%
+The developer writes the original conditional, while the transformed
+ version makes the branch distinction visible to the engine.
 
-For this thesis,
- Phyelds provides the implementation layer connecting field-based coordination
+\begin{lstlisting}[language=Python,breaklines=true,
+  caption={Schematic transformation of a Python conditional for alignment.},
+  label={lst:phyelds-alignment}]
+# Original program fragment
+if condition:
+    do_something()
+else:
+    do_other()
+
+# Fragment executed after transformation
+if condition:
+    with align_left():
+        do_something()
+else:
+    with align_right():
+        do_other()
+\end{lstlisting}
+
+Together, decorated function scopes and branch contexts preserve the
+ distinction between independent subcomputations.
+%
+This is particularly relevant when reusable functions contain their own
+ stateful or communication constructs: each invocation must refer to the
+ corresponding distributed computation rather than accidentally reuse
+ another invocation's state or neighbor values.
+
+\subsection{Coordination Library and Native Simulation}
+\label{sec:phyelds-library}
+
+The Library module builds higher-level coordination functions on top of the
+ calculus interface.
+%
+Its organization follows common aggregate programming concerns:
+ device access, time, distance metrics, spreading, collection, gossip,
+ and leader election.
+%
+These functions retain ordinary Python values at their interfaces,
+ allowing the same coordination structure to carry sensor readings,
+ collections, or model parameters.
+
+\paragraph{Context and distance.}
+The device submodule provides \texttt{local\_\allowbreak id}, \texttt{local\_\allowbreak position},
+ and \texttt{sense} for accessing the current execution context.
+%
+Temporal functions provide simulation time, round counters, and decay
+ mechanisms for time-dependent behavior.
+%
+Distance functions supply neighborhood metrics based on spatial positions
+ or hop counts, supporting both geometric and topology-based computations.
+%
+Using a distance field as an argument also allows higher-level functions
+ to operate with application-specific notions of proximity.
+
+\paragraph{Spreading and collection.}
+The \texttt{distance\_\allowbreak to} function constructs a potential field from
+ designated sources.
+%
+This field provides a direction for information propagation and supports
+ functions such as \texttt{broadcast}, which disseminates values from sources,
+ and \texttt{cast\_\allowbreak from}, which accumulates information along propagation paths.
+%
+Collection functions operate in the opposite direction, using decreasing
+ potential values to establish routes toward a source.
+%
+The \texttt{find\_\allowbreak parent} function identifies parent relationships, while
+ \texttt{collect\_\allowbreak with} combines contributions using a supplied accumulation
+ function.
+%
+Specialized forms include \texttt{count\_\allowbreak nodes} and \texttt{sum\_\allowbreak values}.
+
+\paragraph{Gossip and leader election.}
+Gossip functions spread and combine values through repeated local exchanges.
+%
+The generic \texttt{gossip} function accepts a combination operator;
+ \texttt{gossip\_\allowbreak max} and \texttt{gossip\_\allowbreak min} provide common specializations.
+%
+A stabilizing variant bounds propagation using a network-diameter parameter.
+%
+Leader election is exposed through \texttt{elect\_\allowbreak leaders}, which uses
+ identifiers to break symmetry and a distance threshold to organize devices
+ around distributed coordinators.
+%
+Combined with spreading and collection, it supplies the components needed
+ for self-organizing coordination regions.
+
+\paragraph{Native execution environment.}
+The Simulator module supports testing and inspecting aggregate programs
+ without tying the core library to a specific deployment.
+%
+A \texttt{Node} stores a device identifier, position, and arbitrary sensor
+ data; an \texttt{Environment} manages nodes and determines their
+ communication neighborhoods; and a discrete-event \texttt{Simulator}
+ schedules program executions.
+%
+Neighborhood policies are pluggable, with built-in functions for
+ radius-based communication, nearest-neighbor connectivity, and full connectivity.
+%
+Applications can supply custom policies to represent other communication relations.
+
+Deployment utilities generate regular grids, deformed lattices, and random
+ positions within circular regions.
+%
+Monitors receive callbacks at initialization, after events, and at completion,
+ supporting logging, visualization, and metric collection.
+%
+This separation allows the same aggregate program to be inspected under
+ different topologies and scheduling conditions without incorporating
+ simulator-specific code into its coordination logic.
+
+\subsection{Examples of Aggregate Programs}
+\label{sec:phyelds-examples}
+
+The examples below illustrate how the API expresses spatial coordination
+ and how these patterns extend to learning workflows.
+%
+They cover the main use cases of Phyelds~\cite{DBLP:conf/coordination/AguzziDFV26},
+ while the following contribution chapters discuss the associated learning
+ methods in detail.
+%
+Listings assume that the relevant Phyelds functions have been imported;
+ application-specific helper functions are identified in the text.
+
+\begin{figure*}
+    \centering
+    \begin{subfigure}{0.33\linewidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/ch_frameworks/channel.pdf}
+        \caption{Channel example}
+        \label{fig:channel}
+    \end{subfigure}
+        \begin{subfigure}{0.33\linewidth}
+      \centering
+      \includegraphics[width=\textwidth]{figures/ch_frameworks/scr.pdf}
+      \caption{SCR example}
+      \label{fig:scr}
+    \end{subfigure}
+    \caption{Examples of common aggregate programming patterns implemented in \textsc{Phyelds}.
+    On the left, a channel is constructed between a source device (bottom left) and a target device (top right). The channel color is yellow. On the right, devices are partitioned into coordination regions (different colors).}
+    \label{fig:ac-examples}
+\end{figure*}
+
+\paragraph{Channels between devices.}
+A channel identifies devices around a route connecting a source and a target (\Cref{fig:channel}).
+%
+It can represent a spatial corridor for communication, routing, or coordinated
+ activity.
+%
+\Cref{lst:phyelds-channel} first computes distances toward the target and
+ then collects the source predicate along decreasing potential values.
+%
+The resulting field identifies a route from the source toward the target.
+%
+A second distance computation expands this route into a corridor of
+ configurable width, producing a Boolean field that indicates membership.
+
+\begin{lstlisting}[language=Python,breaklines=true,
+  caption={Construction of a channel between a source and a target.},
+  label={lst:phyelds-channel}]
+@aggregate
+def channel(width):
+    distances = neighbors_distances()
+    target_distance = distance_to(sense("target"), distances)
+    nodes_in_path = collect_or(target_distance, sense("source"))
+    distance_from_path = distance_to(nodes_in_path, distances)
+    return distance_from_path < width
+\end{lstlisting}
+
+The program composes existing operators without managing routing tables or
+ forwarding messages explicitly.
+%
+In the native simulation example, devices occupy a deformed
+ $20 \times 20$ lattice, communicate within a fixed radius, and execute
+ the program at intervals of $0.1$ seconds.
+%
+Source and target roles are supplied through sensor values, and a rendering
+ monitor visualizes the channel as the computation evolves.
+
+\paragraph{Self-organizing coordination regions.}
+A second pattern partitions the network around elected leaders (\Cref{fig:scr}).
+%
+Each region combines three activities: information collection toward its
+ coordinator, processing at that coordinator, and dissemination of the result.
+%
+\Cref{lst:phyelds-regions} instantiates this pattern by counting devices and
+ broadcasting the count within each coordination region.
+
+\begin{lstlisting}[language=Python,breaklines=true,
+  caption={Counting devices within self-organizing coordination regions.},
+  label={lst:phyelds-regions}]
+@aggregate
+def region_size():
+    distances = neighbors_distances()
+    leader = elect_leaders(4, distances)
+    potential = distance_to(leader, distances)
+    nodes = count_nodes(potential)
+    return broadcast(leader, nodes, distances)
+\end{lstlisting}
+
+Leader election determines the distributed sources, the potential field
+ organizes collection, and broadcast makes the regional result available
+ to participating devices.
+%
+Replacing the counted value and accumulation function yields other
+ applications of the same pattern, such as aggregating measurements or
+ coordinating regional model updates.
+
+\paragraph{Self-organizing federated learning.}
+Phyelds allows regional coordination to operate directly on the outputs of
+ local learning procedures.
+%
+In the example shown in~\Cref{lst:phyelds-sofl}, each device maintains
+ its model parameters and a logical training counter, performs local
+ training, and computes neighborhood distances from model performance
+ on validation data.
+%
+These distances drive leader election and define the potential field used
+ to collect updates.
+%
+A regional model is then broadcast and retained for the next local execution.
+
+\begin{lstlisting}[language=Python,breaklines=true,
+  caption={Illustrative coordination of self-organizing federated learning.
+   Training, loss-based distances, and weight averaging are application helpers.},
+  label={lst:phyelds-sofl}]
+@aggregate
+def client(initial_model_params):
+    set_value, value = remember((initial_model_params, 0))
+    local_model, tick = value
+
+    evolved_model, train_loss = local_training(
+        local_model, training_data
+    )
+    distances = loss_based_distances(
+        evolved_model, validation_data
+    )
+    leader = elect_leaders(threshold, distances)
+    potential = distance_to(leader, distances)
+    models = collect_with(
+        potential, [evolved_model], lambda x, y: x + y
+    )
+    aggregated_model = average_weights(models)
+    area_model = broadcast(leader, aggregated_model, distances)
+    set_value((area_model, tick + 1))
+    return potential
+\end{lstlisting}
+
+The listing exposes the division of responsibilities: local training and
+ weight averaging remain ordinary Python operations, while the aggregate
+ functions determine federation structure and information flow.
+%
+It is an illustrative composition rather than a complete training protocol:
+ coordination fields evolve across local rounds, and a complete implementation
+ must also determine when collected updates are ready to be adopted.
+%
+The federation mechanisms and their evaluation are developed
+ in~\Cref{chap:selforg-fl}.
+
+\subsection{Integration with External Simulators}
+\label{sec:phyelds-external-simulators}
+
+The native simulator is one possible execution environment for Phyelds.
+%
+External integration requires two components: a simulator-specific runner
+ and an environment adapter.
+%
+The runner executes actions produced by the aggregate programs and makes
+ subsequent observations available for the next computation.
+%
+The adapter defines how simulated agents map to Phyelds devices, how their
+ contexts are initialized and updated, and how neighborhoods are obtained.
+%
+This preserves the separation between the program's coordination logic and
+ the simulation of physical dynamics.
+
+The integration with the Vectorized Multi-Agent Simulator (VMAS) follows
+ this structure through a dedicated runner and \texttt{VmasEnvironment}.
+%
+VMAS supplies the physical environment and agent state, while Phyelds
+ supplies coordination through local state and neighbor interaction.
+%
+This integration is illustrated through a flocking example
+ based on the Vicsek model (\Cref{fig:vmas-example}).
+%
+Agents move at a fixed speed and repeatedly align their direction with
+ nearby agents, subject to a noise term.
+
+Let $\mathbf{r}_i(t)$ be the position of agent $i$ and $\theta_i(t)$ its
+ heading, with an interaction radius $\rho$.
+%
+For the neighborhood
+ $\mathcal{N}_i(t)=\{j : \|\mathbf{r}_j(t)-\mathbf{r}_i(t)\|<\rho\}$,
+ including the agent itself, the heading update can be written as
+\begin{equation}
+  \theta_i(t+\Delta t)=
+  \operatorname{atan2}\!\left(
+    \sum_{j\in\mathcal{N}_i(t)}\sin\theta_j(t),
+    \sum_{j\in\mathcal{N}_i(t)}\cos\theta_j(t)
+  \right)+\eta_i(t),
+  \label{eq:phyelds-vicsek-heading}
+\end{equation}
+where $\eta_i(t)$ is the angular perturbation.
+%
+Expressing the average through its sine and cosine components accounts for
+ the circular nature of headings.
+%
+The corresponding movement, using the current heading, is
+\begin{equation}
+  \mathbf{r}_i(t+\Delta t)=\mathbf{r}_i(t)+v\Delta t
+  \begin{bmatrix}
+    \cos\theta_i(t)\\
+    \sin\theta_i(t)
+  \end{bmatrix},
+  \label{eq:phyelds-vicsek-position}
+\end{equation}
+with speed $v$.
+
+At the implementation level, the aggregate program reads the agent's
+ velocity from its context, obtains neighbor velocities through
+ \texttt{neighbors}, computes the alignment direction and perturbation,
+ and stores the next action for the runner.
+%
+The simulation shows initially disordered headings
+ evolving toward coherent collective motion.
+%
+This example demonstrates the external execution interface; the policy
+ learning methods discussed in~\Cref{chap:scalable-rl} build on the same
+ ability to combine Python-based agent computation with field-based coordination.
+
+\begin{figure*}
+    \centering
+    \begin{subfigure}{0.29\linewidth}
+        \centering
+        \fbox{\includegraphics[width=\textwidth]{figures/ch_frameworks/frame-0001.pdf}}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.29\linewidth}
+      \centering
+      \fbox{\includegraphics[width=\textwidth]{figures/ch_frameworks/frame-0157.pdf}}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.29\linewidth}
+    \centering
+    \fbox{\includegraphics[width=\textwidth]{figures/ch_frameworks/frame-2358.pdf}}
+    \end{subfigure}
+    \caption{Vicsek flocking simulation in VMAS using \textsc{Phyelds}. 
+    Agents (cirlces) align their velocities over time (left to right), 
+    exhibiting coherent collective motion.}
+    \label{fig:vmas-example}
+\end{figure*}
+
+\subsection{Role in the Thesis and Development Directions}
+
+Phyelds provides the implementation layer connecting field-based coordination
  with Python-native learning code.
 %
-Local training, model aggregation, inference, and policy computation remain ordinary
- Python operations, while \texttt{remember}, \texttt{neighbors}, and the coordination
- library determine how their state and outputs evolve across the collective.
+Its state and communication constructs specify how local computations evolve
+ across the collective, while learning libraries retain responsibility for
+ model representation, optimization, and inference.
 %
-This separation is used throughout the contribution chapters:
- in~\Cref{chap:selforg-fl}, field-based operators organize self-adaptive federation
- structures around local federated learning procedures;
- in~\Cref{chap:scalable-rl}, coordination determines what each agent observes
- and how collective state is summarized for decentralized policy learning;
- and in~\Cref{chap:tasksplacement}, the same abstractions support decentralized
- application placement decisions across the edge--cloud continuum.
+The architecture supports the federation mechanisms
+ in~\Cref{chap:selforg-fl}, the coordination of observations and collective
+ information in~\Cref{chap:scalable-rl}, and decentralized application
+ placement in~\Cref{chap:tasksplacement}.
 
-
+The examples establish the framework's expressiveness and integration
+ capabilities, but do not constitute a systematic performance comparison
+ with other \gls{AC} implementations.
+%
+Further development includes performance and scalability measurements,
+ broader simulator integration, and deployment in physical edge and robotic
+ systems.
+%
+These directions complement the framework's present purpose as a practical
+ environment for implementing and studying collective learning mechanisms.
 
 %=============================================================================
-\section{ProFed: Benchmarking Proximity-Based Federated Learning}
+\section[ProFed: Proximity-Based Federated Learning]{ProFed: A Benchmark for Proximity-Based Federated Learning}
 \label{sec:selforgfl-benchmarking}
 %=============================================================================
 
-\subsection{Motivation}
+\subsection{Motivation and Scope}
 
-The evaluation of federated learning algorithms relies heavily 
- on benchmark suites that provide common datasets, partitioning strategies, 
- and evaluation protocols.
+Federated learning benchmarks provide common datasets, partitioning
+ strategies, and evaluation protocols for comparing distributed learning methods.
 %
-Existing frameworks cover several complementary aspects of this process.
+FedScale~\cite{DBLP:conf/icml/LaiDSLZMC22}, for example, supports large-scale
+ experiments that account for system heterogeneity and client resources.
 %
-For example, 
- FedScale~\cite{DBLP:conf/icml/LaiDSLZMC22} supports large-scale experiments 
- on realistic datasets while accounting for system heterogeneity 
- and client resource constraints.
+LEAF~\cite{DBLP:journals/corr/abs-1812-01097} emphasizes reproducibility
+ through standardized datasets, metrics, and reference implementations.
 %
-Similarly, 
- LEAF~\cite{DBLP:journals/corr/abs-1812-01097} 
-  promotes reproducible evaluation through standardized datasets, metrics, 
-  and reference implementations, including measurements of model performance and training costs.
-%
-Other benchmarks provide configurable environments for comparing federated learning algorithms 
- on established datasets under different client-level
- partitions~\cite{DBLP:journals/corr/abs-2007-13518,DBLP:journals/corr/abs-2007-14390}.
+Other frameworks support configurable experiments with established datasets
+ and client-level partitions~\cite{DBLP:journals/corr/abs-2007-13518,DBLP:journals/corr/abs-2007-14390}.
 
-These frameworks provide valuable support for the evaluation 
- of general-purpose federated learning methods.
+These tools cover many aspects of federated learning, but conventional
+ client-level partitioning often leaves the spatial organization of data implicit.
 %
-However, 
- their data-partitioning procedures typically abstract away 
- the spatial organization of the clients.
+In a \gls{CAS}, nearby devices may observe similar conditions because they
+ operate within the same physical environment.
 %
-Data are assigned directly to individual devices without representing the fact that, 
- in many collective adaptive systems, nearby devices experience similar conditions 
- and consequently observe correlated data distributions.
+Traffic patterns within an urban district, measurements from sensors in a
+ shared site, and observations from neighboring vehicles can therefore be
+ correlated with location.
 %
-Examples include vehicles operating within the same urban district, 
- sensors deployed in a shared physical environment, 
- and devices located within the same industrial site.
+The resulting heterogeneity has a regional structure: devices within a
+ region encounter similar distributions, while devices in different regions
+ may encounter substantially different ones.
 
-This limitation is particularly relevant to the methods introduced in this chapter.
+ProFed provides a benchmark for constructing this kind of
+ scenario~\cite{DBLP:journals/jors/DominiIALV26}.
 %
-All the algorithms presented in this chapter explicitly exploit 
- the relation between spatial proximity and data similarity, 
- assuming that data are relatively homogeneous within a region 
- but heterogeneous across different regions.
+Instead of assigning heterogeneous partitions directly to individual clients,
+ it introduces an intermediate regional layer.
 %
-Evaluating such algorithms through conventional client-level partitions 
- does not capture this structure and makes it difficult to systematically investigate how
- regional heterogeneity affects federation formation and learning performance.
+A dataset is first partitioned among regions according to a selected
+ heterogeneity strategy; each regional partition is then distributed among
+ the devices assigned to that region.
+%
+The resulting datasets support controlled experiments in which spatial
+ proximity is associated with data similarity.
 
-ProFed~\cite{DBLP:journals/jors/DominiIALV26} addresses this gap 
- by providing a standardized benchmark  for generating region-aware federated learning scenarios.
+The benchmark supplies data partitions rather than imposing a federation
+ protocol or a communication topology.
 %
-Rather than distributing data independently among clients, 
- it first partitions a dataset across spatial regions according to a configurable degree of heterogeneity
- and subsequently distributes each regional partition among the devices located within that region.
+Researchers can use the same regional distributions to compare global,
+ clustered, personalized, or decentralized learning methods.
 %
-This enables reproducible evaluation of proximity-based federated learning algorithms 
- under controlled spatial data distributions and facilitates their
- comparison across datasets, partitioning strategies, and levels of regional skewness.
+In this thesis, this is particularly useful for evaluating the methods
+ in~\Cref{chap:selforg-fl}, whose coordination mechanisms exploit relationships
+ between device proximity and local learning conditions.
 
-\subsection{Implementation}
+\subsection{Regional System Model}
+\label{sec:profed-system-model}
 
-ProFed implementation is based on PyTorch~\cite{DBLP:conf/asplos/AnselYHGJVBBBBC24} 
- and TorchVision~\cite{TorchVision}, 
- as it has been specifically designed to facilitate and 
- standardize research experiments within the scenario described above. 
+Consider an operating area partitioned into $K$ contiguous regions
+ $\mathcal{R}=\{R_1,\ldots,R_K\}$ and a set of devices
+ $\mathcal{V}=\{1,\ldots,n\}$.
 %
-ProFed provides an API to partition the supported datasets and 
- to generate experimental scenarios that follow the proposed system model. 
-% 
-In particular, 
- given the number of regions and the number of devices per region, 
- it enables the creation of region-aware data partitions such that 
- devices belonging to the same region receive datasets sampled from 
- the same underlying data distribution. 
+An assignment $r:\mathcal{V}\rightarrow\{1,\ldots,K\}$ maps each device
+ to its region, with multiple devices typically assigned to each region.
 %
-This design allows the benchmark to reproduce realistic proximity-based non-IID scenarios, 
- where data are homogeneous within regions and heterogeneous across regions, 
- as illustrated in~\Cref{fig:spatial-heterogeneity}.
+Region $R_k$ is associated with a joint data distribution $P_k(X,Y)$.
 %
-The following paragraphs detail the implemented methods to synthesize skewed datasets, 
- the supported datasets and the API of the benchmark.
+The local dataset of device $i$ is
+\begin{equation}
+  D_i=\{(x_{i,s},y_{i,s})\}_{s=1}^{m_i},
+  \qquad (x_{i,s},y_{i,s})\sim P_{r(i)}.
+  \label{eq:profed-local-data}
+\end{equation}
+This notation describes the intended statistical model; the benchmark
+ realizes it through finite partitions of an existing dataset.
 
+Devices assigned to the same region share an underlying distribution,
+ although their empirical datasets need not have identical label proportions.
+%
+Across regions, the distributions may differ according to the selected
+ partitioning method.
+%
+The IID configuration is a special case in which the regional distributions
+ are the same.
+%
+Thus, regional membership determines the source of local data without
+ requiring samples within a region to be close under a feature-space metric,
+ or requiring the supports of different regions to be disjoint.
 
+The distinction matters because proximity in ProFed concerns the spatial
+ assignment of devices and the distributions from which they receive data.
+%
+For the classification datasets, the implemented strategies primarily
+ control regional label frequencies.
+%
+They do not by themselves reproduce all forms of geographic variation,
+ such as changes in image acquisition conditions or temporal environmental drift.
+%
+The regional model is therefore a controlled abstraction for studying
+ spatially structured heterogeneity.
 
-\paragraph{Data Distribution.} The supported partitioning methods were selected 
- by reviewing studies in the literature on non-IID 
- Federated Learning and identifying the most commonly used ones.
-%
-Several works employ the \emph{Dirichlet} distribution for data partitioning. 
-%
-This approach results in each party having instances of most labels, 
- although the distribution is highly imbalanced, 
- with some labels being underrepresented and others heavily overrepresented.
-%
-The degree of skewness can be adjusted using the concentration parameter 
- $\alpha$, where lower values yield more skewed distributions.
-%
-In the literature, $\alpha$ values typically range from 0.1 to 1.0, 
- with $\alpha=0.5$ commonly used for moderate heterogeneity.
-%
-An example of this distribution, for $5$ subregions and the MNIST dataset (with $10$ classes), 
- is represented in~\Cref{fig:dirichlet}.
-%
-The second data distribution considered is \emph{hard} partitioning,
- where each party has access to only a subset of labels.
-%
-This creates a significantly more skewed distribution, 
- making it considerably more challenging for learning algorithm stability.
-%
-An example of this distribution is represented in~\Cref{fig:hard}.
-%
-ProFed enables fine-grained control over the data distribution, allowing either 
- balanced label subsets across regions or customizable cardinality per subregion.
-%
-For comparative analysis, ProFed also implements an IID split as a baseline distribution (\Cref{fig:iid}).
-%
-While existing approaches typically apply these partitioning methods 
- directly at the device level (e.g.,~\cite{DBLP:journals/corr/abs-2302-02949,DBLP:conf/nips/LinKSJ20}), 
- ProFed introduces an intermediate layer of regional clustering.
-% 
-ProFed first distributes data heterogeneously among subregions and 
- then splits them homogeneously among devices within the same subregion,
- thereby creating clustered heterogeneity---see~\Cref{fig:spatial-heterogeneity}.
-%
-To support extensibility, ProFed enables custom partitioning 
- based on a user-specified distribution matrix. 
-%
-This distribution is represented as an $N \times M$ matrix 
- where $N$ is the number of labels and $M$ is the number of subregions. 
-%
-Each cell $(i,j)$ indicates the proportion of instances with label $i$ 
- assigned to subregion $j$.
+\subsection{Partitioning Strategies}
+\label{sec:profed-partitioning}
 
-\begin{figure}
-\centering
-\begin{subfigure}{0.3\textwidth}
+ProFed implements IID, Dirichlet, and hard partitioning, together with a
+ custom distribution interface.
+%
+The first stage determines how examples are assigned to regions; the second
+ distributes each region's data among its devices.
+%
+This common structure makes the partitioning strategy independent of the
+ learning algorithm used in the experiment.
+%
+\Cref{fig:skewness} illustrates the three built-in patterns for five regions.
+
+\paragraph{IID partitioning.}
+The IID strategy distributes data so that regional partitions approximate
+ the original dataset's label proportions.
+%
+Devices receive local subsets from comparable regional distributions,
+ providing a baseline against which the effects of heterogeneity can be assessed.
+%
+Finite partition sizes may still produce sampling differences, but there is
+ no intended regional label specialization.
+
+\paragraph{Dirichlet partitioning.}
+The Dirichlet strategy produces regional label imbalance while allowing
+ labels to be represented in multiple regions.
+%
+Its concentration parameter $\alpha$ controls the dispersion of allocation
+ proportions: smaller values favor more concentrated assignments, whereas
+ larger values tend toward more even allocations.
+%
+Unlike a hard split, a region is not explicitly restricted to a prescribed
+ label subset, although a finite realization can leave some labels absent.
+%
+The ProFed evaluation uses $\alpha=0.5$ as its Dirichlet configuration.
+
+This parameter controls statistical heterogeneity at the regional level.
+%
+After allocation, devices within a region receive subsets of the same
+ regional pool, preserving the intended association between regional
+ membership and distributional similarity.
+%
+The construction consequently differs from assigning an independent
+ Dirichlet partition to every device, which need not create any relationship
+ between location and label distribution.
+
+\paragraph{Hard partitioning.}
+Hard partitioning restricts each region to a subset of labels.
+%
+This yields pronounced regional specialization and can create local training
+ sets that omit much of the global label space.
+%
+ProFed supports balanced label-subset sizes as well as configurable
+ cardinalities for individual regions.
+%
+The resulting scenario is useful for examining how learning methods behave
+ when updates are trained on sharply different regional tasks.
+
+\paragraph{Custom distributions.}
+For finer control, users can supply a distribution matrix
+ $W\in[0,1]^{L\times K}$, where $L$ is the number of labels and $K$
+ the number of regions.
+%
+Entry $W_{\ell k}$ specifies the proportion of examples with label $\ell$
+ assigned to region $R_k$.
+%
+When all examples are allocated, the proportions satisfy
+\begin{equation}
+  \sum_{k=1}^{K}W_{\ell k}=1,
+  \qquad \ell=1,\ldots,L.
+  \label{eq:profed-distribution-matrix}
+\end{equation}
+These are allocation proportions for each label, rather than label
+ probabilities conditioned on a region.
+%
+If the original dataset contains $N_\ell$ examples with label $\ell$,
+ the intended number allocated to region $k$ is proportional to
+ $N_\ell W_{\ell k}$, subject to integer allocation.
+%
+Consequently, the regional label frequencies also depend on the label counts
+ in the source dataset.
+
+\begin{figure}[t]
+  \centering
+  \begin{subfigure}{0.3\textwidth}
     \includegraphics[width=\textwidth]{figures/ch07/profed/IID.pdf}
     \caption{IID}
     \label{fig:iid}
-    \end{subfigure}
-\begin{subfigure}{0.3\textwidth}
+  \end{subfigure}
+  \begin{subfigure}{0.3\textwidth}
     \includegraphics[width=\textwidth]{figures/ch07/profed/Dirichlet.pdf}
     \caption{Dirichlet}
     \label{fig:dirichlet}
-    \end{subfigure}
-\begin{subfigure}{0.3\textwidth}
+  \end{subfigure}
+  \begin{subfigure}{0.3\textwidth}
     \includegraphics[width=\textwidth]{figures/ch07/profed/Hard.pdf}
     \caption{Hard}
     \label{fig:hard}
-\end{subfigure}
-\caption{ 
-    Data distribution patterns across 5 subregions: (a) IID data, (b) Dirichlet (Non-IID), and (c) Hard (Highly Non-IID).
-    Each color represents a different subregion.
- }
-\label{fig:skewness}
+  \end{subfigure}
+  \caption{Label allocations across five regions under IID, Dirichlet,
+   and hard partitioning. Each color identifies a region.}
+  \label{fig:skewness}
 \end{figure}
 
+\subsection{Implementation and Supported Datasets}
+\label{sec:profed-implementation}
 
-\paragraph{Supported Datasets.}
-ProFed supports various TorchVision datasets widely used in computer vision research 
- (details in~\Cref{tab:datasets}). 
+ProFed is implemented in Python using
+ PyTorch~\cite{DBLP:conf/asplos/AnselYHGJVBBBBC24} and
+ TorchVision~\cite{TorchVision}.
 %
-MNIST~\cite{lecun2010mnist} is included as a baseline: 
- grayscale $28 \times 28$ pixel images of handwritten digits across 10 classes.
+Its API covers dataset acquisition, training--validation splitting,
+ regional partitioning, and allocation to devices.
 %
-ProFed extends this with Fashion MNIST~\cite{DBLP:journals/corr/abs-1708-07747} (clothing items, 10 classes) 
- and Extended MNIST~\cite{DBLP:journals/corr/CohenATS17} (EMNIST, Latin alphabet letters, 27 classes). 
-% 
-For color images, ProFed includes CIFAR10 and CIFAR100 with 32x32 RGB images. 
+Local partitions are exposed through PyTorch's \texttt{Subset} class,
+ allowing existing training code to consume them through familiar dataset
+ and data-loader interfaces.
 %
-CIFAR10 has 10 classes while CIFAR100 has 100, offering greater complexity. 
-%
-Beyond classification tasks, ProFed incorporates the UTKFace dataset \cite{DBLP:conf/cvpr/ZhangSQ17}, 
- containing over 23,000 face images based on 200 $\times$ 200 pixel RGB images, 
- for age regression tasks.  
-%
-All classification datasets maintain balanced class distributions 
- (e.g., CIFAR10 provides 6,000 training instances per class).
+This avoids requiring learning algorithms to adopt a benchmark-specific
+ representation of examples.
 
-\begin{table}
-    \centering
-    \caption{
-        Summary of the characteristics of the datasets included in the benchmark.
-        The first five datasets are designed for classification tasks, 
-         with target values corresponding to discrete classes.
-        In contrast, the last dataset is used for a regression task, 
-        where the target values span a continuous range.
-        }
-    \label{tab:datasets}
-    \begin{tabular}{lrrrr}
+The supported datasets span handwritten characters, clothing categories,
+ small color images, and face images for age estimation.
+%
+\Cref{tab:datasets} summarizes their sizes and input characteristics.
+%
+MNIST~\cite{lecun2010mnist} supplies handwritten digits and serves as a
+ relatively compact baseline.
+%
+Fashion MNIST~\cite{DBLP:journals/corr/abs-1708-07747} retains the same image
+ dimensions but replaces digits with clothing categories.
+%
+The EMNIST letters configuration~\cite{DBLP:journals/corr/CohenATS17}
+ extends the task to handwritten alphabetic characters.
+
+CIFAR-10 and CIFAR-100 provide $32\times32$ RGB images with 10 and 100
+ classes, respectively, allowing experiments with different label-space sizes.
+%
+UTKFace~\cite{DBLP:conf/cvpr/ZhangSQ17} extends the benchmark to age
+ regression using face images represented at $200\times200$ RGB resolution.
+%
+For this dataset, target values are ages rather than semantic classes;
+ the classification interpretation of label skew should therefore not be
+ transferred directly to the learning objective.
+
+\begin{table}[t]
+  \centering
+  \caption{Datasets included in ProFed. Input values indicate the number
+   of scalar image components. UTKFace sizes correspond to the split
+   used in the benchmark.}
+  \label{tab:datasets}
+  \begin{tabular}{lrrrr}
     \toprule
-    \textbf{Dataset} & \textbf{Training Size} & \textbf{Test Size} & \textbf{Features} & \textbf{Targets} \\ 
+    \textbf{Dataset} & \textbf{Training} & \textbf{Test}
+      & \textbf{Input values} & \textbf{Targets} \\
     \midrule
-    MNIST           & 60,000 & 10,000 & 784  & 10  \\ 
-    Fashion MNIST   & 60,000 & 10,000 & 784  & 10 \\ 
-    EMNIST  & 124,800 & 20,800 & 784  & 27 \\ 
-    CIFAR-10       & 50,000 & 10,000 & 3,072 & 10 \\ 
-    CIFAR-100      & 50,000 & 10,000 & 3,072 & 100 \\ 
-    UTKFace       & 20150 & 3557 & 120000 & $[1;116]$\\
+    MNIST         & 60,000  & 10,000 & 784     & 10 \\
+    Fashion MNIST & 60,000  & 10,000 & 784     & 10 \\
+    EMNIST letters& 124,800 & 20,800 & 784     & 26 letters \\
+    CIFAR-10      & 50,000  & 10,000 & 3,072   & 10 \\
+    CIFAR-100     & 50,000  & 10,000 & 3,072   & 100 \\
+    UTKFace       & 20,150  & 3,557  & 120,000 & $[1,116]$ \\
     \bottomrule
-    \end{tabular}
+  \end{tabular}
 \end{table}
 
-\paragraph{Benchmark API.} 
-ProFed has been designed with usability and ergonomics in mind. 
+The EMNIST letters task contains 26 semantic classes.
 %
-To achieve this, its API provides all the necessary methods 
- to manage the referenced use case seamlessly---an example is provided in Listing~\ref{lst:api-example}.
+Its original labels use indices from 1 to 26; retaining an unused zero
+ index would require a 27-entry output representation.
 %
-First, ProFed allows users to download the selected dataset directly 
- and automatically generate training and validation subsets.
+The table reports the number of semantic classes rather than the size
+ of such an output representation.
 %
-Second, and most important, given a dataset and a predefined number of subregions,
- it enables users to distribute data among subregions following the
- specified distribution strategy.
-%
-Finally, once the data distribution among subregions is established, 
- ProFed facilitates the creation of datasets for individual devices. 
-%
-Each device-specific dataset is represented as an instance of the \texttt{Subset} class from PyTorch, 
- ensuring full compatibility with existing learning algorithms. % based on it.
+Likewise, training and test counts should be distinguished from combined
+ dataset totals: CIFAR-10 contains 5,000 training examples and 1,000 test
+ examples per class.
 
-%\noindent\begin{minipage}{\columnwidth}
+\subsection{Benchmark API and Experimental Workflow}
+\label{sec:profed-api}
+
+The API follows the two-stage partitioning process explicitly.
+%
+First, \texttt{download\_\allowbreak dataset} retrieves the selected dataset and its
+ test split.
+%
+The training data can then be divided into training and validation subsets
+ through \texttt{split\_\allowbreak train\_\allowbreak validation}.
+%
+Next, \texttt{partition\_\allowbreak to\_\allowbreak subregions} creates an environment containing
+ regional partitions for the chosen strategy.
+%
+Finally, \texttt{from\_\allowbreak subregion\_\allowbreak to\_\allowbreak devices} produces local subsets for
+ the devices assigned to each region.
+
+\Cref{lst:api-example} illustrates this workflow using EMNIST and hard
+ partitioning.
+%
+The spatial assignment is supplied by the experiment: the application-defined
+ \texttt{distribute\_\allowbreak nodes\_\allowbreak spatially} helper returns a mapping from regional
+ identifiers to lists of device identifiers.
+%
+ProFed uses this assignment to associate regional data with the corresponding
+ devices, while the simulator or deployment code determines their actual positions.
+
 \lstdefinestyle{proFedStyle}{
-    backgroundcolor=\color{gray!5},
-    frame=single,
-    rulecolor=\color{black!20},
-    frameround=tttt,
-    framesep=8pt,
-    xleftmargin=10pt,
-    xrightmargin=10pt,
-    basicstyle=\ttfamily\scriptsize,
-    breaklines=true,
-    captionpos=b,
-    %numbers=left,
-    numberstyle=\tiny\color{gray!70},
-    language=python,
-    keywordstyle=\color{blue!80!black},
-    commentstyle=\color{green!50!black},
-    stringstyle=\color{red!70!black},
-    showstringspaces=false,
-    tabsize=4,
-    breakatwhitespace=false,
-    breakindent=20pt,
+  basicstyle=\ttfamily\scriptsize,
+  breaklines=true,
+  captionpos=b,
+  language=Python,
+  showstringspaces=false,
+  tabsize=4,
+  breakatwhitespace=false,
+  breakindent=12pt,
 }
 
-\begin{figure*}
-\begin{lstlisting}[style=proFedStyle, caption={An example of how ProFed is used to partition the EMNIST dataset among devices}, label={lst:api-example}]
-from ProFed.partitioner import Environment, Region, download_dataset, split_train_validation, partition_to_subregions
+\begin{lstlisting}[style=proFedStyle,
+  caption={Partitioning EMNIST across regions and their devices.
+   Spatial deployment is provided by an application-defined helper.},
+  label={lst:api-example}]
+from ProFed.partitioner import (
+    download_dataset,
+    split_train_validation,
+    partition_to_subregions,
+)
 
-mapping_devices_area = distribute_nodes_spatially(devices, number_subregions)
+mapping_devices_area = distribute_nodes_spatially(
+    devices, number_subregions
+)
+train_data, test_data = download_dataset("EMNIST")
+train_data, validation_data = split_train_validation(
+    train_data, 0.8
+)
+environment = partition_to_subregions(
+    train_data, validation_data, "Hard", number_subregions, seed
+)
 
-train_data, test_data = download_dataset('EMNIST')
-train_data, validation_data = split_train_validation(train_data, 0.8)
-
-environment = partition_to_subregions(train_data, validation_data, 'Hard', number_subregions, seed)
-
-mapping = {}
-
-for region_id, devices in mapping_devices_area.items():
-    mapping_devices_data = environment.from_subregion_to_devices(
-		region_id, 
-		len(devices))
-    for device_index, data in mapping_devices_data.items():
-        device_id = devices[device_index]
-        mapping[device_id] = data
+mapping_devices_data = {}
+for region_id, region_devices in mapping_devices_area.items():
+    local_partitions = environment.from_subregion_to_devices(
+        region_id, len(region_devices)
+    )
+    for device_index, data in local_partitions.items():
+        device_id = region_devices[device_index]
+        mapping_devices_data[device_id] = data
 \end{lstlisting}
-\end{figure*}
 
-\subsection{Quality Control}
-\paragraph{Experimental Setup}
-To evaluate ProFed's effectiveness and usability, 
- experiments were conducted on the supported datasets with three
- state-of-the-art algorithms: 
- FedAvg~\cite{DBLP:conf/aistats/McMahanMRHA17}, 
- FedProx~\cite{DBLP:conf/mlsys/LiSZSTS20}, and 
- Scaffold~\cite{DBLP:conf/icml/KarimireddyKMRS20}.
+The test split remains available separately from the regional training and
+ validation subsets.
 %
-Data were synthetically partitioned using  
- supported methods: IID, Dirichlet ($\alpha=0.5$), and Hard partitioning.
+This allows evaluation against a common held-out dataset as well as
+ inspection of region-specific behavior during training.
 %
-Experiments varied the number of subregions $A \in \{3, 6, 9\}$.
-%
-All implementations utilized PyTorch with consistent hyperparameters across approaches. 
-%
-A multi-layer perceptron with 128 hidden neurons was
- trained for 30 global rounds. 
-% 
-Each global round comprised 2 local epochs per device 
- with batch size 32, ADAM optimizer (learning rate $10^{-3}$, 
- weight decay $10^{-4}$).
-% 
-Experiments were repeated with 5 random seeds for statistical robustness,
- totaling 120 experimental configurations.
+Because the generated partitions are ordinary PyTorch subsets, model
+ architecture, local optimization, client participation, and aggregation
+ remain choices of the experimental learning protocol.
 
-All code is publicly available under a permissive license for
- reproducibility purposes\footnote{\url{https://github.com/davidedomini/experiments-2025-jors}}.
+Reproducibility requires recording the dataset, partitioning method,
+ regional configuration, device assignment, and random seed alongside the
+ training hyperparameters.
+%
+These settings determine the experimental instance on which competing
+ methods are compared.
+%
+The regional layer additionally permits controlled studies that vary the
+ number of regions or their data distributions while retaining the same
+ local learning implementation.
 
-\paragraph{Discussion}
-Results were systematically collected during training, validation, and testing phases.
-A baseline was first established using a homogeneous data distribution (IID) to assess model stability and accuracy. 
-%
-FedAvg was the only algorithm evaluated under IID conditions, 
- whereas FedProx and Scaffold were not considered in this setting, 
- as they are variants of FedAvg whose distinguishing mechanisms are specifically 
- designed to address non-IID data distributions and therefore provide meaningful 
- differences primarily under data heterogeneity.
-%
-Under IID conditions, FedAvg demonstrates stable convergence and achieves high accuracy.
-% 
-This stability is evident in both validation and testing phases.
-%
-Validation convergence is shown in the first column of \Cref{fig:exp}, 
- where accuracy increases monotonically toward the optimum. 
-%
-Test stability is demonstrated in \Cref{tab:test}, 
- where the model maintains high accuracy with minimal variance.
+\subsection{Quality Control and Illustrative Evaluation}
+\label{sec:profed-quality-control}
 
-The critical impact of data distribution becomes apparent when transitioning 
- from IID to non-IID conditions.
-Under heterogeneous data distribution, significant performance degradation occurs. 
-% 
-All evaluated algorithms fail to handle extreme data skewness effectively, 
- resulting in reduced accuracy and convergence instability. 
+The benchmark is evaluated through experiments with
+ FedAvg~\cite{DBLP:conf/aistats/McMahanMRHA17},
+ FedProx~\cite{DBLP:conf/mlsys/LiSZSTS20}, and
+ SCAFFOLD~\cite{DBLP:conf/icml/KarimireddyKMRS20}.
 %
-This degradation is particularly pronounced under hard partitioning. 
+The purpose is to demonstrate that the generated scenarios can be used
+ with established learning algorithms and to illustrate the analyses made
+ possible by regional partitioning.
 %
-The bottom row of \Cref{fig:exp} illustrates hard partitioning across nine regions, 
- where validation accuracy drops from $80\%$ (IID) to $50\%$. 
+The experiments do not isolate the effect of regional organization from
+ an otherwise matched client-level partition, so they should not be
+ interpreted as establishing that spatial partitioning alone changes
+ algorithm rankings.
+
+\paragraph{Experimental configuration.}
+The evaluation uses IID, Dirichlet with $\alpha=0.5$, and hard partitioning,
+ varying the number of regions over $K\in\{3,6,9\}$.
 %
-Testing results exhibit similar trends. 
+The learning implementations use a multilayer perceptron with 128 hidden
+ neurons, trained for 30 global rounds.
 %
-While FedAvg achieves stable performance above $95\%$ under IID conditions, 
- Dirichlet partitioning introduces substantial instability, 
- evidenced by increased accuracy variance. 
+Each round comprises two local epochs per device with batch size 32 and
+ the Adam optimizer, using learning rate $10^{-3}$ and weight decay $10^{-4}$.
 %
-Performance decline intensifies under hard partitioning, 
- highlighting fundamental limitations of current federated learning approaches 
- in handling extreme data heterogeneity.
+Experiments are repeated with five random seeds.
 %
-These findings indicate that state-of-the-art algorithms inadequately address 
- spatially distributed data challenges, necessitating further research 
- toward more robust solutions.
-\begin{table}
-    \centering
-    \caption{Results on the test set for different algorithms with different partitioning methods.}
-    \label{tab:test}
-    \begin{tabular}{c|ccc}
+FedAvg provides the IID baseline; all three methods are evaluated under
+ the heterogeneous configurations.
+%
+The experimental artifact is publicly
+ available\footnote{\url{https://github.com/davidedomini/experiments-2025-jors}}.
+
+\paragraph{Validation behavior.}
+\Cref{fig:exp} reports representative validation curves for MNIST,
+ Fashion MNIST, and EMNIST under Dirichlet and hard partitioning.
+%
+The trajectories show that both dataset difficulty and the allocation
+ strategy affect convergence and the variation between runs.
+%
+Hard partitioning creates particularly demanding configurations because
+ regional clients train on restricted label subsets.
+%
+The figure also illustrates why a single final accuracy value is insufficient
+ to characterize an experiment: similar endpoints can conceal different
+ convergence trajectories and levels of variability.
+
+\begin{figure}
+  \centering
+  \begin{subfigure}{0.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-MNIST_areas-3_partitioning-Dirichlet.png}
+    \caption{MNIST, $K=3$.}
+  \end{subfigure}
+  \begin{subfigure}{0.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-FashionMNIST_areas-3_partitioning-Dirichlet.png}
+    \caption{Fashion MNIST, $K=3$.}
+  \end{subfigure}
+  \begin{subfigure}{0.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-EMNIST_areas-9_partitioning-Dirichlet.png}
+    \caption{EMNIST, $K=9$.}
+  \end{subfigure}
+
+  \medskip
+  \begin{subfigure}{0.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-MNIST_areas-3_partitioning-Hard.png}
+    \caption{MNIST, $K=3$.}
+  \end{subfigure}
+  \begin{subfigure}{0.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-FashionMNIST_areas-3_partitioning-Hard.png}
+    \caption{Fashion MNIST, $K=3$.}
+  \end{subfigure}
+  \begin{subfigure}{0.32\textwidth}
+    \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-EMNIST_areas-9_partitioning-Hard.png}
+    \caption{EMNIST, $K=9$.}
+  \end{subfigure}
+  \caption{Representative validation accuracy curves from the ProFed
+   evaluation. Columns correspond to datasets; the top and bottom rows
+   show Dirichlet and hard partitioning, respectively.}
+  \label{fig:exp}
+\end{figure}
+
+\paragraph{Test performance.}
+The test-set results are summarized in~\Cref{tab:test}.
+%
+The summary shows lower accuracy and greater variability under heterogeneous
+ partitions than in the IID FedAvg baseline.
+%
+In the hard configuration, FedProx achieves the highest value in this summary,
+ while FedAvg and SCAFFOLD have the same mean.
+%
+These values describe the evaluated configurations and do not establish a
+ uniform ordering across all datasets or regional configurations.
+
+\begin{table}[t]
+  \centering
+  \caption{Test accuracy summary for the ProFed evaluation.
+   Dashes indicate configurations not evaluated in that summary.}
+  \label{tab:test}
+  \begin{tabular}{lccc}
     \toprule
-    \textbf{Algorithm} & \textbf{IID} & \textbf{Dirichlet} & \textbf{Hard} \\ 
+    \textbf{Algorithm} & \textbf{IID} & \textbf{Dirichlet} & \textbf{Hard} \\
     \midrule
-    FedAvg        & 0.95 $\pm$ 0.001 & 0.9 $\pm$ 0.04 & 0.81 $\pm$ 0.01  \\ 
-    FedProx       & \ding{55} &  0.886 $\pm$ 0.04 & 0.86 $\pm$ 0.01 \\ 
-    Scaffold      & \ding{55} & 0.889 $\pm$ 0.06 &  0.81 $\pm$ 0.01 \\ 
+    FedAvg   & $0.950\pm0.001$ & $0.900\pm0.040$ & $0.810\pm0.010$ \\
+    FedProx  & ---             & $0.886\pm0.040$ & $0.860\pm0.010$ \\
+    SCAFFOLD & ---             & $0.889\pm0.060$ & $0.810\pm0.010$ \\
     \bottomrule
-    \end{tabular}
+  \end{tabular}
 \end{table}
 
+The evaluation demonstrates that ProFed can generate heterogeneous regional
+ scenarios and expose differences in learning behavior under a common workflow.
+%
+A broader investigation would require additional algorithms, explicit
+ comparisons against client-level splits, and diagnostics that distinguish
+ global performance from regional specialization.
+%
+These are experimental extensions of the benchmark rather than assumptions
+ built into its partitioning API.
 
-\begin{figure*}
-    \centering
+\subsection{Reuse, Availability, and Role in the Thesis}
 
-    % MNIST
+ProFed is distributed as an open-source Python package under the MIT
+ license\footnote{\url{https://github.com/davidedomini/ProFed}}.
+%
+The benchmark release is archived on
+ Zenodo\footnote{\url{https://doi.org/10.5281/zenodo.16367696}}.
+%
+Its partitioning interface supports reuse with existing PyTorch training
+ pipelines, while additional datasets and allocation strategies can extend
+ the range of experimental scenarios.
+%
+The custom distribution matrix is particularly useful when an experiment
+ requires regional structures beyond the predefined strategies.
 
-    \begin{subfigure}{0.32\textwidth}
-        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-MNIST_areas-3_partitioning-Dirichlet.png}
-        % \caption{TBD}
-        % \label{fig:exp-dirichlet}
-    \end{subfigure}
-    \begin{subfigure}{0.32\textwidth}
-        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-FashionMNIST_areas-3_partitioning-Dirichlet.png}
-        % \caption{TBD}
-        % \label{fig:exp-dirichlet}
-    \end{subfigure}
-    \begin{subfigure}{0.32\textwidth}
-        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-EMNIST_areas-9_partitioning-Dirichlet.png}
-    \end{subfigure}
-    \begin{subfigure}{0.32\textwidth}
-        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-MNIST_areas-3_partitioning-Hard.png}
-        % \caption{TBD.}
-        % \label{fig:exp-hard}
-    \end{subfigure}
-    \begin{subfigure}{0.32\textwidth}
-        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-FashionMNIST_areas-3_partitioning-Hard.png}
-        % \caption{TBD.}
-        % \label{fig:exp-hard}
-    \end{subfigure}
-    \begin{subfigure}{0.32\textwidth}
-        \includegraphics[width=\textwidth]{figures/ch07/profed/charts/ValidationAccuracy_dataset-EMNIST_areas-9_partitioning-Hard.png}   
-    \end{subfigure}
+Within this thesis, ProFed supplies controlled regional data heterogeneity
+ for the evaluation of self-organizing federated learning
+ in~\Cref{chap:selforg-fl}.
+%
+The benchmark's regions define the origin of local data; they are not
+ prescribed federations that an algorithm must adopt.
+%
+This distinction allows experiments to examine whether the coordination
+ mechanism discovers useful learning groups from local information.
+%
+When combined with Phyelds, data generation and federation coordination
+ remain separate components, making it possible to vary one while keeping
+ the other fixed.
 
-\caption{
-    Validation accuracy results across MNIST, FashionMNIST, and EMNIST datasets using Dirichlet (top row) and Hard (bottom row) partitioning methods.
-}
-\label{fig:exp}
-\end{figure*}
-
+Further development includes additional datasets, a wider set of clustered
+ and personalized learning baselines, and systematic comparisons between
+ regional and conventional client-level partitioning.
+%
+These extensions would help characterize when spatially structured
+ heterogeneity changes convergence, robustness, or the relative behavior
+ of federated learning methods.
