@@ -3,21 +3,19 @@
 \minitoc
 %----------------------------------------------------------------------------------------
 
-The contributions of this thesis require both an implementation environment
- for collective coordination and experimental tools that reproduce the
- conditions under which cooperative learning takes place.
+The contributions of this thesis require software for collective coordination,
+ learning, experimental evaluation, and interaction with physical devices.
 %
-This chapter presents two frameworks developed to meet these needs:
- Phyelds, a native Python implementation of \gls{AC}, and ProFed,
- a benchmark for constructing proximity-based non-IID federated learning scenarios.
+This chapter presents five tools developed to support these activities.
 %
-Phyelds connects aggregate programs with Python-based learning and simulation
- workflows, whereas ProFed makes the relationship between spatial organization
- and data heterogeneity an explicit part of experimental design.
+Phyelds provides native Python aggregate computing, while ScaRLib connects
+ aggregate programs with reinforcement learning in a Scala-based environment.
 %
-The two frameworks serve complementary purposes and can be used independently:
- one provides coordination abstractions, while the other supplies controlled
- data partitions for evaluating learning algorithms.
+MARLAlchemy organizes simulation-based experience collection and policy
+ improvement, ProFed generates spatially structured federated learning
+ datasets, and Project Emerge supports physical robot demonstrations.
+%
+The tools address complementary requirements and can be used independently.
 
 %=============================================================================
 \section{Phyelds: Aggregate Computing in Python}
@@ -30,9 +28,13 @@ The work presented in this thesis required aggregate programs to interact
  directly with machine-learning models, training procedures, and multi-agent
  environments.
 %
-However, established \gls{AC} implementations, including Protelis, ScaFi, Collektive
- and FCPP, target Java, Scala, Kotlin and C++, respectively, whereas contemporary
- machine-learning workflows are predominantly developed in Python.
+However, established \gls{AC} implementations, including 
+ Protelis~\cite{DBLP:conf/sac/PianiniVB15}, 
+ ScaFi~\cite{DBLP:journals/softx/CasadeiVAP22}, 
+ Collektive~\cite{DBLP:conf/acsos/Cortecchia24}
+ and FCPP~\cite{DBLP:journals/scp/AudritoT24}, 
+ target Java, Scala, Kotlin and C++, respectively, 
+ whereas contemporary machine-learning workflows are predominantly developed in Python.
 %
 Combining these environments requires a cross-language interface (e.g., ScalaPy~\cite{DBLP:conf/scala/LaddadS20}) 
  for model parameters, tensors, datasets, and simulation state, introducing additional
@@ -51,6 +53,11 @@ Aggregate coordination can therefore be embedded in ordinary Python
 %
 This also makes the framework suitable for interactive development in
  notebooks and for integration with Python-based robotics and simulation software.
+%
+In this thesis, it connects Python-native learning with the federation
+ mechanisms in~\Cref{chap:selforg-fl}, collective information processing
+ in~\Cref{chap:scalable-rl}, and decentralized application placement
+ in~\Cref{chap:tasksplacement}.
 
 Three goals guided the design.
 %
@@ -388,6 +395,9 @@ This separation allows the same aggregate program to be inspected under
 The examples below illustrate how the API expresses spatial coordination
  and how these patterns extend to learning workflows.
 %
+They demonstrate expressiveness and integration rather than provide a
+ systematic performance comparison with other \gls{AC} implementations.
+%
 They cover the main use cases of Phyelds~\cite{DBLP:conf/coordination/AguzziDFV26},
  while the following contribution chapters discuss the associated learning
  methods in detail.
@@ -547,14 +557,14 @@ The adapter defines how simulated agents map to Phyelds devices, how their
 This preserves the separation between the program's coordination logic and
  the simulation of physical dynamics.
 
-The integration with the Vectorized Multi-Agent Simulator (VMAS) follows
- this structure through a dedicated runner and \texttt{VmasEnvironment}.
+The integration with the Vectorized Multi-Agent Simulator (VMAS)~\cite{DBLP:conf/dars/BettiniKBP22} 
+ follows this structure through a dedicated runner and \texttt{VmasEnvironment}.
 %
 VMAS supplies the physical environment and agent state, while Phyelds
  supplies coordination through local state and neighbor interaction.
 %
 This integration is illustrated through a flocking example
- based on the Vicsek model (\Cref{fig:vmas-example}).
+ based on the Vicsek model.
 %
 Agents move at a fixed speed and repeatedly align their direction with
  nearby agents, subject to a noise term.
@@ -594,7 +604,7 @@ At the implementation level, the aggregate program reads the agent's
  \texttt{neighbors}, computes the alignment direction and perturbation,
  and stores the next action for the runner.
 %
-The simulation shows initially disordered headings
+The simulation (\Cref{fig:vmas-example}) shows initially disordered headings
  evolving toward coherent collective motion.
 %
 This example demonstrates the external execution interface; the policy
@@ -623,30 +633,9 @@ This example demonstrates the external execution interface; the policy
     \label{fig:vmas-example}
 \end{figure*}
 
-\subsection{Role in the Thesis and Development Directions}
-
-Phyelds provides the implementation layer connecting field-based coordination
- with Python-native learning code.
-%
-Its state and communication constructs specify how local computations evolve
- across the collective, while learning libraries retain responsibility for
- model representation, optimization, and inference.
-%
-The architecture supports the federation mechanisms
- in~\Cref{chap:selforg-fl}, the coordination of observations and collective
- information in~\Cref{chap:scalable-rl}, and decentralized application
- placement in~\Cref{chap:tasksplacement}.
-
-The examples establish the framework's expressiveness and integration
- capabilities, but do not constitute a systematic performance comparison
- with other \gls{AC} implementations.
-%
 Further development includes performance and scalability measurements,
  broader simulator integration, and deployment in physical edge and robotic
  systems.
-%
-These directions complement the framework's present purpose as a practical
- environment for implementing and studying collective learning mechanisms.
 
 %=============================================================================
 \section[ProFed: Proximity-Based Federated Learning]{ProFed: A Benchmark for Proximity-Based Federated Learning}
@@ -655,7 +644,7 @@ These directions complement the framework's present purpose as a practical
 
 \subsection{Motivation and Scope}
 
-Federated learning benchmarks provide common datasets, partitioning
+\gls{FL} benchmarks provide common datasets, partitioning
  strategies, and evaluation protocols for comparing distributed learning methods.
 %
 FedScale~\cite{DBLP:conf/icml/LaiDSLZMC22}, for example, supports large-scale
@@ -667,8 +656,9 @@ LEAF~\cite{DBLP:journals/corr/abs-1812-01097} emphasizes reproducibility
 Other frameworks support configurable experiments with established datasets
  and client-level partitions~\cite{DBLP:journals/corr/abs-2007-13518,DBLP:journals/corr/abs-2007-14390}.
 
-These tools cover many aspects of federated learning, but conventional
- client-level partitioning often leaves the spatial organization of data implicit.
+These tools cover many aspects of \gls{FL}, 
+ but conventional client-level partitioning often leaves 
+ the spatial organization of data implicit.
 %
 In a \gls{CAS}, nearby devices may observe similar conditions because they
  operate within the same physical environment.
@@ -677,9 +667,9 @@ Traffic patterns within an urban district, measurements from sensors in a
  shared site, and observations from neighboring vehicles can therefore be
  correlated with location.
 %
-The resulting heterogeneity has a regional structure: devices within a
- region encounter similar distributions, while devices in different regions
- may encounter substantially different ones.
+The resulting heterogeneity has a regional structure (\Cref{sec:fl-heterogeneity}): 
+ devices within a region encounter similar distributions, 
+ while devices in different regions ` may encounter substantially different ones.
 
 ProFed provides a benchmark for constructing this kind of
  scenario~\cite{DBLP:journals/jors/DominiIALV26}.
@@ -713,6 +703,9 @@ Consider an operating area partitioned into $K$ contiguous regions
 %
 An assignment $r:\mathcal{V}\rightarrow\{1,\ldots,K\}$ maps each device
  to its region, with multiple devices typically assigned to each region.
+%
+These regions determine the origin of local data; they do not prescribe
+ the federations that a learning algorithm must form.
 %
 Region $R_k$ is associated with a joint data distribution $P_k(X,Y)$.
 %
@@ -861,6 +854,11 @@ Consequently, the regional label frequencies also depend on the label counts
 ProFed is implemented in Python using
  PyTorch~\cite{DBLP:conf/asplos/AnselYHGJVBBBBC24} and
  TorchVision~\cite{TorchVision}.
+%
+It is distributed under the MIT
+ license\footnote{\url{https://github.com/davidedomini/ProFed}},
+ with an archived release on
+ Zenodo\footnote{\url{https://doi.org/10.5281/zenodo.16367696}}.
 %
 Its API covers dataset acquisition, training--validation splitting,
  regional partitioning, and allocation to devices.
@@ -1140,43 +1138,6 @@ A broader investigation would require additional algorithms, explicit
 These are experimental extensions of the benchmark rather than assumptions
  built into its partitioning API.
 
-\subsection{Reuse, Availability, and Role in the Thesis}
-
-ProFed is distributed as an open-source Python package under the MIT
- license\footnote{\url{https://github.com/davidedomini/ProFed}}.
-%
-The benchmark release is archived on
- Zenodo\footnote{\url{https://doi.org/10.5281/zenodo.16367696}}.
-%
-Its partitioning interface supports reuse with existing PyTorch training
- pipelines, while additional datasets and allocation strategies can extend
- the range of experimental scenarios.
-%
-The custom distribution matrix is particularly useful when an experiment
- requires regional structures beyond the predefined strategies.
-
-Within this thesis, ProFed supplies controlled regional data heterogeneity
- for the evaluation of self-organizing federated learning
- in~\Cref{chap:selforg-fl}.
-%
-The benchmark's regions define the origin of local data; they are not
- prescribed federations that an algorithm must adopt.
-%
-This distinction allows experiments to examine whether the coordination
- mechanism discovers useful learning groups from local information.
-%
-When combined with Phyelds, data generation and federation coordination
- remain separate components, making it possible to vary one while keeping
- the other fixed.
-
-Further development includes additional datasets, a wider set of clustered
- and personalized learning baselines, and systematic comparisons between
- regional and conventional client-level partitioning.
-%
-These extensions would help characterize when spatially structured
- heterogeneity changes convergence, robustness, or the relative behavior
- of federated learning methods.
-
 %=============================================================================
 \section[Project Emerge]{Project Emerge: A Toolchain for Robot Teams}
 \label{sec:project-emerge}
@@ -1201,6 +1162,11 @@ These requirements introduce an engineering gap between the computational
 Project Emerge addresses this gap through an open-source toolchain for
  executing and demonstrating aggregate programs on mobile robot
  teams~\cite{DBLP:journals/scp/FarabegoliABCDPV}.
+%
+The toolchain is released under the MIT license in a public
+ repository\footnote{\url{https://github.com/Project-Emerge/Project-Emerge-system}},
+ with an archived release on
+ Zenodo\footnote{\url{https://doi.org/10.5281/zenodo.18224119}}.
 %
 It combines camera-based localization, configurable neighborhood management,
  aggregate execution, robot control, and an interactive web dashboard.
@@ -1230,14 +1196,12 @@ Finally, monitoring and interaction must make collective behavior visible
  and allow changes to programs, parameters, and environmental conditions
  during execution.
 
-Within the infrastructure presented in this chapter, Project Emerge
- supplies a physical demonstration environment for field-based coordination.
+Project Emerge complements the learning studies in this thesis by
+ demonstrating field-based coordination on physical devices and providing
+ infrastructure for future physical evaluation of learned behaviors.
 %
-Its implementation is distinct from Phyelds: the aggregate runtime uses
- Scala and ScaFi, while Python supports localization and robot emulation.
-%
-The shared foundation is the aggregate execution model, which connects
- local sensing and state evolution with collective behavior.
+Its aggregate runtime uses Scala and ScaFi, while Python supports
+ localization and robot emulation.
 
 \subsection{Architecture and Execution Model}
 \label{sec:emerge-architecture}
@@ -1440,6 +1404,9 @@ The toolchain was deployed in a physical demonstrator with nine mobile
  robots, each equipped with an ESP32 microcontroller for communication
  and low-level actuation.
 %
+The companion hardware is available as an open
+ design\footnote{\url{https://github.com/Project-Emerge/rover-circuit}}.
+%
 Each robot carried an ArUco marker for external localization, while the
  central server maintained the aggregate execution contexts and dispatched
  commands to the team.
@@ -1581,35 +1548,10 @@ Further directions include introducing communication delays into the
 Together, these extensions would broaden the infrastructure's applicability
  and support more systematic study of the gap between aggregate models,
  simulated execution, and physical collective behavior.
-
-\subsection{Availability and Role in the Thesis}
-
-Project Emerge is released under the MIT license, with the system source
- available in a public
- repository\footnote{\url{https://github.com/Project-Emerge/Project-Emerge-system}}
- and an archived release on
- Zenodo\footnote{\url{https://doi.org/10.5281/zenodo.18224119}}.
 %
-The companion robot hardware is also available as an open
- design\footnote{\url{https://github.com/Project-Emerge/rover-circuit}}.
-%
-The separation of localization, aggregate execution, communication,
- and actuation permits components to be adapted while retaining the
- collective programming interface.
-
-For this thesis, the demonstrator complements the programming and
- benchmarking tools by showing how field-based coordination can be
- connected to physical devices.
-%
-The demonstrated robot behaviors use explicitly programmed coordination rules.
-%
-Project Emerge supplies infrastructure that could support their future
- physical evaluation, including observation of collective behavior and
- interaction with environmental perturbations.
-%
-Integrating those methods would require implementing the relevant learning
- components and assessing their execution and resource requirements within
- the robot deployment.
+Physical evaluation of learning methods would additionally require
+ integration of their learning components and assessment of execution
+ and resource requirements within the robot deployment.
 
 %=============================================================================
 \section{MARLAlchemy: A Simulation-Based Learning Pipeline}
@@ -1636,7 +1578,7 @@ MARLAlchemy provides a reusable simulation-based pipeline for many-agent
  reinforcement learning~\cite{DBLP:conf/dsrt/DominiAPV24}.
 %
 Its reference implementation extends
- Alchemist~\cite{DBLP:journals/jos/PianiniMV13}, separating scenario-specific
+ the Alchemist simulator~\cite{DBLP:journals/jos/PianiniMV13}, separating scenario-specific
  agent behavior from simulation orchestration and policy improvement.
 %
 The pipeline alternates between collecting experience through multiple
@@ -1783,6 +1725,11 @@ MARLAlchemy introduces a custom launcher that coordinates model
  initialization, simulation execution, experience collection, and policy
  improvement.
 %
+The prototype and experiment are available as open-source
+ software\footnote{\url{https://github.com/davidedomini/experiments-2024-DSRT-batch-rl}},
+ with an archival copy of the code and results on
+ Zenodo\footnote{\url{https://doi.org/10.5281/zenodo.11811677}}.
+%
 \Cref{fig:marlalchemy-components} summarizes its abstractions and their
  correspondence with Alchemist components.
 %
@@ -1852,6 +1799,10 @@ This bridge enables tensor operations and learning procedures to be
 The pipeline structure is independent of a particular neural architecture;
  a concrete implementation must nevertheless supply compatible inference,
  encoding, and update procedures.
+%
+Further development includes additional learning algorithms, broader
+ many-agent scenarios, and integration of the pipeline into the main
+ Alchemist distribution.
 
 \subsection{Illustrative Evaluation: Learning Collective Motion}
 \label{sec:marlalchemy-evaluation}
@@ -2013,54 +1964,22 @@ Because larger $p$ also supplies more experience per round, the comparison
 It also does not measure wall-clock speedup or policy generalization to
  larger populations: the population remains fixed at 100 agents.
 %
-These distinctions separate the empirical learning observations from
- the execution scalability enabled by the pipeline's architecture.
-
-\subsection{Availability, Limitations, and Role in the Thesis}
-
-The prototype and experiment are available as open-source
- software\footnote{\url{https://github.com/davidedomini/experiments-2024-DSRT-batch-rl}},
- with an archival copy of the code and results on
- Zenodo\footnote{\url{https://doi.org/10.5281/zenodo.11811677}}.
+A systematic assessment of execution scalability would require
+ measurements of runtime and resource consumption as population size,
+ simulation count, and available workers vary.
 %
-Their modular organization supports reuse of simulation descriptions,
- execution strategies, encoders, and experience collection across learning
- experiments.
-%
-Further development includes additional learning algorithms, broader
- many-agent scenarios, and integration of the pipeline into the main
- Alchemist distribution.
-
-The evaluation exercises a single task and policy improvement method.
-%
-A systematic assessment of execution scalability would additionally
- require measurements of runtime and resource consumption as population
- size, simulation count, and available workers vary.
-%
-Comparisons under equal experience budgets would help distinguish the
- effects of collection diversity from those of simply providing more data.
-
-Within this thesis, MARLAlchemy contributes reusable experimental
- infrastructure for collecting many-agent experience and coordinating
- shared-policy improvement.
-%
-Its batch-oriented workflow complements the decentralized learning
- mechanisms in~\Cref{chap:scalable-rl}, which address how agents learn
- through local interactions and how learned policies behave across
- different population sizes.
-%
-The pipeline supplies a way to organize simulation-based learning
- experiments without prescribing those algorithmic choices.
-
+Comparisons under equal experience budgets would also help distinguish
+ the effects of collection diversity from those of providing more data.
 
 %=============================================================================
 \section{ScaRLib: Aggregate Computing and Learning}
 \label{sec:scarlib}
+\label{sec:scarlib-role}
 %=============================================================================
 
 \subsection{Motivation and Design Goals}
 
-Combining field-based coordination with reinforcement learning requires
+Combining field-based coordination with \gls{RL} requires
  more than executing a policy within a distributed environment.
 %
 The learning system must define how agents perceive their surroundings,
@@ -2078,17 +1997,24 @@ A reusable implementation must therefore connect aggregate execution,
 ScaRLib provides a Scala-based framework for this
  purpose~\cite{DBLP:journals/scp/DominiCAV24}.
 %
+It is released under the MIT license, with a reproducible
+ software archive\footnote{\url{https://zenodo.org/records/10935670}}
+ and public documentation\footnote{\url{https://scarlib-group.github.io/scarlib-documentation/}}.
+%
 It integrates ScaFi~\cite{DBLP:journals/softx/CasadeiVAP22} and
  Alchemist~\cite{DBLP:journals/jos/PianiniMV13} with learning components
  implemented through PyTorch.
 %
-The default configuration uses Deep Q-Learning and supports both centralized
- training with decentralized execution (CTDE) and decentralized training
- with decentralized execution (DTDE).
+The default configuration uses Deep Q-Learning and supports 
+ both \gls{CTDE} and \gls{DTDE}.
 %
 Its principal design goals are modularity, extensibility, and reuse:
  predefined components support rapid experimentation, while explicit
  interfaces allow task definitions and execution components to be replaced.
+%
+This integration supports the combination of field-based information
+ processing and learned local decisions investigated
+ in~\Cref{chap:scalable-rl}.
 
 The framework distinguishes learning in simulation from subsequent
  execution of the resulting policy.
@@ -2116,7 +2042,7 @@ The core defines the learning abstractions, the DSL configures their
 
 \begin{figure}
   \centering
-  \includegraphics[width=0.52\textwidth]{figures/ch_frameworks/scarlib/scarlib-modules.pdf}
+  \includegraphics[width=0.4\textwidth]{figures/ch_frameworks/scarlib/scarlib-modules.pdf}
   \caption{ScaRLib modules. The learning abstractions, configuration DSL,
    and Alchemist--ScaFi integration are separated into dedicated modules.}
   \label{fig:scarlib-modules}
@@ -2151,7 +2077,7 @@ The system also controls the interaction schedule, including whether
 
 \begin{figure}
   \centering
-  \includegraphics[width=0.95\textwidth]{figures/ch_frameworks/scarlib/dtde-system.pdf}
+  \includegraphics[width=0.6\textwidth]{figures/ch_frameworks/scarlib/dtde-system.pdf}
   \caption{Agent--environment interactions in a ScaRLib DTDE system.
    Agents collect experience and their associated learners update their
    models. The CTDE configuration instead uses a shared dataset and
@@ -2197,6 +2123,13 @@ The typed interface makes incompatible component combinations detectable
 %
 It also reduces configuration boilerplate while retaining the ability to
  supply application-specific implementations.
+%
+Development directions include cooperative policy improvement algorithms,
+ graph-based models, knowledge sharing among agents, and additional
+ simulator integrations.
+%
+The modular interfaces provide integration points for these learning
+ components and execution backends.
 
 \subsection{Defining a Learning Scenario}
 \label{sec:scarlib-scenario}
@@ -2410,39 +2343,40 @@ The larger-population evaluation demonstrates that a fixed-size local
   \centering
   \begin{subfigure}{0.30\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/1.png}
-    \caption{50 agents, early.}
+    \fbox{\includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/1.png}}
+    \caption{}
   \end{subfigure}\hfill
   \begin{subfigure}{0.30\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/4.png}
-    \caption{50 agents, intermediate.}
+    \fbox{\includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/4.png}}
+    \caption{}
   \end{subfigure}\hfill
   \begin{subfigure}{0.30\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/7.png}
-    \caption{50 agents, later.}
+    \fbox{\includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/7.png}}
+    \caption{}
   \end{subfigure}
 
   \medskip
   \begin{subfigure}{0.30\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/1-large.png}
-    \caption{200 agents, early.}
+    \fbox{\includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/1-large.png}}
+    \caption{}
   \end{subfigure}\hfill
   \begin{subfigure}{0.30\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/3-large.png}
-    \caption{200 agents, intermediate.}
+    \fbox{\includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/3-large.png}}
+    \caption{}
   \end{subfigure}\hfill
   \begin{subfigure}{0.30\textwidth}
     \centering
-    \includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/4-large.png}
-    \caption{200 agents, later.}
+    \fbox{\includegraphics[width=\linewidth]{figures/ch_frameworks/scarlib/4-large.png}}
+    \caption{}
   \end{subfigure}
-  \caption{Execution of a policy trained with 50 agents at two population
-   sizes. Time progresses from left to right. Points represent agents
-   and lines represent neighborhood relations.}
+  \caption{Snapshots of the learned policy, the time flow is from left to right. Each dot represents an agent, while 
+    each line represents the neighboring relation between two agents.
+    The first row illustrates a simulation with $50$ agents,  
+    whereas the second row illustrates a simulation with $200$ agents.}
   \label{fig:scarlib-snapshots}
 \end{figure}
 
@@ -2498,7 +2432,7 @@ The practical performance of the integrated tool consequently depends
 
 \begin{figure}
   \centering
-  \includegraphics[width=0.78\textwidth]{figures/ch_frameworks/scarlib/performance.pdf}
+  \includegraphics[width=0.6\textwidth]{figures/ch_frameworks/scarlib/performance.pdf}
   \caption{Execution time as the simulated population increases.
    The measurements characterize the integrated evaluation workflow,
    including simulation and agent interactions.}
@@ -2514,41 +2448,3 @@ The former concerns the resources required to execute the system;
 %
 This distinction motivates the more extensive investigation of policy
  scalability in~\Cref{chap:scalable-rl}.
-
-\subsection{Extensibility and Role in the Toolchain}
-\label{sec:scarlib-role}
-
-ScaRLib supplies reusable abstractions for the boundary between aggregate
- computation and reinforcement learning.
-%
-Aggregate observation programs, state encoders, reward definitions, and
- learning configurations can be reused across experiments or replaced
- independently when the task changes.
-%
-The initial integration uses aggregate computation to build observations;
- broader combinations can also investigate how coordination structures
- and learned decisions influence one another.
-
-Development directions include cooperative policy improvement algorithms,
- graph-based models, and learning mechanisms that share knowledge among
- agents.
-%
-Additional simulator integrations could support different execution
- environments and performance requirements.
-%
-These extensions require concrete bindings and learning components;
- the modular architecture provides their integration points.
-
-The framework is released under the MIT license, with a reproducible
- software archive\footnote{\url{https://zenodo.org/records/10935670}}
- and public documentation\footnote{\url{https://scarlib-group.github.io/scarlib-documentation/}}.
-%
-Within this thesis, it provides an implementation approach for combining
- field-based information processing with learned local decisions.
-%
-MARLAlchemy complements this integration by organizing experience
- collection and policy improvement across multiple simulation runs,
- while Phyelds provides a native Python environment for aggregate programs.
-%
-Together, these tools address distinct practical requirements for studying
- cooperative learning in collective systems.
