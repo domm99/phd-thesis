@@ -49,7 +49,7 @@ However, specifying such rules becomes difficult when the mapping depends on
 complex patterns, noisy observations, or conditions that change during
 operation.
 
-Machine learning replaces the direct specification of this mapping with a
+\gls{ML} replaces the direct specification of this mapping with a
 parameterized model whose behavior is determined from data.
 %
 Let
@@ -129,8 +129,8 @@ three disjoint subsets: the \emph{training set}, used to optimize the model para
  independent estimate of performance on unseen data.
 %
 Maintaining this separation is essential: any signal from the test set that
- reaches the model — even indirectly, through architecture or hyperparameter choices —
- produces an optimistic estimate of generalization.
+ reaches the model--even indirectly, through architecture or hyperparameter choices--produces 
+ an optimistic estimate of generalization.
 
 Minimizing the empirical risk is accomplished iteratively.
 %
@@ -159,8 +159,8 @@ where $\eta > 0$ is the learning rate.
 Using mini-batches reduces the computational cost of each update and introduces
 stochasticity that can improve optimization.
 %
-Regularization techniques — including weight penalties, dropout, data
- augmentation, and early stopping — are commonly employed to reduce the gap
+Regularization techniques (e.g., weight penalties, dropout, data
+ augmentation, and early stopping) are commonly employed to reduce the gap
  between training and generalization error~\cite{DBLP:books/daglib/0040158}.
 %
 The tension between fitting the training data and generalizing to new inputs
@@ -170,7 +170,7 @@ The tension between fitting the training data and generalizing to new inputs
 \section{Learning Paradigms and Settings}
 \label{sec:learning-paradigms}
 
-Machine-learning problems differ primarily in the information available to the
+\gls{ML} problems differ primarily in the information available to the
 learner and in the objective that guides adaptation.
 %
 The following paradigms provide the context required to position the methods
@@ -186,7 +186,7 @@ a loss such as the one in \Cref{eq:empirical-risk}.
 %
 Classification and regression are the two main supervised tasks.
 %
-The federated-learning methods studied in~\Cref{chap:federated-learning} and~\Cref{chap:selforg-fl}
+The \gls{FL} methods studied in~\Cref{chap:federated-learning} and~\Cref{chap:selforg-fl}
  primarily operate in this setting: 
  each device trains a local model from labeled observations while cooperating with other
  devices to improve its predictive performance.
