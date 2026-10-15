@@ -51,7 +51,7 @@ on a central learner.
 
 In the single-agent setting, 
  learning proceeds through a closed feedback loop
- between an \emph{agent} and an \emph{environment}~\cite{Sutton1998}.
+ between an \emph{agent} and an \emph{environment}~\cite{DBLP:books/lib/SuttonB2018}.
 %
 As shown in~\Cref{fig:rl-loop}, 
  at discrete time step $t$, the agent observes the current state $s_t$, 
@@ -161,7 +161,7 @@ where $\alpha$ is the learning rate and the expression in brackets is the
 temporal-difference error.
 %
 Tabular storage becomes impractical when $\mathcal{S}$ is large or continuous.
-Deep Q-learning~\cite{mnih2015humanlevel} addresses this limitation by replacing the table with a neural
+Deep Q-learning~\cite{DBLP:journals/nature/MnihKSRVBGRFOPB15} addresses this limitation by replacing the table with a neural
 network $Q(s,a;\theta)$ parameterized by $\theta$.
 %
 The network is trained from transitions sampled from a replay buffer
@@ -522,7 +522,7 @@ learning information.
 %
 Each agent still performs its own optimization, but may combine parameters,
 gradients, value estimates, or other training statistics with those received
-from its neighbors~\cite{zhang2018fully}.
+from its neighbors~\cite{DBLP:conf/icml/ZhangYBH18}.
 %
 Repeated local exchanges allow information to propagate without a parameter
 server or a globally shared replay buffer.
