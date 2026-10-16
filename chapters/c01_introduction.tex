@@ -377,8 +377,9 @@ This thesis investigates mechanisms for organizing cooperative learning in
  \glspl{CAS}, scaling decentralized decision making, and placing computation
  across resource-constrained infrastructure.
 %
-The three lines of research address different aspects of the broader engineering
- problem rather than constituting a single integrated system.
+Three main lines of research address different aspects of the broader engineering
+ problem in separate experimental settings, complemented by software tools
+ and a study of distributed state estimation.
 %
 The investigation is guided by the following research questions.
 
@@ -408,73 +409,132 @@ individual device constraints and collective system-level phenomena?
 
 \end{questions}
 
-These questions are addressed through three complementary lines of research,
-whose relationship with the engineering dimensions is summarized
-in~\Cref{fig:mapping}.
+These questions are addressed through three main lines of research,
+ whose relationship with the engineering dimensions is summarized
+ in~\Cref{fig:mapping}.
 
-The first line concerns \emph{self-organizing federated learning} and
-addresses~\ref{itm:rq1} and~\ref{itm:rq2}. Field-based coordination mechanisms
-are used to let devices construct and maintain adaptive learning groups according to
-spatial proximity and model similarity, without a fixed server or prior
-knowledge of the number of groups. This line introduces localized learning
-methods, evaluates their robustness to changes in topology and participation,
-and provides a benchmark for spatially structured data heterogeneity.
-It also studies how these groups and their models can adapt to mobility-induced
-distribution shifts while retaining previously acquired knowledge, and how model
-sparsification can reduce computation and communication costs without removing
-the spatial structure of collaboration.
+A cross-cutting contribution provides \emph{software tools and experimental infrastructure} 
+ for collective coordination and learning. 
+% 
+Phyelds implements \gls{AC} natively in Python, 
+ while ScaRLib integrates aggregate programs with \gls{RL} in a Scala-based environment.
+%
+MARLAlchemy supports simulation-based experience collection and policy improvement,
+ and ProFed constructs \gls{FL} benchmarks with spatially structured data heterogeneity. 
+% 
+Project Emerge supports the execution and demonstration 
+ of aggregate programs on physical robots. 
+% 
+These tools address complementary engineering requirements 
+ and can be used independently.
 
-The second line addresses~\ref{itm:rq3} through \emph{scalable decentralized
-reinforcement learning}. It investigates training strategies based on
-interactions among neighboring devices and learning architectures that operate
-on variable-sized neighborhoods. The resulting analysis characterizes the
-trade-offs between centralized training, independent learning, and local
-cooperation, and examines whether policies trained with a given number of
-devices remain effective when deployed in larger collectives.
+The first line concerns \emph{self-organizing federated learning} 
+ and addresses~\ref{itm:rq1} and~\ref{itm:rq2}. 
+% 
+Field-based coordination mechanisms are used to let devices construct 
+ and maintain adaptive learning groups according to spatial proximity and model similarity,
+ without a fixed server or prior knowledge of the number of groups. 
+% 
+This line introduces localized learning methods 
+ and evaluates their robustness to changes in topology and participation.
+%
+It also studies how these groups and their models can adapt 
+ to mobility-induced distribution shifts while retaining previously acquired knowledge, 
+ and how model sparsification can reduce computation and communication costs 
+ without removing the spatial structure of collaboration.
 
-The third line concerns \emph{adaptive deployment across the edge--cloud
-continuum} and addresses~\ref{itm:rq4}. It develops a learning-based approach
-through which devices make decentralized application placement and offloading
-decisions. The method combines local information, including energy and
-computational capacity, with collective conditions such as latency, network
-congestion, and infrastructure load, thereby accounting for the externalities
-created by concurrent device decisions.
+The second line addresses~\ref{itm:rq3} through \emph{scalable decentralized reinforcement learning}. 
+%
+It investigates training strategies based on interactions among neighboring devices 
+ and learning architectures that operate on variable-sized neighborhoods. 
+% 
+The resulting analysis characterizes the trade-offs between centralized training, 
+ independent learning, and local cooperation, and examines whether policies trained 
+ with a given number of devices remain effective when deployed in larger collectives.
 
-Together, these contributions provide methods and empirical evidence for
- addressing distinct aspects of cooperative learning in \glspl{CAS}:
- distributed data, local interactions, changing populations, and constrained resources.
+The third line concerns \emph{adaptive deployment across the edge--cloud continuum} 
+ and addresses~\ref{itm:rq4}. 
+%
+It develops a learning-based approach through which devices make decentralized application placement 
+ and offloading decisions. 
+% 
+The method combines local information, including energy and computational capacity, 
+ with collective conditions such as latency, network congestion, and infrastructure load, 
+ thereby accounting for the externalities created by concurrent device decisions.
+
+A complementary contribution investigates \emph{field-based distributed state estimation}, 
+ extending the coordination perspective to collective perception.
+%
+It combines particle filtering with aggregate programs that organize neighborhood measurement sharing, 
+ elect a temporary fusion coordinator, or coordinate mobile sensors. 
+% 
+Single-target and multi-target tracking experiments examine the effects of local cooperation, 
+ recovery after fusion-center failure, and sensor movement.
+%
+The study complements the investigation of local information 
+ and adaptive coordination in~\ref{itm:rq3} by examining how the same field-based abstractions
+ can organize information fusion and reassign responsibilities at runtime.
+
+Together, 
+ these contributions provide methods and empirical evidence for
+ addressing distinct aspects of cooperative learning and collective information
+ processing in \glspl{CAS}: distributed data, partial observations, local interactions,
+ changing populations, and constrained resources.
 %
 They begin to reduce the gap between learning methods and the conditions of
  collective systems, while leaving the integration of collaboration,
- learning, and deployment within a single architecture for future work.
+ perception, learning, and deployment within a single architecture for future work.
 
 \section{Thesis Structure}
 
 The remainder of this thesis is organized into two main parts.
 
-\emph{Part~I---Background} introduces the concepts required to frame the
-contributions. \Cref{chap:context} presents Collective Adaptive Systems,
-self-adaptive systems, and the edge--cloud continuum, establishing the
-computational and deployment setting considered throughout the thesis.
-\Cref{chap:macroprogramming} introduces macroprogramming and the abstractions
-used to express collective behavior through local interactions.
-\Cref{chap:ml} provides the machine-learning foundations required by the
-subsequent chapters. \Cref{chap:federated-learning} focuses on federated
-learning, with particular attention to decentralized architectures, non-IID data,
-and clustered approaches. \Cref{chap:reinforcement-learning} introduces
-reinforcement learning and its extension to multi-agent settings, including
-decentralized training and scalability.
+\emph{Part~I---Background} introduces the concepts required to frame the contributions. 
+%
+\Cref{chap:context} 
+ presents \gls{CAS}, self-adaptive systems, and the \gls{ECC}, 
+ establishing the computational and deployment setting considered throughout the thesis.
+%
+\Cref{chap:macroprogramming} 
+ introduces \gls{MP} and the abstractions 
+ used to express collective behavior through local interactions.
+%
+\Cref{chap:ml} 
+ provides the \gls{ML} foundations required 
+ by the subsequent chapters. 
+%
+\Cref{chap:federated-learning} 
+ focuses on \gls{FL}, with particular attention to decentralized architectures, 
+ non-\gls{IID} data, and clustered approaches. 
+% 
+\Cref{chap:reinforcement-learning} 
+ introduces \gls{RL} and its extension to multi-agent settings, 
+ including decentralized training and scalability.
 
-\emph{Part~II---Contribution} presents the research developed during this
-thesis. \Cref{chap:selforg-fl} introduces the proposed approaches to
-self-organizing federated learning, from spatial federation formation to
-adaptation under mobility and resource constraints. \Cref{chap:scalable-rl}
-investigates scalable decentralized reinforcement learning, focusing on local
-training interactions and the deployment of learned policies in collectives of
-different sizes. \Cref{chap:tasksplacement} studies adaptive deployment across
-the edge--cloud continuum and presents a learning-based method for decentralized
-application offloading under device-level constraints and collective resource
-contention. 
+\emph{Part~II---Contribution} presents the research developed during this thesis. 
+%
+\Cref{chap:frameworks}
+ introduces Phyelds, ProFed, Project Emerge, MARLAlchemy, and ScaRLib,
+ covering collective programming, spatial data partitioning, 
+ simulation-based learning, and physical robot demonstrations.
+%
+\Cref{chap:selforg-fl} 
+ introduces the proposed approaches to self-organizing federated learning, 
+ from spatial federation formation to adaptation under mobility and resource constraints. 
+% 
+\Cref{chap:scalable-rl}
+ investigates scalable decentralized reinforcement learning, 
+ focusing on local training interactions and the deployment of learned policies 
+ in collectives of different sizes. 
+% 
+\Cref{chap:tasksplacement} 
+ studies adaptive deployment across the edge--cloud continuum and presents a learning-based method 
+ for decentralized application offloading under device-level constraints 
+ and collective resource contention. 
+% 
+\Cref{chap:distributed-state-estimation} 
+ investigates how aggregate computing can organize cooperative particle filtering, 
+ recover fusion responsibilities after failures, and coordinate mobile sensing infrastructure.
 
 \emph{Epilogue}, finally, 
  summarizes the findings, discusses the
