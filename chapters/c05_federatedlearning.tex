@@ -198,20 +198,14 @@ The heterogeneity condition is captured by requiring distributions to be
 \begin{equation}
   \forall\, i \neq j : \; D(P_i \| P_j) \geq \varepsilon.
 \end{equation}
-An equivalent sample-level characterization~\cite{DBLP:journals/jors/DominiIALV26},
- using a distance metric $m(\cdot, \cdot)$ and a threshold $\delta > 0$, requires:
-\begin{equation}
-  \forall\, i \neq j,\; \forall\, d, d' \in P_i,\; \forall\, d'' \in P_j :
-  \quad m(d, d') \leq \delta < m(d, d''),
-\end{equation}
-%where $d'$ is any sample from the same distribution $P_i$.
 %
-Both conditions capture the same intuition:
- within a region data are \gls{IID},
- while data from different regions are distinguishable by a margin.
+Under this regional model, 
+ devices within the same region draw data from a common distribution, 
+ while distributions associated with different regions are separated 
+ by at least $\varepsilon$ under the chosen divergence measure.
 %
-This structure has direct consequences for which collaborations are beneficial
- and which are harmful.
+This structure has direct consequences for which collaborations
+ are beneficial and which may be harmful.
 
 \begin{figure}[t]
   \centering
