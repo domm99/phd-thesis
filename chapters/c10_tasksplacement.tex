@@ -31,37 +31,68 @@ At this scale,
  particularly for applications with strict latency, bandwidth, 
  or privacy requirements~\cite{DBLP:journals/computer/Satyanarayanan17}.
 
-Cloud-edge computing addresses these limitations 
- by distributing computation across a continuum comprising end devices, edge servers, 
- and cloud data centers~\cite{DBLP:journals/jpdc/RosendoCVA22}.
+The \glsentryfull{ECC} provides a common deployment space spanning end devices,
+ intermediate edge infrastructure, and remote cloud data centers~\cite{DBLP:journals/jpdc/RosendoCVA22}.
 %
-Instead of executing an application entirely on a single device or moving it entirely to the cloud,
- its components may be placed at different points of this continuum according to the resources 
- and network conditions currently available.
+The term \emph{continuum} emphasizes that application functions can be distributed across these resources
+ and relocated during operation as connectivity, workload, and resource availability change.
 %
-This flexibility gives rise to the \emph{component offloading problem}: 
- determining where each application component should execute in order to balance objectives such as response time, 
- energy consumption, and infrastructure cost.
+The three regions shown in \Cref{fig:edge-cloud-system} offer different execution conditions.
+%
+End devices provide direct access to local observations and actuators but typically have limited processing,
+ memory, and energy capacity; nearby edge nodes offer additional computation while retaining proximity to data sources;
+ and cloud servers provide elastic computation and storage for resource-intensive or delay-tolerant functions.
+%
+These regions do not form a rigid hierarchy:
+ resources within the same region can differ substantially in capacity and connectivity.
+%
+Here, \emph{edge} broadly denotes computation made available near data sources,
+ while \gls{ECC} refers to the entire heterogeneous execution environment.
 
-Offloading decisions become particularly difficult when applications 
- are structured as workflows rather than as indivisible tasks.
+\begin{figure}
+  \centering
+  \def\svgwidth{0.8\linewidth}\footnotesize
+  \input{figures/ch02/edge-cloud-system.pdf_tex}
+  \caption{Overview of the edge--cloud computing environment.}
+  \label{fig:edge-cloud-system}
+\end{figure}
+
+Using this deployment space requires distinguishing application logic from its physical execution.
 %
-A workflow may be represented as a directed acyclic graph whose nodes correspond 
+A \emph{placement} assigns application components to execution resources,
+ while \emph{offloading} transfers execution from the device to which a computation logically belongs to another resource.
+%
+Remote execution can reduce local processing and battery consumption,
+ but introduces serialization, communication, queueing, and result-delivery overhead.
+%
+The \emph{component offloading problem} therefore consists in selecting and revising placements
+ to balance response time, energy consumption, and infrastructure cost,
+ accounting for both computation and communication~\cite{DBLP:journals/cn/SaeikASSDVLAMP21}.
+
+The granularity of this decision depends on the application structure.
+%
+\emph{Full offloading} moves an application or task as an indivisible unit,
+ whereas \emph{partial offloading} places its components separately~\cite{DBLP:journals/access/WangWHSQ20}.
+%
+The latter allows resource-intensive functions to use remote resources while latency-sensitive functions remain local,
+ but also makes dependencies relevant to placement.
+%
+A workflow may be represented as a directed acyclic graph whose nodes correspond
  to computational components and whose edges encode data and execution dependencies.
 %
-The placement of one component therefore affects the cost and feasibility of placing the others:
- executing two dependent components on different devices may reduce local computation 
- but introduce additional communication latency and energy consumption.
-%
-Component models, architecture description languages, 
- and service-oriented frameworks provide abstractions for decomposing 
+Placing dependent components on different resources may reduce processing time
+ while increasing data-transfer latency and energy consumption.
+
+Component models, architecture description languages,
+ and service-oriented frameworks provide abstractions for decomposing
  applications~\cite{DBLP:journals/tse/CrnkovicSVC11,DBLP:conf/isola/BallouliBBS18,DBLP:journals/csur/LemosDB16}.
 %
-However, 
- their deployment is commonly managed through centralized policies, 
-  while approaches such as pulverization~\cite{DBLP:journals/fgcs/FarabegoliPCV24} 
-  primarily address the decomposition of individual devices and provide limited support 
-  for dynamically placing only selected parts of an application.
+Pulverization similarly separates application logic into independently deployable components,
+ allowing their allocation to change without redefining the application behavior~\cite{DBLP:journals/fgcs/FarabegoliPCV24}.
+%
+These abstractions make deployment an explicit concern,
+ but a placement policy must still determine which components to offload,
+ where to execute them, and when to revise those choices under changing conditions.
 
 A further complication is that offloading decisions cannot be optimized independently.
 %
@@ -315,7 +346,7 @@ For instance a component ``\emph{taking the temperature and return a boolean hol
 \begin{figure*}
   \centering
 
-  \begin{subfigure}[t]{0.45\textwidth}
+  \begin{subfigure}{0.45\textwidth}
     \centering
     \resizebox{\linewidth}{!}{%
       \input{figures/ch09/collective-component.pdf_tex}%
@@ -327,7 +358,7 @@ For instance a component ``\emph{taking the temperature and return a boolean hol
     \label{fig:collective-component}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[t]{0.45\textwidth}
+  \begin{subfigure}{0.45\textwidth}
     \centering
     \resizebox{\linewidth}{!}{%
       \input{figures/ch09/local-component.pdf_tex}%
@@ -420,7 +451,7 @@ $\mathbf{D}$ and $\mathbf{D}_I$ are assumed to be fixed and known in advance,
  and the physical network topology $\mathcal{N}_P$ (and consequently $\mathcal{N}$) may change over time,
  because of node mobility.
 
-\begin{figure}[t]
+\begin{figure}
   \centering
   \resizebox{\linewidth}{!}{%
     \input{figures/ch09/pulverization-model-all.pdf_tex}%
@@ -574,7 +605,7 @@ The dashed lines toward the infrastructural devices represent the Wi-Fi/5G conne
 
 \begin{figure}
   \centering
-  \begin{subfigure}[t]{0.45\textwidth}
+  \begin{subfigure}{0.45\textwidth}
     \centering
     \def\svgwidth{0.7\textwidth}\footnotesize
     \input{figures/ch09/crowd-example-deployment-steady.pdf_tex}
@@ -582,7 +613,7 @@ The dashed lines toward the infrastructural devices represent the Wi-Fi/5G conne
     \label{fig:deployment-steady}
   \end{subfigure}
   \hfill
-  \begin{subfigure}[t]{0.45\textwidth}
+  \begin{subfigure}{0.45\textwidth}
       \centering
       \def\svgwidth{0.7\textwidth}\footnotesize
       \input{figures/ch09/crowd-example-deployment-emergency.pdf_tex}
