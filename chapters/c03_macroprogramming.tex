@@ -305,6 +305,19 @@ Besides preventing messages or state from being matched to the wrong construct,
  alignment ensures that function calls, conditionals, 
  and dynamically instantiated computations create consistent subdomains.
 
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.4\textwidth]{figures/ch03/gradient.pdf}
+  \caption{
+    Graphical output of~\Cref{lst:distance-field}. 
+    The source node is located at the center, 
+    and all other nodes compute their distance from it, 
+    collectively forming a distance gradient.
+  }
+  \label{fig:gradient}
+\end{figure}
+
 \Cref{lst:distance-field} illustrates how the constructs cooperate. 
 %
 The program computes a distributed estimate of the minimum path distance 
@@ -313,7 +326,7 @@ The program computes a distributed estimate of the minimum path distance
 Source devices produce zero. 
 %
 Every other device repeatedly selects the smallest neighbor estimate plus the measured distance
- to that neighbor. 
+ to that neighbor---see~\Cref{fig:gradient} for the result. 
 %
 The \texttt{rep} construct stores the estimate between rounds, 
  while \texttt{nbr} propagates it through local interactions. 
