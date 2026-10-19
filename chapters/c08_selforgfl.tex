@@ -348,13 +348,47 @@ Formally, assume the devices admit a latent partition into $k$ clusters
 This partition reflects the underlying spatial and distributional structure of the data,
  but is \emph{not known} to the devices at learning time.
 
+% The learning problem can then be framed as finding a mapping $\mathcal{M}$
+%  from the set of devices to a collection of \emph{federations}:
+% \begin{equation}
+%   \mathcal{M} : \mathcal{V} \;\rightarrow\; \mathcal{F} \subseteq \mathcal{P}(\mathcal{V}),
+% \end{equation}
+% where $\mathcal{P}(\mathcal{V})$ denotes the power set of $\mathcal{V}$
+%  and $\mathcal{F} = \{F_1, \ldots, F_f\}$ is the set of discovered federations.
+
+% The discovered federations are required to be nonempty
+%  and to form a partition of $\mathcal V$:
+% \[
+%     F_q \neq \varnothing
+%     \quad \text{for } q=1,\ldots,f,
+% \]
+% \[
+%     F_q \cap F_r = \varnothing \quad \text{for } q \neq r,
+%     \qquad
+%     \bigcup_{q=1}^{f} F_q = \mathcal V.
+% \]
+
 The learning problem can then be framed as finding a mapping $\mathcal{M}$
  from the set of devices to a collection of \emph{federations}:
 \begin{equation}
-  \mathcal{M} : \mathcal{V} \;\rightarrow\; \mathcal{F} \subseteq \mathcal{P}(\mathcal{V}),
+    \mathcal{M} : \mathcal{V} \rightarrow \mathcal{F}
+    \subseteq \mathcal{P}(\mathcal{V}),
 \end{equation}
 where $\mathcal{P}(\mathcal{V})$ denotes the power set of $\mathcal{V}$
  and $\mathcal{F} = \{F_1, \ldots, F_f\}$ is the set of discovered federations.
+%
+These federations form a partition of $\mathcal{V}$, satisfying
+\[
+    F_q \neq \varnothing \quad \text{for } q=1,\ldots,f,
+\]
+\[
+    F_q \cap F_r = \varnothing \quad \text{for } q \neq r,
+    \qquad
+    \bigcup_{q=1}^{f} F_q = \mathcal{V}.
+\]
+%
+The mapping $\mathcal{M}$ assigns each device
+ to the unique federation containing it.
 %
 Each federation $F_q \subseteq \mathcal{V}$ runs an independent federated learning process,
  training a specialized model $\mathbf{w}_q$ by minimizing a weighted combination
@@ -378,8 +412,21 @@ The overall goal is that each discovered federation $F_q$ recovers the correspon
 \qquad m=\max(f,k),
 \label{eq:misclassification}
 \end{equation}
-where $\Pi_m$ is the set of all permutations over $\{1, \ldots, m\}$
+% where $\Pi_m$ is the set of all permutations over $\{1, \ldots, m\}$
+%  and $\triangle$ denotes the symmetric difference between sets.
+where $\Pi_m$ is the set of all permutations over $\{1,\ldots,m\}$
  and $\triangle$ denotes the symmetric difference between sets.
+%
+For the purpose of this matching, the shorter indexed family
+ is extended with empty sets:
+\[
+    F_q=\varnothing \quad \text{for } f<q\leq m,
+    \qquad
+    C_q=\varnothing \quad \text{for } k<q\leq m.
+\]
+%
+These additional empty sets are used only in the matching objective;
+ the training federations are the $f$ nonempty sets $F_1,\ldots,F_f$.
 %
 The concrete mechanisms through which the federations $\mathcal{F}$ are discovered
  and maintained are the subject of the contributions described in the following sections. 
