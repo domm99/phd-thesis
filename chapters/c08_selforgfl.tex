@@ -2476,7 +2476,7 @@ This modification helps address statistical heterogeneity across devices while s
 
 Formally, the local objective function for device $k$ in FedProx is:
 \begin{equation} 
-  \text{arg}\min_{\mathbf{w}} h_k(\mathbf{w}; \mathbf{w}_t) = F_k(\mathbf{w}) + \frac{\mu}{2} \|\mathbf{w} - \mathbf{w}_t\|^2 
+  \min_{\mathbf{w}} h_k(\mathbf{w}; \mathbf{w}_t) = F_k(\mathbf{w}) + \frac{\mu}{2} \|\mathbf{w} - \mathbf{w}_t\|^2 
 \end{equation}
 where $F_k(\mathbf{w})$ is the local loss function, $\mathbf{w}_t$ is the global model at round start, 
  and $\mu \geq 0$ is the proximal term coefficient that controls how far local 
@@ -2494,7 +2494,7 @@ In the local model update phase, each client $i$ adjusts its model $\mathbf{y}_i
  and client control variates respectively.
 %
 The client's control variate $\mathbf{c}_i$ is then updated using either $\mathbf{c}^+_i \leftarrow g_i(\mathbf{x})$ or 
- $\mathbf{c}^+_i \leftarrow \mathbf{c}_i - \frac{1}{K\eta_l}(\mathbf{x} - \mathbf{y}_i)$, where $\mathbf{x}$ is the server's model 
+ $\mathbf{c}^+_i \leftarrow \mathbf{c}_i - \mathbf{c} + \frac{1}{K\eta_l}(\mathbf{x} - \mathbf{y}_i)$, where $\mathbf{x}$ is the server's model 
  and $K$ represents the number of local updates.
 %
 Finally, the server performs global updates. 
