@@ -220,7 +220,12 @@ A round can be summarized in three phases (\Cref{fig:ac-model}):
     \centering
     \def\svgwidth{0.9\textwidth}
     {\scriptsize\input{figures/ch03/ac.pdf_tex}}
-    \caption{Graphical representation of the aggregate computing system model. (Left) The system is a dynamic graph of computing devices, where a device communicates only with \emph{neighbors}. (Right) Every device repeatedly runs asynchronous \emph{sense--compute--interact rounds} (cf. self-organization steering).}
+    \caption{
+      Graphical representation of the aggregate computing system model.
+(Left) The system is a dynamic graph of computing devices, where a device communicates only with \emph{neighbors}.
+The shaded region represents a computational field mapping each device to its local value, providing a discrete approximation of an underlying continuous field.
+(Right) Every device repeatedly runs asynchronous \emph{sense--compute--interact rounds}.
+    }
     \label{fig:ac-model}
 \end{figure}
 
