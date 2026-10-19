@@ -50,24 +50,22 @@ Third,
  a graph-based offloading approach combines local device information with aggregate estimates of collective conditions 
  to place application components across edge and cloud resources.
 
-Simulation results show that self-organizing federations learn models specialized to spatially heterogeneous data, 
- outperform single-model baselines under strong label skew, match a clustered baseline provided with the correct number of clusters, 
- and reorganize after failures and device movement.
+Simulation results show that adapting cooperation structures to data heterogeneity
+ supports specialized learning and maintains effective collaboration as the collective changes.
 %
-Moderate sparsification preserves these properties, 
- whereas aggressive pruning destabilizes federation formation.
+Model sparsification can preserve these benefits,
+ although excessive compression can undermine the stability of self-organization.
 %
-In decentralized reinforcement learning, 
- exchanging experiences or parameters with neighboring agents narrows the performance gap with centralized training,
- while graph-based policies trained with ten agents remain functional in swarms nearly three times larger, 
- although their efficiency progressively declines.
+In multi-agent reinforcement learning,
+ local knowledge exchange improves decentralized training,
+ while graph-based policies support transfer across different collective sizes,
+ with performance remaining sensitive to scale.
 %
-Finally, 
- incorporating collective density information enables agents to differentiate offloading decisions 
- between congested and sparse areas, a behavior that does not emerge when such information is removed.
+Deployment experiments further demonstrate the value of collective information
+ in enabling decentralized policies to adapt resource allocation to shared operating conditions.
 %
-Together, 
- these findings show that explicitly representing and organizing the structure of the collective 
+Together,
+ these findings show that explicitly representing and organizing the structure of the collective
  can support learning and decentralized decision making under the operating conditions of \glspl{CAS}.
 
 \sloppypar
