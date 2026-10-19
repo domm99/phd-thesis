@@ -2474,7 +2474,7 @@ This algorithm extends FedAvg by introducing a proximal term to the objective
 This modification helps address statistical heterogeneity across devices while safely 
  accommodating varying amounts of local computation due to system heterogeneity.
 
-Formally, the local objective function for device $k$ in FedProx is:
+Formally, the local optimization problem for device $k$ in FedProx is:
 \begin{equation} 
   \min_{\mathbf{w}} h_k(\mathbf{w}; \mathbf{w}_t) = F_k(\mathbf{w}) + \frac{\mu}{2} \|\mathbf{w} - \mathbf{w}_t\|^2 
 \end{equation}
