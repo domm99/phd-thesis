@@ -2,12 +2,16 @@
 %! Author = davidedomini
 
 %----------------------------------------------------------------------------------------
-\chapter{Context}
+\chapter{Collective Adaptive Systems}
 \label{chap:context}
 \minitoc
 %----------------------------------------------------------------------------------------
 
-\section{Collective Adaptive Systems}
+\section{Foundations}
+\label{sec:cas-foundations}
+
+\subsection{Definition and Scope}
+\label{subsec:cas-definition}
 
 A \glsentryfull{CAS} is a system whose behavior results
  from the interactions among multiple autonomous or semi-autonomous entities 
@@ -178,91 +182,8 @@ Self-stabilizing coordination mechanisms provide a foundation for resilient \gls
  because they tolerate changes in local state, failures, and network topology
  while preserving system-level behavior~\cite{DBLP:journals/tomacs/ViroliABDP18}.
 
-\subsection{Characteristic Properties and Engineering Implications}
+\section{Characteristic Properties and Engineering Implications}
 \label{subsec:cas-properties}
-
-% Although \glspl{CAS} encompass different application domains, 
-%  several recurring properties shape how they can be engineered.
-
-% \paragraph{Situatedness and locality.}
-% The entities of a \gls{CAS} operate within a logical or physical environment 
-%  from which they obtain observations and on which their actions have effects. 
-% %
-% Access to this environment is normally local: 
-%  an entity observes only part of the relevant state and communicates with a limited neighborhood. 
-% % 
-% Locality improves scalability and permits timely decisions, 
-%  but prevents any component from assuming a continuously available global view. 
-% % 
-% Information about collective conditions must instead be estimated, propagated, 
-%  or aggregated through the system.
-
-% \paragraph{Scale and openness.}
-% \glspl{CAS} may contain hundreds or thousands of entities, 
-%  and their population is often open. 
-% % 
-% Components can join, leave, move, fail, or become temporarily unreachable, 
-%  changing both the system size and its interaction topology.
-% %
-% Algorithms that depend on a fixed membership, 
-%  a stable ordering of entities, or global synchronization become increasingly fragile under these conditions.
-% %
-% Collective mechanisms should instead operate incrementally 
-%  and tolerate asynchrony and partial participation.
-
-% \paragraph{Autonomy and decentralized control.}
-% Individual entities retain control over at least part of their state 
-%  and behavior. 
-% % 
-% Their decisions are based on local knowledge 
-%  and may be made without authorization from a permanent central coordinator. 
-% % 
-% Decentralization removes single points of control, distributes computational load, 
-%  and can improve responsiveness and fault tolerance. 
-% % 
-% At the same time, 
-%  it makes global correctness harder to establish: 
-%  locally reasonable decisions can conflict, and delayed or inconsistent information 
-%  can prevent coordination or slow convergence.
-
-% \paragraph{Heterogeneity.}
-% The members of a CAS may differ in hardware, energy availability,
-%  communication capacity, data, mobility, and assigned role. 
-% % 
-% Heterogeneity can expand the capabilities of the collective, 
-%  since different components contribute complementary resources and observations. 
-% % 
-% It also prevents uniform assumptions about what each component can compute, communicate, or learn. 
-% %
-% Coordination mechanisms must therefore distinguish differences 
-%  that are operationally relevant while avoiding dependencies on the identity 
-%  or ordering of individual entities.
-
-% \paragraph{Resilience.}
-% Failures and environmental changes are part of the expected operating conditions of a \gls{CAS} 
-%  rather than exceptional events. 
-% % 
-% Resilience consequently does not mean preventing every disruption, 
-%  but maintaining acceptable system-level behavior and recovering when the collective is perturbed.
-% %
-% Redundant components and decentralized control can support graceful degradation, 
-%  although redundancy alone is insufficient: 
-%  the collective must also detect changes and
-%  reorganize its activity around the resources that remain available.
-
-% These properties create an important engineering trade-off. 
-% %
-% Local interaction, decentralization, and openness enable scale and robustness, 
-%  but also make the system difficult to predict, verify, and control. 
-% %
-% Evaluation must consequently consider both levels of the system. 
-% %
-% Component-level measures such as latency, energy consumption, 
-%  or individual accuracy remain necessary, 
-%  but they do not by themselves establish that the collective satisfies its intended function.
-% %
-% Macro-level properties such as coverage, convergence, fairness, stability, 
-%  and resource utilization must be assessed as outcomes of the interactions among components.
 
 Although \glspl{CAS} encompass different application domains, 
  several recurring properties shape how they can be engineered.
@@ -275,7 +196,7 @@ Rather than occurring independently, these properties reinforce one another:
  interaction, and interdependence allows local actions to affect collective
  outcomes.
 
-\paragraph{Situatedness, awareness, and locality.}
+\subsection{Situatedness, Awareness, and Locality}
 The entities of a \gls{CAS} operate within a logical or physical environment
  from which they obtain observations and on which their actions have effects.
 %
@@ -300,7 +221,7 @@ Locality improves scalability and enables timely decisions, but prevents any
 Information about collective conditions must instead be estimated, propagated,
  or aggregated through the system.
 
-\paragraph{Scale, openness, and anonymity.}
+\subsection{Scale, Openness, and Anonymity}
 A \gls{CAS} may contain hundreds or thousands of entities, and its population
  is often open.
 %
@@ -323,7 +244,7 @@ It enables groups to form dynamically around run-time conditions and allows
  components to be replaced without requiring the interaction logic to be
  reconfigured explicitly.
 
-\paragraph{Autonomy and decentralized control.}
+\subsection{Autonomy and Decentralized Control}
 Individual entities retain control over at least part of their state and
  behavior.
 %
@@ -341,7 +262,7 @@ Engineering mechanisms must therefore constrain local autonomy sufficiently
  to preserve collective properties without eliminating the ability of
  individual entities to adapt independently.
 
-\paragraph{Interdependence and collaboration.}
+\subsection{Interdependence and Collaboration}
 Entities in a \gls{CAS} are interdependent because their actions may alter
  conditions experienced by other entities.
 %
@@ -359,7 +280,7 @@ At the same time, the intended behavior of the system often depends on
 Coordination mechanisms must therefore account for both deliberate cooperation
  and unintended interference mediated by the environment.
 
-\paragraph{Heterogeneity.}
+\subsection{Heterogeneity}
 The members of a \gls{CAS} may differ in hardware, energy availability,
  communication capacity, data, mobility, and assigned role.
 %
@@ -373,7 +294,7 @@ Coordination mechanisms must therefore distinguish differences that are
  operationally relevant while avoiding unnecessary dependencies on the
  identities or ordering of individual entities.
 
-\paragraph{Resilience.}
+\subsection{Resilience}
 Failures and environmental changes are part of the expected operating
  conditions of a \gls{CAS} rather than exceptional events.
 %
@@ -385,6 +306,8 @@ Redundant components and decentralized control can support graceful
  degradation, although redundancy alone is insufficient:
  the collective must also detect changes and reorganize its activity around
  the resources that remain available.
+
+\subsection{Engineering Implications}
 
 These properties create an important engineering trade-off.
 %
@@ -402,7 +325,7 @@ Macro-level properties such as coverage, convergence, fairness, stability,
  and resource utilization must be assessed as outcomes of the interactions
  among components.
 
-\subsection{Relationship with Adjacent Paradigms}
+\section{Relationship with Adjacent Paradigms}
 \label{subsec:cas-related-paradigms}
 
 \glspl{CAS} overlap with several established classes of systems,
@@ -411,7 +334,7 @@ Macro-level properties such as coverage, convergence, fairness, stability,
 \glspl{MAS} provide models and mechanisms
  for autonomy, interaction, coordination, and organization. 
 % 
-A \gls{CAS} can therefore ften be modeled as a \gls{MAS}. 
+A \gls{CAS} can therefore often be modeled as a \gls{MAS}. 
 %
 The \gls{CAS} perspective, however, 
  places particular emphasis on how macroscopic behavior 
@@ -449,7 +372,88 @@ Likewise,
 %
 They provide common substrates on which \glspl{CAS} can be realized.
 
-\subsection{Engineering Perspective Adopted in This Thesis}
+\section{Representative Examples}
+\label{sec:cas-examples}
+
+The properties discussed above appear in systems with different components,
+ interaction mechanisms, and objectives.
+%
+The following examples illustrate how the CAS perspective applies to physical cooperation, 
+ shared-resource management, and distributed guidance.
+
+\subsection{Heterogeneous Robotic Cooperation: Swarmanoid}
+Swarmanoid is a robotic system comprising three types of robots 
+ with complementary capabilities: flying \emph{eye-bots} explore the environment,
+ ground-based \emph{foot-bots} provide mobility and transport,
+ and \emph{hand-bots} climb structures and manipulate objects~\cite{DBLP:journals/ram/Dorigo13}.
+%
+In the demonstrated search-and-retrieval task,
+ these capabilities are combined to locate and retrieve a book from a shelf.
+%
+Eye-bots establish an exploration and communication network,
+ which foot-bots progressively complement on the ground,
+ freeing flying robots for further exploration.
+%
+Foot-bots also assemble around hand-bots to transport them,
+ then detach so that the hand-bots can climb and retrieve the object.
+%
+The organization of the system therefore changes as the task progresses:
+ cooperation involves both information exchange 
+ and the formation of temporary physical structures.
+%
+This example illustrates why collective decision making must account 
+ for complementary capabilities and changing dependencies among agents.
+
+\subsection{Shared Urban Resources: Bike-Sharing Systems}
+Bike-sharing systems provide a socio-technical example 
+ in which individual decisions continuously reshape the resources available
+ to the population.
+%
+Loreti and Hillston~\cite{DBLP:conf/sfm/LoretiH16} use such a system as a running example
+ for modeling and analyzing CASs with CARMA.
+%
+Users retrieve bicycles from stations and return them elsewhere,
+ changing the spatial distribution of bicycles and empty docking spaces.
+%
+Consequently, 
+ the feasibility of a trip depends on the accumulated effects of other users' choices.
+%
+The authors also identify prices and incentives as mechanisms
+ through which users may adjust their behavior.
+%
+The collective objective is to maintain service availability,
+ although individual users primarily pursue their own travel needs.
+%
+For cooperative learning and decision making,
+ this distinction highlights the need to evaluate system-wide outcomes:
+ improvements for individual participants do not necessarily produce
+ a better allocation of shared resources.
+
+\subsection{Distributed Evacuation Guidance: SAPERE}
+The SAPERE framework includes an emergency evacuation example in a smart museum, 
+ involving agents associated with visitors
+ and security agents monitoring emergency and crowding conditions~\cite{DBLP:journals/taas/CastelliMRZ15}.
+%
+When an emergency is detected,
+ agents associated with exits propagate information through the building,
+ creating a field that visitor agents can follow toward an exit.
+%
+Aggregated information about crowd distribution influences the field,
+ allowing guidance to account for congestion as well as proximity.
+%
+The evacuation service is thus sustained by interactions among monitoring, 
+ information propagation, and visitor movement,
+ rather than by an independently computed route for each visitor.
+%
+This example anticipates the field-based coordination mechanisms
+ introduced in the next chapter:
+ distributed observations are organized into a computational structure
+ that supports collective action.
+%
+It also connects to the crowd-steering problems considered later in this thesis, 
+ where local movement decisions must be assessed through their effects on the distribution of the population.
+
+\section{Engineering Perspective Adopted in This Thesis}
 \label{subsec:cas-thesis-perspective}
 
 The systems considered in this thesis are cooperative many-agent \glspl{CAS}. 
@@ -487,84 +491,3 @@ Macroprogramming provides abstractions for specifying collective behavior
 % 
 Their integration supports \glspl{CAS} in which learning is not an isolated function executed 
  by independent devices, but a coordinated and adaptive part of the collective behavior.
-
-\subsection{Representative Examples of CASs}
-\label{sec:cas-examples}
-
-The properties discussed above appear in systems with different components,
- interaction mechanisms, and objectives.
-%
-The following examples illustrate how the CAS perspective applies to physical cooperation, 
- shared-resource management, and distributed guidance.
-
-\paragraph{Heterogeneous robotic cooperation: Swarmanoid.}
-Swarmanoid is a robotic system comprising three types of robots 
- with complementary capabilities: flying \emph{eye-bots} explore the environment,
- ground-based \emph{foot-bots} provide mobility and transport,
- and \emph{hand-bots} climb structures and manipulate objects~\cite{DBLP:journals/ram/Dorigo13}.
-%
-In the demonstrated search-and-retrieval task,
- these capabilities are combined to locate and retrieve a book from a shelf.
-%
-Eye-bots establish an exploration and communication network,
- which foot-bots progressively complement on the ground,
- freeing flying robots for further exploration.
-%
-Foot-bots also assemble around hand-bots to transport them,
- then detach so that the hand-bots can climb and retrieve the object.
-%
-The organization of the system therefore changes as the task progresses:
- cooperation involves both information exchange 
- and the formation of temporary physical structures.
-%
-This example illustrates why collective decision making must account 
- for complementary capabilities and changing dependencies among agents.
-
-\paragraph{Shared urban resources: bike-sharing systems.}
-Bike-sharing systems provide a socio-technical example 
- in which individual decisions continuously reshape the resources available
- to the population.
-%
-\cite{DBLP:conf/sfm/LoretiH16} use such a system as a running example
- for modeling and analyzing CASs with CARMA.
-%
-Users retrieve bicycles from stations and return them elsewhere,
- changing the spatial distribution of bicycles and empty docking spaces.
-%
-Consequently, 
- the feasibility of a trip depends on the accumulated effects of other users' choices.
-%
-The authors also identify prices and incentives as mechanisms
- through which users may adjust their behavior.
-%
-The collective objective is to maintain service availability,
- although individual users primarily pursue their own travel needs.
-%
-For cooperative learning and decision making,
- this distinction highlights the need to evaluate system-wide outcomes:
- improvements for individual participants do not necessarily produce
- a better allocation of shared resources.
-
-\paragraph{Distributed evacuation guidance: SAPERE.}
-The SAPERE framework includes an emergency evacuation example in a smart museum, 
- involving agents associated with visitors
- and security agents monitoring emergency and crowding conditions~\cite{DBLP:journals/taas/CastelliMRZ15}.
-%
-When an emergency is detected,
- agents associated with exits propagate information through the building,
- creating a field that visitor agents can follow toward an exit.
-%
-Aggregated information about crowd distribution influences the field,
- allowing guidance to account for congestion as well as proximity.
-%
-The evacuation service is thus sustained by interactions among monitoring, 
- information propagation, and visitor movement,
- rather than by an independently computed route for each visitor.
-%
-This example anticipates the field-based coordination mechanisms
- introduced in the next chapter:
- distributed observations are organized into a computational structure
- that supports collective action.
-%
-It also connects to the crowd-steering problems considered later in this thesis, 
- where local movement decisions must be assessed through their effects on the distribution of the population.
