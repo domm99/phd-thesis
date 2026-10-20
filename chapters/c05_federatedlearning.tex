@@ -353,32 +353,3 @@ This picture, however, has a persistent limitation:
 %
 In open and dynamic environments, the natural group structure may be unknown a priori,
  variable over time, or spatially organized in ways not visible to a central server.
-
-\section{Toward Self-Organizing Federated Learning}
-\label{sec:fl-selforg-preview}
-
-The approaches reviewed above address individual aspects
- of federated learning in heterogeneous and dynamic settings,
- but they are typically studied under simplified assumptions:
- a fixed cluster count, a known topology, or a static population.
-%
-In a \gls{CAS}, these assumptions fail simultaneously.
-
-The contribution developed in~\Cref{chap:selforg-fl} addresses this
- by integrating \gls{FL} with the field-based coordination mechanisms
- introduced in~\Cref{chap:macroprogramming}.
-%
-Rather than treating the clustering structure as a hyperparameter or a preprocessing step,
- the approach builds it dynamically through self-organizing field computations:
- devices discover their collaborators through local interactions,
- elect region leaders without a central coordinator,
- and adapt their federation membership as spatial context and model similarity change.
-%
-Model sparsification is incorporated directly into the self-organization process,
- allowing the network structure to reflect both distributional similarity
- and resource availability.
-
-Together, these mechanisms yield a family of methods for
- \emph{self-organizing federated learning} that operates under
- the distribution, locality, mobility, and resource constraints
- that characterize real-world \glspl{CAS}.
