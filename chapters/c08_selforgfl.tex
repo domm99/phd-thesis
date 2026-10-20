@@ -151,64 +151,6 @@ This design addresses the concrete gap identified in~\Cref{sec:fl-selforg-previe
   \item exploits the spatial structure of data distributions to improve model quality.
  \end{enumerate*}
 
-% Standard \gls{FL} algorithms such as \gls{FedAvg}~\cite{DBLP:conf/aistats/McMahanMRHA17}
-%  are designed under the assumption that a global model is both
-%  attainable and desirable.
-% %
-% In practice, 
-%  this assumption frequently fails~\cite{DBLP:journals/ftml/KairouzMABBBBCC21}.
-% %
-% When data distributions vary significantly across clients 
-%  (a condition commonly referred to as statistical heterogeneity or non-\gls{IID} data), 
-%  training a single global model introduces a bias toward the majority distribution 
-%  and degrades performance~\cite{DBLP:conf/icde/LiDCH22}.
-
-% The heterogeneity problem is especially acute in spatially distributed
-%  \gls{CAS}:
-%  devices co-located in the same urban district, sensor field, or
-%  industrial site observe correlated local phenomena,
-%  while devices in distant regions observe systematically different ones~\cite{esterle2022deep}.
-% %
-% As discussed in \Cref{sec:fl-heterogeneity},
-%  this spatial structure implies that the globally optimal partition
-%  \sidenote{questo non mi fa impazzire}
-%  of clients into cooperative groups largely follows geography.
-% %
-% Existing clustered \gls{FL} algorithms (e.g., 
-%  IFCA~\cite{DBLP:journals/tit/GhoshCYR22},
-%  FlexCFL~\cite{DBLP:journals/tpds/DuanLJWLCTR22}, or
-%  ICFL~\cite{DBLP:journals/tnn/YanTW24})
-%  assume a central server that knows the number of clusters in advance
-%  and assigns clients to them through server-side computation.
-% %
-% Neither assumption holds in large-scale \gls{CAS}:
-%  the number of natural data clusters is not known a priori,
-%  and the devices themselves may not have access to a reliable
-%  coordination infrastructure.
-
-% The approach developed in this chapter frames the clustering problem
-%  as a self-organization problem amenable to field-based coordination.
-% %
-% Rather than relying on a server to assign devices to federations,
-%  each device participates in a distributed leader election
-%  that partitions the network into spatially compact regions.
-% %
-% Within each region a federated training round proceeds independently,
-%  aggregating only models from devices whose data are likely to be
-%  compatible.
-% %
-% The coordination layer is implemented entirely through the
-%  aggregate computing primitives described in \Cref{chap:macroprogramming},
-%  which provide provable convergence guarantees
-%  and tolerate node failures and dynamic network topologies.
-
-% This design answers a concrete gap identified in
-%  \Cref{sec:fl-selforg-preview}:
-%  the need for a \gls{FL} system that (i) does not require a
-%  central server, (ii) discovers the number and composition of
-%  training clusters autonomously, and (iii) exploits the spatial
-%  structure of data distributions to improve model quality.
-
 
 %=============================================================================
 \section{System and Problem Formalization}
@@ -378,26 +320,6 @@ Formally, assume the devices admit a latent partition into $k$ clusters
 %
 This partition reflects the underlying spatial and distributional structure of the data,
  but is \emph{not known} to the devices at learning time.
-
-% The learning problem can then be framed as finding a mapping $\mathcal{M}$
-%  from the set of devices to a collection of \emph{federations}:
-% \begin{equation}
-%   \mathcal{M} : \mathcal{V} \;\rightarrow\; \mathcal{F} \subseteq \mathcal{P}(\mathcal{V}),
-% \end{equation}
-% where $\mathcal{P}(\mathcal{V})$ denotes the power set of $\mathcal{V}$
-%  and $\mathcal{F} = \{F_1, \ldots, F_f\}$ is the set of discovered federations.
-
-% The discovered federations are required to be nonempty
-%  and to form a partition of $\mathcal V$:
-% \[
-%     F_q \neq \varnothing
-%     \quad \text{for } q=1,\ldots,f,
-% \]
-% \[
-%     F_q \cap F_r = \varnothing \quad \text{for } q \neq r,
-%     \qquad
-%     \bigcup_{q=1}^{f} F_q = \mathcal V.
-% \]
 
 The learning problem can then be framed as finding a mapping $\mathcal{M}$
  from the set of devices to a collection of \emph{federations}:
@@ -769,7 +691,7 @@ The evaluation investigates whether spatially organized federations can preserve
 More specifically, 
  it addresses the following research questions:
 
-\begin{chapRQ}{7}
+\begin{chapRQ}{8}
   \item
   How does Field-Based Federated Learning perform compared with centralized
   \gls{FL} under \gls{IID} data?
@@ -2080,7 +2002,7 @@ The evaluation investigates the extent to which model sparsification can be
 Accordingly, 
  the evaluation addresses the following research question:
 
-\begin{chapRQ}{7}
+\begin{chapRQ}{8}
   \item
   To what extent can neural network sparsification be integrated into
   proximity-based decentralized federated learning to reduce communication
