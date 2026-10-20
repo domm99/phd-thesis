@@ -218,30 +218,61 @@ This design addresses the concrete gap identified in~\Cref{sec:fl-selforg-previe
 The following notation is used consistently throughout the chapter
  and summarized in~\Cref{tab:selforgfl-notation}.
 
-\sidenote{double check symbols}
-\begin{table}[htbp]
+\begin{table}
   \centering
-  \caption{Notation used in \Cref{chap:selforg-fl}.}
+  \small
+  \caption{Main notation used in \Cref{chap:selforg-fl}.}
   \label{tab:selforgfl-notation}
-  \begin{tabular}{ll}
+  \begin{tabular}{@{}p{0.30\textwidth}p{0.66\textwidth}@{}}
     \toprule
     Symbol & Meaning \\
     \midrule
-    $\mathcal{V}$ & Set of devices (nodes) \\
-    $\mathcal{E}$ & Set of communication links \\
-    $\mathcal{G} = (\mathcal{V}, \mathcal{E})$ & Communication graph \\
-    $\mathcal{N}_d$ & Neighborhood of device $d$: $\{d' \in \mathcal{V} \mid (d,d') \in \mathcal{E}\}$ \\
-    $\mathcal{D}_d$ & Local dataset on device $d$; $n_d = |\mathcal{D}_d|$ \\
-    $\mathbf{w}_d^{(t)}$ & Local model parameters of device $d$ at round $t$ \\
-    $t \in \{0, \ldots, \mathcal{T}\}$ & Federated learning round index \\
-    $\mathcal{L}^{(t)}$ & Set of elected leaders at round $t$ \\
-    $\mathcal{R}_l^{(t)}$ & Region of leader $l$ at round $t$; $\{\mathcal{R}_l^{(t)}\}$ partitions $\mathcal{V}$ \\
-    $d_{\mathcal{L}}^{(t)}$ & Leader assigned to device $d$ at round $t$ \\
-    $\mathrm{dist}(d, l)$ & Neighborhood metric between devices $d$ and $l$ \\
-    $R$ & Influence radius for leader election \\
-    $\mathcal{A}$ & Aggregation operator (e.g., weighted average) \\
-    $\sigma$ & Dissimilarity threshold (space-fluid variant) \\
-    $\psi$ & Sparsification ratio \\
+    $\mathcal{V}$, $n$
+      & Set of devices and its cardinality, $n=|\mathcal{V}|$ \\
+    $\mathcal{G}=(\mathcal{V},\mathcal{E})$
+      & Communication graph, with communication links $\mathcal{E}$ \\
+    $\mathcal{N}_d$
+      & Neighbors of device $d$ in $\mathcal{G}$ \\
+    $A=\{a_1,\ldots,a_k\}$
+      & Spatial area divided into $k$ data subregions \\
+    $P_j$, $\mathbb{P}_d$
+      & Data distributions associated with subregion $a_j$ and device $d$ \\
+    $\mathcal{D}_d$, $n_d$
+      & Local dataset on device $d$ and its size, $n_d=|\mathcal{D}_d|$ \\
+    $\mathbf{w}_d^{(t)}$
+      & Model parameters of device $d$ at round $t$ \\
+    $\widetilde{\mathbf{w}}_i^{(t)}$
+      & Parameters obtained by device $d_i$ after local training at round $t$ \\
+    $t$, $\mathcal{T}$, $E$
+      & Learning round index, total rounds, and local epochs per round \\
+    $C_1,\ldots,C_k$
+      & Latent ground-truth partition of the devices \\
+    $\mathcal{F}=\{F_1,\ldots,F_f\}$
+      & Discovered partition into $f$ nonempty training federations \\
+    $\mathcal{M}$
+      & Mapping assigning each device to its federation \\
+    $\mathcal{L}^{(t)}$
+      & Set of elected leaders at round $t$ \\
+    $\mathcal{R}_l^{(t)}$
+      & Federation region associated with leader $l$ at round $t$ \\
+    $d_{\mathcal{L}}^{(t)}$
+      & Leader assigned to the current device at round $t$ \\
+    $d(\cdot,\cdot)$
+      & Generic distance function between neighboring devices \\
+    $\sigma$
+      & Influence threshold for leader election under the selected distance \\
+    $\mathcal{DL}(d,\sigma)$
+      & Distributed leader-election procedure \\
+    $\Phi^{(t)}(d_i)$
+      & Minimum cumulative distance from device $d_i$ to an elected leader \\
+    $d_{\mathrm{s}}^{(t)}(d_i,d_j)$
+      & Symmetric loss-based dissimilarity, $L_{i,j}^{(t)}+L_{j,i}^{(t)}$ \\
+    $\psi$
+      & Target sparsity level: fraction of parameters selected for pruning \\
+    $\mathcal{P}_{\psi}$, $\tau_{\psi}$
+      & Magnitude-based pruning operator and corresponding magnitude threshold \\
+    $\alpha$
+      & Weight assigned to the local model during SParSeFuL model integration \\
     \bottomrule
   \end{tabular}
 \end{table}
