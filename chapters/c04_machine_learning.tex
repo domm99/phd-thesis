@@ -121,12 +121,15 @@ A model that performs well on the training data but poorly on new observations
 is said to overfit, while a model that is unable to capture the relevant structure
 of the training data underfits.
 
-To estimate generalization, the available samples are typically divided into
-three disjoint subsets: the \emph{training set}, used to optimize the model parameters;
- the \emph{validation set}, which guides choices that are not learned during training,
- such as the model architecture, regularization strength, and learning rate;
- and the \emph{test set}, held out until the final evaluation to provide an
- independent estimate of performance on unseen data.
+To estimate generalization, the available samples are typically divided 
+ into three disjoint subsets: 
+\begin{enumerate*}[label=(\roman*)]
+    \item the \emph{training set}, used to optimize the model parameters;
+    \item the \emph{validation set}, which guides choices that are not learned during training,
+        such as the model architecture, regularization strength, and learning rate; and
+    \item \emph{test set}, held out until the final evaluation to provide 
+        an independent estimate of performance on unseen data.
+\end{enumerate*}
 %
 Maintaining this separation is essential: any signal from the test set that
  reaches the model--even indirectly, through architecture or hyperparameter choices--produces 
@@ -134,8 +137,8 @@ Maintaining this separation is essential: any signal from the test set that
 
 Minimizing the empirical risk is accomplished iteratively.
 %
-For differentiable models this is typically done through
- variants of stochastic gradient descent~\cite{DBLP:journals/siamrev/BottouCN18}.
+For differentiable models (i.e., models whose gradients with respect to their parameters can be computed) 
+ this is typically done through variants of stochastic gradient descent~\cite{DBLP:journals/siamrev/BottouCN18}.
 %
 At training step $t$, a mini-batch $\mathcal{B}_t \subseteq \mathcal{D}$ is
 sampled and the parameters are updated according to
@@ -155,6 +158,9 @@ sampled and the parameters are updated according to
 \end{equation}
 %
 where $\eta > 0$ is the learning rate.
+Intuitively, 
+ each update moves the parameters in the direction of steepest decrease 
+ of the mini-batch loss, with $\eta$ controlling the step size.
 %
 Using mini-batches reduces the computational cost of each update and introduces
 stochasticity that can improve optimization.
@@ -170,73 +176,102 @@ The tension between fitting the training data and generalizing to new inputs
 \section{Learning Paradigms and Settings}
 \label{sec:learning-paradigms}
 
-\gls{ML} problems differ primarily in the information available to the
-learner and in the objective that guides adaptation.
+\gls{ML} problems differ in the information available to the learner
+ and in the objective that guides adaptation.
 %
-The following paradigms provide the context required to position the methods
-used throughout this thesis.
-
-
-\subsection{Supervised and Unsupervised Learning}
-\label{subsec:supervised-unsupervised}
-
-In \emph{supervised learning}, each training input is associated with a target,
-and the model learns to approximate the relationship between them by minimizing
-a loss such as the one in \Cref{eq:empirical-risk}.
+A first distinction concerns whether the training observations
+ are accompanied by explicit targets.
+%
+In \emph{supervised learning}, each input is associated with a target,
+ and the model learns to approximate the relationship between them
+ by minimizing a loss such as the one in~\Cref{eq:empirical-risk}.
 %
 Classification and regression are the two main supervised tasks.
 %
-The \gls{FL} methods studied in~\Cref{chap:federated-learning} and~\Cref{chap:selforg-fl}
- primarily operate in this setting: 
- each device trains a local model from labeled observations while cooperating with other
- devices to improve its predictive performance.
+The \gls{FL} methods studied in~\Cref{chap:federated-learning,chap:selforg-fl}
+ primarily operate in this setting:
+ each device trains a local model from labeled observations
+ while cooperating with other devices to improve its predictive performance.
 
-In \emph{unsupervised learning}, 
- the observations are not accompanied by target values.
+When target values are unavailable,
+ learning instead focuses on discovering structure in the observations themselves.
 %
-The objective is instead to expose structure in the input distribution, 
- for example by discovering groups of similar observations, 
- learning compact representations, 
- or identifying samples that differ from previously observed data.
+In this \emph{unsupervised learning} setting,
+ the objective may be to identify groups of similar observations,
+ learn compact representations,
+ or detect samples that differ from previously observed data.
 %
-Clustering, dimensionality reduction, and novelty detection are
- representative examples.
+Clustering, dimensionality reduction, and novelty detection
+ are representative examples.
 %
-This thesis employs unsupervised principles in two ways:
- to identify device groups with compatible data distributions in clustered federated learning,
- and to detect novel states via prediction error in the Random Network Distillation mechanism
+This thesis employs these principles to identify device groups
+ with compatible data distributions in clustered federated learning,
+ and to detect novel inputs through prediction error
+ in the Random Network Distillation mechanism
  introduced in~\Cref{sec:selforgfl-future}.
 
-
-\subsection{Reinforcement Learning}
-\label{subsec:rl-paradigm}
-
-In \gls{RL}, 
- the learning process is driven by interaction rather than 
- by a fixed collection of labeled examples.
+A different form of feedback arises when learning is coupled
+ with interaction with an environment.
 %
-An agent observes the state of an environment, selects actions, 
+In \gls{RL},
+ an agent observes the environment, selects actions,
  and receives feedback in the form of rewards.
 %
-Its objective is to learn a policy that maximizes the cumulative reward obtained
- over time~\cite{DBLP:books/lib/SuttonB2018}.
-
-\gls{RL} therefore differs from supervised learning in two important respects.
+Its objective is to learn a policy that maximizes
+ the cumulative reward obtained over time~\cite{DBLP:books/lib/SuttonB2018}.
 %
-The appropriate action is never directly provided to the learner:
- the reward only indicates the consequences of the selected behavior,
- leaving the agent to infer which actions led to favorable outcomes.
+Unlike a supervised target,
+ a reward does not directly specify the appropriate action:
+ it provides feedback on the consequences of the selected behavior,
+ leaving the agent to infer which actions lead to favorable outcomes.
 %
-Moreover, the data available for learning are not fixed in advance:
- the agent's own decisions determine which states and rewards it will subsequently observe,
+Moreover, the data available for learning are not fixed in advance.
+%
+The agent's own decisions influence which states and rewards
+ it will subsequently observe,
  creating a feedback loop between behavior and experience.
 %
-The formal \gls{RL} framework, 
- its extension to multi-agent systems, 
- and the algorithms adopted in this thesis are presented in~\Cref{chap:reinforcement-learning}.
+This makes \gls{RL} particularly relevant to learning decision policies
+ for devices whose actions affect both their surroundings
+ and their future observations.
+%
+The formal \gls{RL} framework,
+ its extension to multi-agent systems,
+ and the algorithms adopted in this thesis
+ are presented in~\Cref{chap:reinforcement-learning}.
 
 \section{Neural Networks and Deep Learning}
 \label{sec:neural-networks}
+
+\begin{figure*}
+    \centering
+
+    \begin{subfigure}{0.4\textwidth}
+        \centering
+        \includegraphics[
+            width=\linewidth
+        ]{figures/ch04/nn.drawio.pdf}
+        \caption{}
+        \label{fig:nn}
+    \end{subfigure}
+    \begin{subfigure}{0.4\textwidth}
+        \centering
+        \includegraphics[
+            width=\linewidth
+        ]{figures/ch04/activations.pdf}
+        \caption{}
+        \label{fig:activations}
+    \end{subfigure}
+
+    \caption{
+        On the left, the structure of a feedforward neural network,
+        with an input layer, a hidden layer, and an output layer.
+        On the right, two examples of activation functions that can be used
+        in the network's neurons to introduce nonlinearity:
+        the rectified linear unit (ReLU) and the hyperbolic tangent ($\tanh$).
+    }
+    \label{fig:dnn}
+\end{figure*}
 
 The parameterized model $f_{\boldsymbol{\theta}}$ introduced in~\Cref{sec:learning-from-data}
  can in principle take any differentiable form.
@@ -253,7 +288,8 @@ This design is not a mere implementation convenience:
 Depth (i.e., stacking many layers rather than widening a single one) 
  makes this approximation power practically attainable with far fewer parameters.
 
-In a feedforward network, the computation proceeds layer by layer from the input to the output.
+In a feedforward network (\Cref{fig:nn}), 
+ the computation proceeds layer by layer from the input to the output.
 %
 The representation produced by layer $l$ is
 %
@@ -272,7 +308,7 @@ The representation produced by layer $l$ is
 %
 where $\mathbf{h}^{(0)} = \mathbf{x}$ is the input,
 $\mathbf{W}^{(l)}$ and $\mathbf{b}^{(l)}$ are a trainable weight matrix and bias vector, and
-$\sigma^{(l)}$ is a pointwise nonlinear activation function.
+$\sigma^{(l)}$ is a pointwise nonlinear activation function (\Cref{fig:activations}).
 %
 The affine part $\mathbf{W}^{(l)} \mathbf{h}^{(l-1)} + \mathbf{b}^{(l)}$
  performs a learned re-weighting and shift of the previous layer's representation.
@@ -326,7 +362,7 @@ These gradients are consumed by an optimizer such as the one in~\Cref{eq:gradien
  validation set no longer improves.
 %
 The same procedure underlies the different neural architectures used
- throughout this thesis — from the feedforward networks employed in federated classification tasks
+ throughout this thesis---from the feedforward networks employed in federated classification tasks
  to the graph-based and distillation-based architectures introduced in the following section.
 
 
