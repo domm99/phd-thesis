@@ -185,8 +185,6 @@ Self-stabilizing coordination mechanisms provide a foundation for resilient \gls
 \section{Characteristic Properties and Engineering Implications}
 \label{subsec:cas-properties}
 
-\sidenote{usare paragraph}
-
 Although \glspl{CAS} encompass different application domains, 
  several recurring properties shape how they can be engineered.
 %
@@ -198,7 +196,7 @@ Rather than occurring independently, these properties reinforce one another:
  interaction, and interdependence allows local actions to affect collective
  outcomes.
 
-\subsection{Situatedness, Awareness, and Locality}
+\paragraph{Situatedness, Awareness, and Locality}
 The entities of a \gls{CAS} operate within a logical or physical environment
  from which they obtain observations and on which their actions have effects.
 %
@@ -223,7 +221,7 @@ Locality improves scalability and enables timely decisions, but prevents any
 Information about collective conditions must instead be estimated, propagated,
  or aggregated through the system.
 
-\subsection{Scale, Openness, and Anonymity}
+\paragraph{Scale, Openness, and Anonymity}
 A \gls{CAS} may contain hundreds or thousands of entities, and its population
  is often open.
 %
@@ -246,7 +244,7 @@ It enables groups to form dynamically around run-time conditions and allows
  components to be replaced without requiring the interaction logic to be
  reconfigured explicitly.
 
-\subsection{Autonomy and Decentralized Control}
+\paragraph{Autonomy and Decentralized Control}
 Individual entities retain control over at least part of their state and
  behavior.
 %
@@ -264,7 +262,7 @@ Engineering mechanisms must therefore constrain local autonomy sufficiently
  to preserve collective properties without eliminating the ability of
  individual entities to adapt independently.
 
-\subsection{Interdependence and Collaboration}
+\paragraph{Interdependence and Collaboration}
 Entities in a \gls{CAS} are interdependent because their actions may alter
  conditions experienced by other entities.
 %
@@ -282,7 +280,7 @@ At the same time, the intended behavior of the system often depends on
 Coordination mechanisms must therefore account for both deliberate cooperation
  and unintended interference mediated by the environment.
 
-\subsection{Heterogeneity}
+\paragraph{Heterogeneity}
 The members of a \gls{CAS} may differ in hardware, energy availability,
  communication capacity, data, mobility, and assigned role.
 %
@@ -296,7 +294,7 @@ Coordination mechanisms must therefore distinguish differences that are
  operationally relevant while avoiding unnecessary dependencies on the
  identities or ordering of individual entities.
 
-\subsection{Resilience}
+\paragraph{Resilience}
 Failures and environmental changes are part of the expected operating
  conditions of a \gls{CAS} rather than exceptional events.
 %
@@ -309,8 +307,7 @@ Redundant components and decentralized control can support graceful
  the collective must also detect changes and reorganize its activity around
  the resources that remain available.
 
-\subsection{Engineering Implications}
-
+\paragraph{Engineering Implications}
 These properties create an important engineering trade-off.
 %
 Local interaction, decentralization, openness, and identity-independent
