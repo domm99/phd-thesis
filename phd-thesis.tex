@@ -14,59 +14,77 @@
 \input{front}
 
 \begin{abstract}
-\Glspl{CAS} comprise distributed devices or agents whose local interactions 
- give rise to emergent collective behavior that cannot be attributed to any component in isolation.
+\Glspl{CAS} comprise distributed devices or agents whose local interactions
+give rise to emergent collective behavior that cannot be attributed to any component in isolation.
 %
-Such behavior can be engineered through explicit coordination rules, 
- expressed for instance through macroprogramming, 
- or through machine learning mechanisms that derive models and decision policies from distributed data and experience.
+Such behavior can be engineered through explicit coordination rules,
+expressed for instance through macroprogramming,
+or through machine learning mechanisms that derive models and decision policies from distributed data and experience.
 %
-This thesis brings these two perspectives together 
- to investigate how cooperative learning 
- and decision making can be engineered as integral parts of a \gls{CAS}.
+This thesis brings these two perspectives together
+to investigate how cooperative learning
+and decision making can be engineered as integral parts of a \gls{CAS}.
 %
-This requires addressing conditions that conventional machine learning methods often abstract away, 
- including heterogeneous and distributed data, local communication, changing populations, 
- and limited computational resources.
+This requires addressing conditions that conventional machine learning methods often abstract away,
+including heterogeneous and distributed data, local communication, changing populations,
+and limited computational resources.
+%
+Addressing these conditions also requires practical tools
+for implementing coordination mechanisms, integrating them with learning algorithms,
+and evaluating their collective behavior.
+%
+The thesis therefore contributes complementary software tools
+for aggregate programming, spatially structured data benchmarks,
+simulation-based learning, and execution on physical robots.
 
-Three complementary lines of research address these challenges.
+Three complementary lines of research investigate the associated learning and coordination challenges.
 %
-First, 
- field-based coordination enables devices to form and reorganize federated learning groups 
- according to spatial proximity and model compatibility, without centralizing raw data, 
- relying on a permanent server, or fixing the number of groups in advance.
+To address data locality and privacy requirements,
+federated learning enables devices to learn collaboratively while keeping raw data local.
 %
-This approach is extended with model sparsification 
- and supported by a benchmark for spatially structured data heterogeneity.
+However, heterogeneous data and changing populations require the collaboration structure itself to adapt.
 %
-Preliminary extensions further investigate task-independent collaborator discovery 
- and continual adaptation under mobility.
- %
-Second, 
- decentralized reinforcement learning is studied through neighbor-based training strategies 
- and graph-based policies that can operate across different swarm sizes.
+The first line of research therefore develops field-based coordination mechanisms
+that enable devices to form and reorganize federated learning groups
+according to spatial proximity and model compatibility,
+without relying on a permanent server or fixing the number of groups in advance.
 %
-Third, 
- a graph-based offloading approach combines local device information with aggregate estimates of collective conditions 
- to place application components across edge and cloud resources.
+Simulation results show that this organization supports specialized learning
+and maintains effective collaboration under failures and mobility.
+%
+Model sparsification can preserve these benefits while reducing computational requirements,
+although excessive compression can undermine the stability of self-organization.
+%
+Preliminary extensions further investigate task-independent collaborator discovery
+and continual adaptation to mobility-induced distribution shifts.
 
-Simulation results show that adapting cooperation structures to data heterogeneity
- supports specialized learning and maintains effective collaboration as the collective changes.
+To learn cooperative actions from experience under partial observations,
+the second line of research investigates decentralized reinforcement learning.
 %
-Model sparsification can preserve these benefits,
- although excessive compression can undermine the stability of self-organization.
+Neighbor-based training strategies allow agents to exchange knowledge locally,
+while graph-based policies accommodate variable-sized interaction neighborhoods.
 %
-In multi-agent reinforcement learning,
- local knowledge exchange improves decentralized training,
- while graph-based policies support transfer across different collective sizes,
- with performance remaining sensitive to scale.
+Experiments show that local knowledge exchange improves decentralized training
+and that graph-based policies support transfer across different collective sizes,
+although performance degrades as deployment conditions diverge from the training configuration.
+
+To address limited device resources and contention for shared infrastructure,
+the third line of research investigates adaptive application deployment across the edge--cloud continuum.
 %
-Deployment experiments further demonstrate the value of collective information
- in enabling decentralized policies to adapt resource allocation to shared operating conditions.
+A graph-based reinforcement learning approach combines local device information
+with aggregate estimates of collective conditions
+to decide where application components should execute.
 %
-Together,
- these findings show that explicitly representing and organizing the structure of the collective
- can support learning and decentralized decision making under the operating conditions of \glspl{CAS}.
+Simulation experiments show that collective information enables decentralized policies
+to adapt placement decisions to shared operating conditions,
+balancing device energy consumption, infrastructure costs, and server load.
+%
+The policies also adjust their decisions as devices move between areas with different collective conditions.
+
+Together, these methods, tools, and empirical findings show
+how explicitly representing and organizing the structure of the collective
+can support cooperative learning and decentralized decision making
+under the operating conditions of \glspl{CAS}.
 
 \sloppypar
     \textbf{Keywords} -- \emph{\glsentryfull{CAS}, \gls{CFL}, \gls{MARL}, \gls{MP}}
