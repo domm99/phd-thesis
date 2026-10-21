@@ -252,19 +252,11 @@ Bridging these two perspectives exposes four dimensions along which
  the assumptions of conventional machine learning are systematically
  violated by the CAS setting, summarized in~\Cref{fig:overview}.
 
-% \begin{figure}
-%     \centering
-%     \includegraphics[width=0.9\textwidth]{figures/axes.drawio.pdf}
-%     \caption{
-%         Coupled engineering dimensions of cooperative learning in many-agent Collective Adaptive Systems.
-%     }
-%     \label{fig:overview}
-% \end{figure}
-
 \begin{figure}
     \centering
     \begingroup
 
+    \definecolor{dimFrameworks}{HTML}{BD5350}
     \definecolor{dimPrivacy}{HTML}{6C90C3}
     \definecolor{dimShift}{HTML}{D99A00}
     \definecolor{dimDecentralization}{HTML}{9874AC}
@@ -288,7 +280,7 @@ Bridging these two perspectives exposes four dimensions along which
             }
         ]
 
-        % Central research xobjective
+        % Central research objective
         \node[
             ellipse,
             draw=black,
@@ -354,6 +346,23 @@ Bridging these two perspectives exposes four dimensions along which
             }
         };
 
+        % Frameworks: a shared foundation spanning the diagram
+        \path let
+            \p1 = (decentralization.west),
+            \p2 = (shift.east),
+            \p3 = (resources.south)
+        in node[
+            dimension,
+            draw=dimFrameworks,
+            fill=dimFrameworks!16,
+            minimum width={\x2-\x1},
+            anchor=north,
+            outer sep=0pt
+        ] (frameworks)
+            at ({(\x1+\x2)/2},{\y3-10mm}) {
+                Frameworks
+            };
+
         % Connections
         \draw[connection, draw=dimPrivacy]
             (objective.north) -- (privacy.south);
@@ -372,7 +381,8 @@ Bridging these two perspectives exposes four dimensions along which
 
     \endgroup
     \caption{Coupled engineering dimensions of cooperative learning
-        in many-agent Collective Adaptive Systems.}
+        in many-agent Collective Adaptive Systems,
+        supported by a shared foundation of software frameworks.}
     \label{fig:overview}
 \end{figure}
 
@@ -663,74 +673,80 @@ individual device constraints and collective system-level phenomena?
 
 \end{questions}
 
-These questions are addressed through three main lines of research,
+These questions are addressed through complementary contributions,
  whose relationship with the engineering dimensions is summarized
  in~\Cref{fig:mapping}.
 
-A cross-cutting contribution provides \emph{software tools and experimental infrastructure} 
- for collective coordination and learning. 
-% 
-Phyelds implements \gls{AC} natively in Python, 
+\emph{Software tools and experimental infrastructure}
+ provide a practical foundation for implementing and evaluating
+ collective coordination and learning.
+%
+Phyelds implements \gls{AC} natively in Python,
  while ScaRLib integrates aggregate programs with \gls{RL} in a Scala-based environment.
 %
 MARLAlchemy supports simulation-based experience collection and policy improvement,
- and ProFed constructs \gls{FL} benchmarks with spatially structured data heterogeneity. 
-% 
-Project Emerge supports the execution and demonstration 
- of aggregate programs on physical robots. 
-% 
-These tools address complementary engineering requirements 
+ and ProFed constructs \gls{FL} benchmarks with spatially structured data heterogeneity.
+%
+Project Emerge supports the execution and demonstration
+ of aggregate programs on physical robots.
+%
+These tools address complementary engineering requirements
  and can be used independently.
 
-The first line concerns \emph{self-organizing federated learning} 
- and addresses~\ref{itm:rq1} and~\ref{itm:rq2}. 
-% 
-Field-based coordination mechanisms are used to let devices construct 
- and maintain adaptive learning groups according to spatial proximity and model similarity,
- without a fixed server or prior knowledge of the number of groups. 
-% 
-This line introduces localized learning methods 
- and evaluates their robustness to changes in topology and participation.
+The organization of collaboration is investigated through
+ \emph{self-organizing federated learning},
+ addressing~\ref{itm:rq1} and~\ref{itm:rq2}.
 %
-It also studies how these groups and their models can adapt 
- to mobility-induced distribution shifts while retaining previously acquired knowledge, 
- and how model sparsification can reduce computation and communication costs 
+Field-based coordination mechanisms let devices construct
+ and maintain adaptive learning groups according to spatial proximity and model similarity,
+ without a fixed server or prior knowledge of the number of groups.
+%
+The proposed localized learning methods are evaluated
+ for their robustness to changes in topology and participation.
+%
+The investigation also examines how these groups and their models can adapt
+ to mobility-induced distribution shifts while retaining previously acquired knowledge,
+ and how model sparsification can reduce computation and communication costs
  without removing the spatial structure of collaboration.
 
-The second line addresses~\ref{itm:rq3} through \emph{scalable decentralized reinforcement learning}. 
+Cooperative decision making is studied through
+ \emph{scalable decentralized reinforcement learning},
+ addressing~\ref{itm:rq3}.
 %
-It investigates training strategies based on interactions among neighboring devices 
- and learning architectures that operate on variable-sized neighborhoods. 
-% 
-The resulting analysis characterizes the trade-offs between centralized training, 
- independent learning, and local cooperation, and examines whether policies trained 
+This contribution investigates training strategies based on interactions among neighboring devices
+ and learning architectures that operate on variable-sized neighborhoods.
+%
+The resulting analysis characterizes the trade-offs between centralized training,
+ independent learning, and local cooperation, and examines whether policies trained
  with a given number of devices remain effective when deployed in larger collectives.
 
-The third line concerns \emph{adaptive deployment across the edge--cloud continuum} 
- and addresses~\ref{itm:rq4}. 
+Resource constraints and heterogeneous infrastructure motivate
+ \emph{adaptive deployment across the edge--cloud continuum},
+ addressing~\ref{itm:rq4}.
 %
-It develops a learning-based approach through which devices make decentralized application placement 
- and offloading decisions. 
-% 
-The method combines local information, including energy and computational capacity, 
- with collective conditions such as latency, network congestion, and infrastructure load, 
+A learning-based approach enables devices to make decentralized application placement
+ and offloading decisions.
+%
+The method combines local information, including energy and computational capacity,
+ with collective conditions such as latency, network congestion, and infrastructure load,
  thereby accounting for the externalities created by concurrent device decisions.
 
-A complementary contribution investigates \emph{field-based distributed state estimation}, 
- extending the coordination perspective to collective perception.
+The coordination perspective further extends to collective perception through
+ \emph{field-based distributed state estimation}.
 %
-It combines particle filtering with aggregate programs that organize neighborhood measurement sharing, 
- elect a temporary fusion coordinator, or coordinate mobile sensors. 
-% 
-Single-target and multi-target tracking experiments examine the effects of local cooperation, 
+This contribution combines particle filtering with aggregate programs
+ that organize neighborhood measurement sharing,
+ elect a temporary fusion coordinator, or coordinate mobile sensors.
+%
+Single-target and multi-target tracking experiments examine the effects of local cooperation,
  recovery after fusion-center failure, and sensor movement.
 %
-The study complements the investigation of local information 
+The study complements the investigation of local information
  and adaptive coordination in~\ref{itm:rq3} by examining how the same field-based abstractions
  can organize information fusion and reassign responsibilities at runtime.
 
-Together, 
- these contributions provide methods and empirical evidence for
+Together,
+ these contributions provide tools, methods, and empirical evidence for
  addressing distinct aspects of cooperative learning and collective information
  processing in \glspl{CAS}: distributed data, partial observations, local interactions,
  changing populations, and constrained resources.
