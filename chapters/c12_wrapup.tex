@@ -398,40 +398,68 @@ These extensions would turn collective-aware individual offloading into coordina
 
 \subsection{Validation in the Real World}
 
-The experiments in this thesis deliberately isolate individual mechanisms in simulation. 
+The experiments in this thesis deliberately isolate individual mechanisms in simulation.
 %
-Establishing external validity requires deployments in which sensing, communication, computation, 
+Establishing external validity requires deployments in which sensing, communication, computation,
  and mobility introduce delays and failures that are only approximated by the current models.
 %
-Future evaluations should include physical robot or sensor collectives 
+Future evaluations should include physical robot or sensor collectives
  and edge--cloud testbeds with heterogeneous hardware, intermittent connectivity,
- asynchronous execution, packet loss, and devices joining or leaving during operation. 
-% 
-Population size and topology should vary during both training 
+ asynchronous execution, packet loss, and devices joining or leaving during operation.
+%
+Population size and topology should vary during both training
  and deployment, rather than being changed only between experimental runs.
+
+A concrete example could build on the urban traffic scenario 
+ introduced in~\Cref{sec:motivating-scenarios}.
+%
+A testbed spanning a small network of intersections could connect roadside sensors,
+ edge computing units, and instrumented vehicles,
+ allowing devices to cooperatively learn traffic predictors from local observations.
+%
+Changes in traffic patterns, vehicle mobility, and connectivity
+ would provide realistic conditions for evaluating collaborator discovery,
+ federation reorganization, and continual adaptation.
+%
+Such a deployment would also expose interactions between mechanisms studied separately in this thesis:
+ for example, whether changes in the communication topology trigger a reorganization
+ that improves prediction enough to justify its computational and communication costs.
 
 Evaluation criteria must also broaden beyond final task accuracy or reward.
 %
 Relevant measures include recovery time after disruption, communication volume,
  energy consumed by training and inference, stability during reorganization,
- fairness across devices and regions, and the quality of service experienced 
- while adaptation is still in progress. 
-% 
-Privacy claims should be assessed against explicit adversary models, 
- including information leakage from exchanged parameters and collective summaries. 
-% 
-Finally, 
- comparisons should include the engineering cost of configuration: 
- an approach that performs well only after selecting the correct number of clusters, 
- neighborhood size, reward weights, or aggregation interval may be less useful 
+ fairness across devices and regions, and the quality of service experienced
+ while adaptation is still in progress.
+%
+Privacy claims should be assessed against explicit adversary models,
+ including information leakage from exchanged parameters and collective summaries.
+%
+Finally,
+ comparisons should include the engineering cost of configuration:
+ an approach that performs well only after selecting the correct number of clusters,
+ neighborhood size, reward weights, or aggregation interval may be less useful
  in an open system than one with slightly lower peak performance but reliable self-configuration.
 
-Progress along these directions would move the proposed methods from separate proofs of feasibility 
- toward a unified engineering discipline for cooperative learning in \glspl{CAS}. 
-% 
-The defining challenge is not merely to make each device learn, 
- but to ensure that learning, coordination, and deployment continue 
- to support one another as the collective changes. 
+These testbeds should also provide the basis for shared benchmarks,
+ turning individual deployments into standard evaluation scenarios.
 %
-The evidence developed in this thesis indicates that this objective is attainable 
+For the traffic example,
+ this would require documenting the hardware and network configuration,
+ releasing suitably anonymized observations and connectivity traces,
+ and defining common tasks, metrics, and protocols for introducing disruptions.
+%
+Combining access to physical infrastructure with recorded traces
+ and reproducible simulation counterparts would allow different methods
+ to be compared under common conditions,
+ while retaining a connection to the constraints observed in deployment.
+
+Progress along these directions would move the proposed methods from separate proofs of feasibility
+ toward a unified engineering discipline for cooperative learning in \glspl{CAS}.
+%
+The defining challenge is not merely to make each device learn,
+ but to ensure that learning, coordination, and deployment continue
+ to support one another as the collective changes.
+%
+The evidence developed in this thesis indicates that this objective is attainable
  when collective structure is made explicit and treated as a first-class element of the learning system.
