@@ -252,12 +252,127 @@ Bridging these two perspectives exposes four dimensions along which
  the assumptions of conventional machine learning are systematically
  violated by the CAS setting, summarized in~\Cref{fig:overview}.
 
+% \begin{figure}
+%     \centering
+%     \includegraphics[width=0.9\textwidth]{figures/axes.drawio.pdf}
+%     \caption{
+%         Coupled engineering dimensions of cooperative learning in many-agent Collective Adaptive Systems.
+%     }
+%     \label{fig:overview}
+% \end{figure}
+
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/axes.drawio.pdf}
-    \caption{
-        Coupled engineering dimensions of cooperative learning in many-agent Collective Adaptive Systems.
+    \begingroup
+
+    \definecolor{dimPrivacy}{HTML}{6C90C3}
+    \definecolor{dimShift}{HTML}{D99A00}
+    \definecolor{dimDecentralization}{HTML}{9874AC}
+    \definecolor{dimResources}{HTML}{7FAF64}
+
+    \resizebox{\textwidth}{!}{%
+        \begin{tikzpicture}[
+            dimension/.style={
+                rectangle,
+                rounded corners=5pt,
+                minimum width=4.2cm,
+                minimum height=1.3cm,
+                inner xsep=8pt,
+                inner ysep=6pt,
+                align=center,
+                line width=2pt
+            },
+            connection/.style={
+                line width=3pt,
+                -{Stealth[length=4mm,width=4mm]}
+            }
+        ]
+
+        % Central research xobjective
+        \node[
+            ellipse,
+            draw=black,
+            fill=white,
+            line width=2pt,
+            inner xsep=5pt,
+            inner ysep=10pt,
+            font=\bfseries
+        ] (objective) {
+            \shortstack[c]{
+                Engineering Many-Agent\\
+                Cooperative Learning in\\
+                Collective Adaptive Systems
+            }
+        };
+
+        % Engineering dimensions
+        \node[
+            dimension,
+            draw=dimPrivacy,
+            fill=dimPrivacy!16,
+            above=10mm of objective
+        ] (privacy) {
+            \shortstack[c]{
+                Data Privacy\\
+                Constraints
+            }
+        };
+
+        \node[
+            dimension,
+            draw=dimShift,
+            fill=dimShift!16,
+            right=10mm of objective
+        ] (shift) {
+            \shortstack[c]{
+                Spatio-temporal\\
+                Distribution Shift
+            }
+        };
+
+        \node[
+            dimension,
+            draw=dimDecentralization,
+            fill=dimDecentralization!16,
+            left=10mm of objective
+        ] (decentralization) {
+            \shortstack[c]{
+                Scalable\\
+                Decentralization
+            }
+        };
+
+        \node[
+            dimension,
+            draw=dimResources,
+            fill=dimResources!16,
+            below=10mm of objective
+        ] (resources) {
+            \shortstack[c]{
+                Resource-constrained\\
+                Edge Devices
+            }
+        };
+
+        % Connections
+        \draw[connection, draw=dimPrivacy]
+            (objective.north) -- (privacy.south);
+
+        \draw[connection, draw=dimShift]
+            (objective.east) -- (shift.west);
+
+        \draw[connection, draw=dimDecentralization]
+            (objective.west) -- (decentralization.east);
+
+        \draw[connection, draw=dimResources]
+            (objective.south) -- (resources.north);
+
+        \end{tikzpicture}%
     }
+
+    \endgroup
+    \caption{Coupled engineering dimensions of cooperative learning
+        in many-agent Collective Adaptive Systems.}
     \label{fig:overview}
 \end{figure}
 
@@ -368,10 +483,147 @@ This thesis takes an initial step toward that goal by investigating
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.8\textwidth]{figures/mapping.drawio.pdf}
-    \caption{
-        Relationship between the engineering dimensions and the contribution chapters of this thesis.
+    \begingroup
+
+    \definecolor{dimFrameworks}{HTML}{BD5350}
+    \definecolor{dimPrivacy}{HTML}{6C90C3}
+    \definecolor{dimShift}{HTML}{D99A00}
+    \definecolor{dimDecentralization}{HTML}{9874AC}
+    \definecolor{dimResources}{HTML}{7FAF64}
+
+    \resizebox{\textwidth}{!}{%
+        \begin{tikzpicture}[
+            font=\normalsize,
+            dimension/.style={
+                rectangle,
+                rounded corners=5pt,
+                minimum height=0.9cm,
+                text width=4.2cm,
+                inner xsep=0.15cm,
+                align=center,
+                line width=1.3pt,
+                anchor=west
+            },
+            chapter/.style={
+                text width=2.3cm,
+                minimum height=2.8cm,
+                inner sep=0pt,
+                align=center,
+                anchor=south
+            }
+        ]
+
+        % Column headings
+        \node[
+            text width=4.5cm,
+            minimum height=2.8cm,
+            align=center,
+            anchor=south west,
+            inner sep=0pt
+        ] at (0,0.65) {
+            \textbf{Engineering\\Dimensions}
+        };
+
+        \node[chapter] at (6.0,0.65) {
+            \textbf{\Cref{chap:frameworks}}
+        };
+
+        \node[chapter] at (8.6,0.65) {
+            \textbf{\Cref{chap:selforg-fl}}
+        };
+
+        \node[chapter] at (11.2,0.65) {
+            \textbf{\Cref{chap:scalable-rl}}
+        };
+
+        \node[chapter] at (13.8,0.65) {
+            \textbf{\Cref{chap:tasksplacement}}
+        };
+
+        \node[chapter] at (16.4,0.65) {
+            \textbf{\Cref{chap:distributed-state-estimation}}
+        };
+
+        % Header separator
+        \draw[black!25, line width=1.2pt]
+            (0,0.65) -- (17.65,0.65);
+
+        % Subtle row separators
+        \foreach \y in {-0.6,-1.8,-3.0,-4.2} {
+            \draw[black!10, line width=1pt]
+                (0,\y) -- (17.65,\y);
         }
+
+        % Engineering dimensions
+        \node[
+            dimension,
+            draw=dimFrameworks,
+            fill=dimFrameworks!16
+        ] at (0,0) {
+            Frameworks
+        };
+
+        \node[
+            dimension,
+            draw=dimPrivacy,
+            fill=dimPrivacy!16
+        ] at (0,-1.2) {
+            Data Privacy Constraints
+        };
+
+        \node[
+            dimension,
+            draw=dimShift,
+            fill=dimShift!16
+        ] at (0,-2.4) {
+            Spatio-temporal\\
+            Distribution Shift
+        };
+
+        \node[
+            dimension,
+            draw=dimDecentralization,
+            fill=dimDecentralization!16
+        ] at (0,-3.6) {
+            Scalable \\
+            Decentralization
+        };
+
+        \node[
+            dimension,
+            draw=dimResources,
+            fill=dimResources!16
+        ] at (0,-4.8) {
+            Resource-constrained\\
+            Edge Devices
+        };
+
+        % Dimension--chapter associations
+        \fill[dimFrameworks]
+            (6.0,0) circle[radius=0.17cm];
+
+        \fill[dimPrivacy]
+            (8.6,-1.2) circle[radius=0.17cm];
+
+        \fill[dimShift]
+            (8.6,-2.4) circle[radius=0.17cm];
+
+        \foreach \x in {8.6,11.2,16.4} {
+            \fill[dimDecentralization]
+                (\x,-3.6) circle[radius=0.17cm];
+        }
+
+        \fill[dimResources]
+            (13.8,-4.8) circle[radius=0.17cm];
+
+        \end{tikzpicture}%
+    }
+
+    \endgroup
+    \caption{Mapping between the engineering dimensions
+        addressed in this thesis and the contribution chapters.
+        Each colored marker identifies a chapter
+        addressing the corresponding dimension.}
     \label{fig:mapping}
 \end{figure}
 
