@@ -330,9 +330,6 @@ Every other device repeatedly selects the smallest neighbor estimate plus the me
 %
 The \texttt{rep} construct stores the estimate between rounds, 
  while \texttt{nbr} propagates it through local interactions. 
-% 
-The second function uses a field-based conditional to exclude obstacles 
- from the communication domain.
 
 \begin{lstlisting}[language=scafi,float=t,
   caption={Illustrative field-calculus program for a self-healing distance field.},
@@ -345,11 +342,6 @@ def distanceTo(source) {
       minHood(nbr { distance } + nbrRange())
     }
   }
-}
-
-def distanceAvoiding(source, obstacle) {
-  if (obstacle) { INFINITY }
-  else          { distanceTo(source) }
 }
 \end{lstlisting}
 
