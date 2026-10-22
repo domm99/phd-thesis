@@ -14,77 +14,64 @@
 \input{front}
 
 \begin{abstract}
-\Glspl{CAS} comprise distributed devices or agents whose local interactions
-give rise to emergent collective behavior that cannot be attributed to any component in isolation.
-%
-Such behavior can be engineered through explicit coordination rules,
-expressed for instance through macroprogramming,
-or through machine learning mechanisms that derive models and decision policies from distributed data and experience.
-%
-This thesis brings these two perspectives together
-to investigate how cooperative learning
-and decision making can be engineered as integral parts of a \gls{CAS}.
-%
-This requires addressing conditions that conventional machine learning methods often abstract away,
-including heterogeneous and distributed data, local communication, changing populations,
-and limited computational resources.
-%
-Addressing these conditions also requires practical tools
-for implementing coordination mechanisms, integrating them with learning algorithms,
-and evaluating their collective behavior.
-%
-The thesis therefore contributes complementary software tools
-for aggregate programming, spatially structured data benchmarks,
-simulation-based learning, and execution on physical robots.
 
-Three complementary lines of research investigate the associated learning and coordination challenges.
+Networks of sensors, mobile devices, and robots can cooperate
+to provide services and solve problems beyond the capabilities of individual components.
 %
-To address data locality and privacy requirements,
-federated learning enables devices to learn collaboratively while keeping raw data local.
+In \glspl{CAS}, this cooperation relies on local interactions
+through which collective behavior emerges and adapts to changing conditions.
 %
-However, heterogeneous data and changing populations require the collaboration structure itself to adapt.
+Engineering learning in these systems poses several challenges:
+observations are distributed and heterogeneous,
+communication is local,
+populations and environments change,
+and computation competes for limited resources.
 %
-The first line of research therefore develops field-based coordination mechanisms
-that enable devices to form and reorganize federated learning groups
+These characteristics complicate both the organization of learning
+and the execution of decisions that must account for their effects on the collective.
+
+This thesis investigates methods and tools for engineering cooperative learning
+and decentralized decision making in \glspl{CAS}.
+%
+The approach combines machine learning with distributed mechanisms for collective coordination,
+including macroprogramming techniques such as aggregate computing.
+%
+These mechanisms organize collaboration and information exchange among devices,
+while learning derives models and decision policies from distributed data and experience.
+
+To support collaborative learning without centralizing raw observations,
+the thesis develops self-organizing federated learning methods.
+%
+Field-based coordination enables devices to form and reorganize learning groups
 according to spatial proximity and model compatibility,
-without relying on a permanent server or fixing the number of groups in advance.
+without a permanent server or a predefined number of groups.
 %
-Simulation results show that this organization supports specialized learning
-and maintains effective collaboration under failures and mobility.
-%
-Model sparsification can preserve these benefits while reducing computational requirements,
-although excessive compression can undermine the stability of self-organization.
-%
-Preliminary extensions further investigate task-independent collaborator discovery
-and continual adaptation to mobility-induced distribution shifts.
+Simulation results show that these methods support models specialized to heterogeneous data
+and sustain collaboration under failures and mobility.
 
-To learn cooperative actions from experience under partial observations,
-the second line of research investigates decentralized reinforcement learning.
+Cooperative decision making is investigated through decentralized reinforcement learning,
+allowing agents to learn from interaction with their environment.
 %
-Neighbor-based training strategies allow agents to exchange knowledge locally,
-while graph-based policies accommodate variable-sized interaction neighborhoods.
+Neighbor-based exchanges improve decentralized training,
+while graph-based policies allow learned behaviors to operate across different collective sizes,
+although performance remains sensitive to changes in scale.
 %
-Experiments show that local knowledge exchange improves decentralized training
-and that graph-based policies support transfer across different collective sizes,
-although performance degrades as deployment conditions diverge from the training configuration.
+Resource constraints are addressed through a graph-based learning approach
+for placing application components across edge and cloud resources.
+%
+By combining local observations with aggregate estimates of collective conditions,
+the resulting policies adapt placement decisions to mobility and shared infrastructure conditions,
+balancing energy consumption, infrastructure costs, and server load.
 
-To address limited device resources and contention for shared infrastructure,
-the third line of research investigates adaptive application deployment across the edge--cloud continuum.
+The engineering contribution also includes software tools
+for integrating aggregate programs with learning algorithms,
+constructing spatially structured benchmarks,
+conducting simulation experiments,
+and executing collective programs on physical robots.
 %
-A graph-based reinforcement learning approach combines local device information
-with aggregate estimates of collective conditions
-to decide where application components should execute.
-%
-Simulation experiments show that collective information enables decentralized policies
-to adapt placement decisions to shared operating conditions,
-balancing device energy consumption, infrastructure costs, and server load.
-%
-The policies also adjust their decisions as devices move between areas with different collective conditions.
-
-Together, these methods, tools, and empirical findings show
-how explicitly representing and organizing the structure of the collective
-can support cooperative learning and decentralized decision making
-under the operating conditions of \glspl{CAS}.
+Together, these contributions provide methods, practical support, and empirical evidence
+for engineering learning and decision making around the interactions,
+organization, and resource constraints of collective systems.
 
 \sloppypar
     \textbf{Keywords} -- \emph{\glsentryfull{CAS}, \gls{CFL}, \gls{MARL}, \gls{MP}}
