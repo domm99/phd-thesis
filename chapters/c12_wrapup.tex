@@ -22,7 +22,7 @@ Addressing these conditions ultimately requires attention to how learning,
 This thesis examined parts of that broader problem in separate experimental settings,
  developing methods and evidence for each without combining them into a single system.
 
-The contributions followed three complementary directions.
+The contributions followed multiple complementary directions.
 %
 \Cref{chap:selforg-fl} studied how federated-learning groups can emerge 
  and reorganize through local field-based coordination.
@@ -33,6 +33,10 @@ The contributions followed three complementary directions.
 \Cref{chap:tasksplacement} examined the placement of distributed applications,
  combining heterogeneous graph learning with aggregate information to support component-level offloading 
  across the edge--cloud continuum.
+%
+\Cref{chap:distributed-state-estimation} complemented these directions
+ by applying field-based coordination to distributed state estimation,
+ organizing cooperative particle filtering under partial observations and changing responsibilities.
 %
 This final chapter consolidates the evidence obtained from these contributions,
  answers the research questions introduced in~\Cref{chap:introduction}, 
@@ -186,10 +190,29 @@ Increased density changed the local interaction patterns observed by the policy
 In the obstacle-avoidance task, this shift appeared as a safety--efficiency trade-off:
  collisions remained rare, but agents became increasingly conservative and less effective at reaching the goal.
 
+Finally,
+ the study of distributed state estimation in~\Cref{chap:distributed-state-estimation}
+ shows that field-based coordination also helps devices reconstruct
+ more complete information about the environment from partial and noisy local observations.
+%
+Sharing measurements within neighborhoods reduced the error of local particle filters
+ compared with isolated filters, without requiring a fusion center or the exchange of particles.
+%
+When estimation relied on an elected fusion device,
+ the aggregate program reassigned this role after its failure
+ and tracking resumed after a transient,
+ while mobile sensors coordinated their formation to follow the estimated targets.
+%
+These experiments involved a small, fixed sensor population
+ and therefore do not establish scaling behavior;
+ they complement the answer to this question by showing that
+ the same abstractions used to organize learning can also organize
+ information fusion and reassign responsibilities at runtime.
+
 \paragraph{RQ4: How can learning-based decisions be deployed across heterogeneous
 and resource-constrained edge--cloud infrastructures while accounting for both
 individual device constraints and collective system-level phenomena?}
-IDHGQL addressed this problem by combining three representations.
+IDHGQL (\Cref{chap:tasksplacement}) addressed this problem by combining three representations.
 %
 The macro-component model decomposed applications into selectively placeable
  units while preserving their data and execution dependencies.
@@ -235,9 +258,11 @@ size independent of population size, or supporting variable graphs addresses onl
 one source of growth. Communication volume, behavioral distribution shift,
 resource contention, and adaptation time must be considered jointly.
 
-In the federated learning and offloading studies, macroprogramming provided
- a computational layer for constructing learning groups and collective state
- through local interactions. The reinforcement learning studies addressed
+In the federated learning, offloading, and state estimation studies, macroprogramming provided
+ a computational layer for constructing learning groups, collective state,
+ and information fusion structures through local interactions. 
+% 
+The reinforcement learning studies addressed
  complementary questions through neighborhood exchanges and graph-based policies.
 
 
