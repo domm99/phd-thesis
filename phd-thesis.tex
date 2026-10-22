@@ -15,63 +15,68 @@
 
 \begin{abstract}
 
-Networks of sensors, mobile devices, and robots can cooperate
-to provide services and solve problems beyond the capabilities of individual components.
+In \glspl{CAS}, networks of sensors, mobile devices, and robots
+cooperate through local interactions,
+from which collective behavior emerges and adapts to changing conditions.
 %
-In \glspl{CAS}, this cooperation relies on local interactions
-through which collective behavior emerges and adapts to changing conditions.
-%
-Engineering learning in these systems poses several challenges:
-observations are distributed and heterogeneous,
+Engineering learning and autonomy in these systems poses several challenges:
+observations are distributed, heterogeneous, and often sensitive,
 communication is local,
 populations and environments change,
 and computation competes for limited resources.
-%
-These characteristics complicate both the organization of learning
-and the execution of decisions that must account for their effects on the collective.
 
 This thesis investigates methods and tools for engineering cooperative learning
-and decentralized decision making in \glspl{CAS}.
-%
-The approach combines machine learning with distributed mechanisms for collective coordination,
-including macroprogramming techniques such as aggregate computing.
-%
-These mechanisms organize collaboration and information exchange among devices,
-while learning derives models and decision policies from distributed data and experience.
+and decentralized decision making in many-agent \glspl{CAS},
+combining machine learning with distributed coordination mechanisms
+such as aggregate computing.
 
-To support collaborative learning without centralizing raw observations,
-the thesis develops self-organizing federated learning methods.
+Self-organizing federated learning methods support collaborative learning
+without centralizing raw observations.
 %
-Field-based coordination enables devices to form and reorganize learning groups
+Field-based coordination lets devices form and reorganize learning groups
 according to spatial proximity and model compatibility,
 without a permanent server or a predefined number of groups.
 %
-Simulation results show that these methods support models specialized to heterogeneous data
-and sustain collaboration under failures and mobility.
+Under spatially heterogeneous data,
+the resulting regional models outperform single-global-model approaches,
+and groups reorganize after leader failures and device movement.
+%
+Preliminary results show that local replay mitigates forgetting of previously visited regions,
+while model sparsification reduces computational costs
+but, beyond a dataset-dependent threshold, disrupts group formation.
 
-Cooperative decision making is investigated through decentralized reinforcement learning,
-allowing agents to learn from interaction with their environment.
+\sloppypar
+Cooperative decision making is investigated through decentralized multi-agent reinforcement learning.
 %
-Neighbor-based exchanges improve decentralized training,
-while graph-based policies allow learned behaviors to operate across different collective sizes,
-although performance remains sensitive to changes in scale.
-%
-Resource constraints are addressed through a graph-based learning approach
-for placing application components across edge and cloud resources.
+Exchanging experiences or model information within bounded neighborhoods
+brings decentralized training close to centralized performance,
+while graph-based policies remain functional without retraining in larger collectives,
+although their efficiency degrades as population size departs from training.
+
+For resource-constrained deployment,
+graph-based reinforcement learning places application components across edge and cloud resources.
 %
 By combining local observations with aggregate estimates of collective conditions,
-the resulting policies adapt placement decisions to mobility and shared infrastructure conditions,
-balancing energy consumption, infrastructure costs, and server load.
+policies adapt to device density and mobility,
+balancing energy consumption, infrastructure costs, and server load;
+without this collective information, devices converge toward uniform strategies.
 
-The engineering contribution also includes software tools
-for integrating aggregate programs with learning algorithms,
-constructing spatially structured benchmarks,
-conducting simulation experiments,
-and executing collective programs on physical robots.
+% Field-based coordination is also applied to distributed state estimation,
+% organizing cooperative particle filtering and reassigning the fusion role after failures.
 %
-Together, these contributions provide methods, practical support, and empirical evidence
-for engineering learning and decision making around the interactions,
-organization, and resource constraints of collective systems.
+Software tools complete the contribution,
+supporting aggregate programs integrated with learning,
+spatially structured benchmarks, simulation experiments,
+and execution on physical robots.
+
+Across these settings,
+making collective structure explicit
+(learning groups, interaction neighborhoods, and shared infrastructure conditions)
+improves learning and decentralized decisions
+without requiring any device to observe or control the entire system.
+%
+% Each mechanism is evaluated separately in simulation;
+% integrating them into a single architecture is left to future work.
 
 \sloppypar
     \textbf{Keywords} -- \emph{\glsentryfull{CAS}, \gls{CFL}, \gls{MARL}, \gls{MP}}
